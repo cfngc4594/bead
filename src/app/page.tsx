@@ -3,50 +3,18 @@ import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { canvasSizes, isCanvasSizeId } from "@/config/canvas-sizes";
 import { cn } from "@/lib/utils";
-
-const sizes = [
-  {
-    id: "16x16",
-    title: "16×16",
-    desc: "手机挂件",
-    emoji: "🐰",
-  },
-  {
-    id: "29x29",
-    title: "29×29",
-    desc: "头像贴纸",
-    emoji: "🐻",
-  },
-  {
-    id: "32x32",
-    title: "32×32",
-    desc: "桌面摆件",
-    emoji: "🌷",
-  },
-  {
-    id: "64x64",
-    title: "64×64",
-    desc: "大型作品",
-    emoji: "🖼️",
-  },
-] as const;
-
-type SizeId = (typeof sizes)[number]["id"];
 
 type PageProps = {
   searchParams: Promise<{ size?: string | string[] }>;
 };
 
-function isSizeId(value: unknown): value is SizeId {
-  return typeof value === "string" && sizes.some((size) => size.id === value);
-}
-
 export default async function Page({ searchParams }: PageProps) {
   const { size } = await searchParams;
 
-  if (!isSizeId(size)) {
-    redirect(`/?size=${sizes[0].id}`);
+  if (!isCanvasSizeId(size)) {
+    redirect(`/?size=${canvasSizes[0].id}`);
   }
 
   const selected = size;
@@ -65,7 +33,7 @@ export default async function Page({ searchParams }: PageProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {sizes.map((sizeItem) => {
+          {canvasSizes.map((sizeItem) => {
             const isSelected = selected === sizeItem.id;
 
             return (
@@ -94,8 +62,8 @@ export default async function Page({ searchParams }: PageProps) {
         </div>
 
         <div className="flex justify-center">
-          <Button className="min-w-48 rounded-full" size="lg">
-            开始创作
+          <Button asChild className="min-w-48 rounded-full" size="lg">
+            <Link href={`/editor?size=${selected}`}>开始创作</Link>
           </Button>
         </div>
       </div>
