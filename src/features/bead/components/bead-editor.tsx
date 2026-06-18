@@ -1,17 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
-import {
-  BeadCanvas,
-  type GridCell,
-} from "@/features/bead/components/bead-canvas";
+import type { BeadCanvasProps } from "@/features/bead/components/bead-canvas";
 import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop-color-sidebar";
+import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
 import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
 import { useBeadHistory } from "@/features/bead/hooks/use-bead-history";
-import type { CanvasTool } from "@/features/bead/types";
+import type { CanvasTool, GridCell } from "@/features/bead/types";
+
+const BeadCanvas = dynamic<BeadCanvasProps>(
+  () =>
+    import("@/features/bead/components/bead-canvas").then(
+      (module) => module.BeadCanvas,
+    ),
+  {
+    loading: () => <BeadCanvasSkeleton />,
+    ssr: false,
+  },
+);
 
 type BeadEditorProps = {
   size: CanvasSize;

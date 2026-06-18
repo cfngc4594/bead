@@ -20,7 +20,7 @@ import type {
 
 export type { GridCell };
 
-type BeadCanvasProps = {
+export type BeadCanvasProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
