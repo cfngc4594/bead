@@ -5,12 +5,12 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useCanvasNavigation } from "@/features/perler/hooks/use-canvas-navigation";
+import { drawBoard } from "@/features/perler/lib/canvas-drawing";
 import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
 } from "@/features/perler/lib/canvas-geometry";
-import { getReadableTextColor } from "@/features/perler/lib/color-utils";
 import type {
   BeadFill,
   CanvasTool,
@@ -32,10 +32,6 @@ type PerlerCanvasProps = {
   resetViewSignal: number;
   viewport?: Viewport;
 };
-
-const gridColor = "#d9d9d9";
-const labelBackground = "#f3f4f6";
-const labelTextColor = "#6b7280";
 
 export function PerlerCanvas({
   rows,
@@ -239,83 +235,4 @@ function getCanvasCursor(tool: CanvasTool, isDraggable: boolean) {
   }
 
   return "default";
-}
-
-function drawBoard(
-  context: Konva.Context,
-  rows: number,
-  cols: number,
-  beads: readonly (BeadFill | null)[],
-) {
-  context.save();
-  drawLabels(context, rows, cols);
-
-  const origin = getGridOrigin();
-
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const x = origin.x + col * cellSize;
-      const y = origin.y + row * cellSize;
-      const color = beads[row * cols + col];
-
-      context.fillStyle = "#ffffff";
-      context.fillRect(x, y, cellSize, cellSize);
-      context.strokeStyle = gridColor;
-      context.lineWidth = 1;
-      context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
-
-      if (color) {
-        context.fillStyle = color.hex;
-        context.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
-        context.fillStyle = getReadableTextColor(color.hex);
-        context.font = "600 7px sans-serif";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(color.code, x + cellSize / 2, y + cellSize / 2);
-      }
-    }
-  }
-
-  context.restore();
-}
-
-function drawLabels(context: Konva.Context, rows: number, cols: number) {
-  const boardHeight = (rows + 2) * cellSize;
-
-  context.strokeStyle = gridColor;
-  context.lineWidth = 1;
-  context.font = "600 7px sans-serif";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillStyle = labelTextColor;
-
-  for (let col = 0; col < cols; col += 1) {
-    const label = String(col + 1);
-    const x = cellSize + col * cellSize;
-
-    drawLabelCell(context, x, 0, label);
-    drawLabelCell(context, x, boardHeight - cellSize, label);
-  }
-
-  for (let row = 0; row < rows; row += 1) {
-    const label = String(row + 1);
-    const y = cellSize + row * cellSize;
-    const rightLabelX = (cols + 1) * cellSize;
-
-    drawLabelCell(context, 0, y, label);
-    drawLabelCell(context, rightLabelX, y, label);
-  }
-}
-
-function drawLabelCell(
-  context: Konva.Context,
-  x: number,
-  y: number,
-  label: string,
-) {
-  context.fillStyle = labelBackground;
-  context.fillRect(x, y, cellSize, cellSize);
-  context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
-  context.fillStyle = labelTextColor;
-  context.fillText(label, x + cellSize / 2, y + cellSize / 2);
 }
