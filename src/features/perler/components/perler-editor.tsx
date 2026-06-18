@@ -104,7 +104,7 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
         <header className="flex h-16 shrink-0 items-center justify-between border-b px-5">
           <div>
             <h1 className="font-semibold text-base">拼豆编辑器</h1>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-xs tabular-nums">
               {size.title} · {usedCount}/{size.rows * size.cols}
             </p>
           </div>
@@ -161,7 +161,6 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
             rows={size.rows}
             cols={size.cols}
             beads={beads}
-            selectedColor={selectedColor.hex}
             tool={tool}
             onEditCell={editCell}
             onEditEnd={commitEdit}

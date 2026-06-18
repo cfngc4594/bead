@@ -24,7 +24,6 @@ type PerlerCanvasProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
-  selectedColor: string;
   tool: CanvasTool;
   onEditStart: () => void;
   onEditCell: (cell: GridCell) => void;
@@ -40,7 +39,6 @@ export function PerlerCanvas({
   rows,
   cols,
   beads,
-  selectedColor,
   tool,
   onEditStart,
   onEditCell,
@@ -166,6 +164,7 @@ export function PerlerCanvas({
     <div className="h-full w-full overflow-hidden" ref={containerRef}>
       <Stage
         ref={stageRef}
+        style={{ cursor: getCanvasCursor(tool, isDraggable) }}
         width={stageSize.width}
         height={stageSize.height}
         x={view.x}
@@ -199,15 +198,26 @@ export function PerlerCanvas({
             }}
           />
           {hoveredCell ? (
-            <Rect
-              x={hoveredCell.column * cellSize}
-              y={hoveredCell.row * cellSize}
-              width={cellSize}
-              height={cellSize}
-              stroke={selectedColor}
-              strokeWidth={2}
-              listening={false}
-            />
+            <>
+              <Rect
+                x={hoveredCell.column * cellSize + 1}
+                y={hoveredCell.row * cellSize + 1}
+                width={cellSize - 2}
+                height={cellSize - 2}
+                stroke="#ffffff"
+                strokeWidth={2}
+                listening={false}
+              />
+              <Rect
+                x={hoveredCell.column * cellSize + 2.5}
+                y={hoveredCell.row * cellSize + 2.5}
+                width={cellSize - 5}
+                height={cellSize - 5}
+                stroke="#111111"
+                strokeWidth={1}
+                listening={false}
+              />
+            </>
           ) : null}
         </Layer>
       </Stage>
@@ -217,6 +227,26 @@ export function PerlerCanvas({
 
 function isEditTool(tool: CanvasTool) {
   return tool === "paint" || tool === "erase";
+}
+
+function getCanvasCursor(tool: CanvasTool, isDraggable: boolean) {
+  if (isDraggable) {
+    return "grab";
+  }
+
+  if (tool === "paint") {
+    return "crosshair";
+  }
+
+  if (tool === "erase") {
+    return "cell";
+  }
+
+  if (tool === "picker") {
+    return "copy";
+  }
+
+  return "default";
 }
 
 function drawBoard(
