@@ -1,20 +1,20 @@
 import type { BeadColor } from "@/data/colors";
-import { getReadableTextColor } from "@/features/perler/lib/color-utils";
+import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import { cn } from "@/lib/utils";
 
-type PerlerColorGridProps = {
+type BeadColorGridProps = {
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   layout: "desktop" | "mobile";
   onSelectColor: (color: BeadColor) => void;
 };
 
-export function PerlerColorGrid({
+export function BeadColorGrid({
   colors,
   selectedColor,
   layout,
   onSelectColor,
-}: PerlerColorGridProps) {
+}: BeadColorGridProps) {
   return (
     <div
       className={cn(

@@ -14,9 +14,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { CanvasTool } from "@/features/perler/types";
+import type { CanvasTool } from "@/features/bead/types";
 
-type PerlerToolbarProps = {
+type BeadToolbarProps = {
   tool: CanvasTool;
   canUndo: boolean;
   canRedo: boolean;
@@ -34,7 +34,7 @@ type ToolbarIconButtonProps = {
   onClick: () => void;
 };
 
-export function PerlerToolbar({
+export function BeadToolbar({
   tool,
   canUndo,
   canRedo,
@@ -42,7 +42,7 @@ export function PerlerToolbar({
   onResetView,
   onUndo,
   onRedo,
-}: PerlerToolbarProps) {
+}: BeadToolbarProps) {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center justify-end overflow-hidden border-b px-4 md:px-5">
       <div className="scrollbar-none flex w-full min-w-0 items-center justify-end gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">

@@ -1,10 +1,10 @@
 import type { BeadColor } from "@/data/colors";
 
-type PerlerCurrentColorProps = {
+type BeadCurrentColorProps = {
   color: BeadColor;
 };
 
-export function PerlerCurrentColor({ color }: PerlerCurrentColorProps) {
+export function BeadCurrentColor({ color }: BeadCurrentColorProps) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <span

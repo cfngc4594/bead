@@ -1,4 +1,4 @@
-import type { CanvasView, GridCell, Viewport } from "@/features/perler/types";
+import type { CanvasView, GridCell, Viewport } from "@/features/bead/types";
 
 export const cellSize = 18;
 export const boardPadding = 24;

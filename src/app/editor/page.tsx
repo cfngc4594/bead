@@ -4,7 +4,7 @@ import {
   getCanvasSize,
   isCanvasSizeId,
 } from "@/config/canvas-sizes";
-import { PerlerEditor } from "@/features/perler/components/perler-editor";
+import { BeadEditor } from "@/features/bead/components/bead-editor";
 
 type EditorPageProps = {
   searchParams: Promise<{ size?: string | string[] }>;
@@ -17,5 +17,5 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
     redirect(`/editor?size=${canvasSizes[0].id}`);
   }
 
-  return <PerlerEditor size={getCanvasSize(size)} />;
+  return <BeadEditor size={getCanvasSize(size)} />;
 }

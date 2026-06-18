@@ -4,23 +4,23 @@ import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
-import { useCanvasNavigation } from "@/features/perler/hooks/use-canvas-navigation";
-import { drawBoard } from "@/features/perler/lib/canvas-drawing";
+import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
+import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
-} from "@/features/perler/lib/canvas-geometry";
+} from "@/features/bead/lib/canvas-geometry";
 import type {
   BeadFill,
   CanvasTool,
   GridCell,
   Viewport,
-} from "@/features/perler/types";
+} from "@/features/bead/types";
 
 export type { GridCell };
 
-type PerlerCanvasProps = {
+type BeadCanvasProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
@@ -33,7 +33,7 @@ type PerlerCanvasProps = {
   viewport?: Viewport;
 };
 
-export function PerlerCanvas({
+export function BeadCanvas({
   rows,
   cols,
   beads,
@@ -44,7 +44,7 @@ export function PerlerCanvas({
   onPickCell,
   resetViewSignal,
   viewport = { width: 760, height: 640 },
-}: PerlerCanvasProps) {
+}: BeadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const [stageSize, setStageSize] = useState(viewport);

@@ -3,19 +3,19 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-type PerlerColorLetterIndexProps = {
+type BeadColorLetterIndexProps = {
   letters: readonly string[];
   selectedLetter: string;
   orientation: "horizontal" | "vertical";
   onSelectLetter: (letter: string) => void;
 };
 
-export function PerlerColorLetterIndex({
+export function BeadColorLetterIndex({
   letters,
   selectedLetter,
   orientation,
   onSelectLetter,
-}: PerlerColorLetterIndexProps) {
+}: BeadColorLetterIndexProps) {
   const isHorizontal = orientation === "horizontal";
 
   if (isHorizontal) {

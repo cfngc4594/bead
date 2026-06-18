@@ -1,7 +1,7 @@
 import type Konva from "konva";
-import { cellSize, getGridOrigin } from "@/features/perler/lib/canvas-geometry";
-import { getReadableTextColor } from "@/features/perler/lib/color-utils";
-import type { BeadFill } from "@/features/perler/types";
+import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
+import { getReadableTextColor } from "@/features/bead/lib/color-utils";
+import type { BeadFill } from "@/features/bead/types";
 
 const gridColor = "#d9d9d9";
 const labelBackground = "#f3f4f6";

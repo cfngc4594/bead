@@ -4,16 +4,16 @@ import { useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
 import {
+  BeadCanvas,
   type GridCell,
-  PerlerCanvas,
-} from "@/features/perler/components/perler-canvas";
-import { PerlerDesktopColorSidebar } from "@/features/perler/components/perler-desktop-color-sidebar";
-import { PerlerMobileColorPanel } from "@/features/perler/components/perler-mobile-color-panel";
-import { PerlerToolbar } from "@/features/perler/components/perler-toolbar";
-import { useBeadHistory } from "@/features/perler/hooks/use-bead-history";
-import type { CanvasTool } from "@/features/perler/types";
+} from "@/features/bead/components/bead-canvas";
+import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop-color-sidebar";
+import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
+import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
+import { useBeadHistory } from "@/features/bead/hooks/use-bead-history";
+import type { CanvasTool } from "@/features/bead/types";
 
-type PerlerEditorProps = {
+type BeadEditorProps = {
   size: CanvasSize;
 };
 
@@ -21,7 +21,7 @@ const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
 
-export function PerlerEditor({ size }: PerlerEditorProps) {
+export function BeadEditor({ size }: BeadEditorProps) {
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -76,7 +76,7 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
-        <PerlerToolbar
+        <BeadToolbar
           canRedo={canRedo}
           canUndo={canUndo}
           onRedo={redo}
@@ -87,7 +87,7 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
         />
 
         <div className="min-h-0 flex-1 overflow-hidden bg-muted/30">
-          <PerlerCanvas
+          <BeadCanvas
             rows={size.rows}
             cols={size.cols}
             beads={beads}
@@ -101,7 +101,7 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
         </div>
       </section>
 
-      <PerlerDesktopColorSidebar
+      <BeadDesktopColorSidebar
         colors={filteredColors}
         letters={colorLetters}
         onSelectColor={setSelectedColor}
@@ -109,7 +109,7 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
       />
-      <PerlerMobileColorPanel
+      <BeadMobileColorPanel
         colors={filteredColors}
         letters={colorLetters}
         onSelectColor={setSelectedColor}

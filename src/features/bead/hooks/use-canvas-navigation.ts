@@ -7,8 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   getInitialView,
   getZoomedView,
-} from "@/features/perler/lib/canvas-geometry";
-import type { CanvasTool, CanvasView, Viewport } from "@/features/perler/types";
+} from "@/features/bead/lib/canvas-geometry";
+import type { CanvasTool, CanvasView, Viewport } from "@/features/bead/types";
 
 type UseCanvasNavigationProps = {
   rows: number;

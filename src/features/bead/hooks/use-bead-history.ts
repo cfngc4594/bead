@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { BeadFill } from "@/features/perler/types";
+import type { BeadFill } from "@/features/bead/types";
 
 type BeadState = (BeadFill | null)[];
 
