@@ -6,7 +6,7 @@ type BeadCurrentColorProps = {
 
 export function BeadCurrentColor({ color }: BeadCurrentColorProps) {
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 select-none items-center gap-3">
       <span
         className="size-8 shrink-0 rounded-full border"
         style={{ backgroundColor: color.hex }}
