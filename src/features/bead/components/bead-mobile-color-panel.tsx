@@ -29,7 +29,7 @@ export function BeadMobileColorPanel({
   onSelectLetter,
   onResetViewAfterResize,
 }: BeadMobileColorPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <section
