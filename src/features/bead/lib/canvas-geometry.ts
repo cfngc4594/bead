@@ -5,6 +5,8 @@ export const boardPadding = 24;
 export const labelCells = 1;
 export const boardOrigin = cellSize * labelCells;
 const maxFitScale = 2.5;
+const minZoomScale = 0.35;
+const maxZoomScale = 3;
 
 export function getBoardSize(rows: number, cols: number) {
   return {
@@ -67,8 +69,10 @@ export function getZoomedView({
   deltaY: number;
 }): CanvasView {
   const scaleBy = 1.08;
-  const nextScale = deltaY > 0 ? view.scale / scaleBy : view.scale * scaleBy;
-  const scale = Math.min(3, Math.max(0.35, nextScale));
+  const scale =
+    deltaY > 0
+      ? clampZoomScale(view.scale / scaleBy)
+      : clampZoomScale(view.scale * scaleBy);
   const pointOnBoard = {
     x: (point.x - view.x) / view.scale,
     y: (point.y - view.y) / view.scale,
@@ -78,6 +82,30 @@ export function getZoomedView({
     scale,
     x: point.x - pointOnBoard.x * scale,
     y: point.y - pointOnBoard.y * scale,
+  };
+}
+
+export function getPinchedView({
+  view,
+  previousCenter,
+  nextCenter,
+  scaleFactor,
+}: {
+  view: CanvasView;
+  previousCenter: { x: number; y: number };
+  nextCenter: { x: number; y: number };
+  scaleFactor: number;
+}): CanvasView {
+  const scale = clampZoomScale(view.scale * scaleFactor);
+  const pointOnBoard = {
+    x: (previousCenter.x - view.x) / view.scale,
+    y: (previousCenter.y - view.y) / view.scale,
+  };
+
+  return {
+    scale,
+    x: nextCenter.x - pointOnBoard.x * scale,
+    y: nextCenter.y - pointOnBoard.y * scale,
   };
 }
 
@@ -91,4 +119,8 @@ function getInitialScale(rows: number, cols: number, viewport: Viewport) {
     availableWidth / board.width,
     availableHeight / board.height,
   );
+}
+
+function clampZoomScale(scale: number) {
+  return Math.min(maxZoomScale, Math.max(minZoomScale, scale));
 }

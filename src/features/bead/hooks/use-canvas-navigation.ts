@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   getInitialView,
+  getPinchedView,
   getZoomedView,
 } from "@/features/bead/lib/canvas-geometry";
 import type { CanvasTool, CanvasView, Viewport } from "@/features/bead/types";
@@ -31,6 +32,10 @@ export function useCanvasNavigation({
 }: UseCanvasNavigationProps) {
   const initializedViewKeyRef = useRef<string | null>(null);
   const handledResetSignalRef = useRef(0);
+  const pinchGestureRef = useRef<{
+    center: { x: number; y: number };
+    distance: number;
+  } | null>(null);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [view, setView] = useState<CanvasView>(() =>
     getInitialView(rows, cols, viewport),
@@ -124,12 +129,53 @@ export function useCanvasNavigation({
     }));
   }
 
+  function handlePinchMove(
+    points: [{ x: number; y: number }, { x: number; y: number }],
+  ) {
+    const gesture = getPinchGesture(points);
+    const previousGesture = pinchGestureRef.current;
+
+    pinchGestureRef.current = gesture;
+
+    if (!previousGesture) {
+      return;
+    }
+
+    setView((current) =>
+      getPinchedView({
+        view: current,
+        previousCenter: previousGesture.center,
+        nextCenter: gesture.center,
+        scaleFactor: gesture.distance / previousGesture.distance,
+      }),
+    );
+  }
+
+  function resetPinch() {
+    pinchGestureRef.current = null;
+  }
+
   return {
     view,
     isTemporaryPan: isSpacePressed,
     isDraggable: tool === "pan" || isSpacePressed,
     handleWheel,
     handleDragEnd,
+    handlePinchMove,
+    resetPinch,
+  };
+}
+
+function getPinchGesture([first, second]: [
+  { x: number; y: number },
+  { x: number; y: number },
+]) {
+  return {
+    center: {
+      x: (first.x + second.x) / 2,
+      y: (first.y + second.y) / 2,
+    },
+    distance: Math.hypot(first.x - second.x, first.y - second.y),
   };
 }
 

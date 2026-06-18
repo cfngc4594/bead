@@ -47,20 +47,28 @@ export function BeadCanvas({
 }: BeadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
+  const touchPointersRef = useRef(new Map<number, { x: number; y: number }>());
   const [stageSize, setStageSize] = useState(viewport);
   const [isStageMeasured, setIsStageMeasured] = useState(false);
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
   const [isPainting, setIsPainting] = useState(false);
-  const { view, isTemporaryPan, isDraggable, handleWheel, handleDragEnd } =
-    useCanvasNavigation({
-      rows,
-      cols,
-      viewport: stageSize,
-      isViewportMeasured: isStageMeasured,
-      resetViewSignal,
-      tool,
-      stageRef,
-    });
+  const {
+    view,
+    isTemporaryPan,
+    isDraggable,
+    handleWheel,
+    handleDragEnd,
+    handlePinchMove,
+    resetPinch,
+  } = useCanvasNavigation({
+    rows,
+    cols,
+    viewport: stageSize,
+    isViewportMeasured: isStageMeasured,
+    resetViewSignal,
+    tool,
+    stageRef,
+  });
   const gridOrigin = getGridOrigin();
 
   useEffect(() => {
@@ -108,6 +116,12 @@ export function BeadCanvas({
   }
 
   function handlePointerDown(event: KonvaEventObject<PointerEvent>) {
+    updateTouchPointer(event.evt);
+
+    if (handleTouchPinch()) {
+      return;
+    }
+
     if (tool === "picker") {
       const cell = getCellFromPointer();
 
@@ -131,7 +145,13 @@ export function BeadCanvas({
     editFromPointer();
   }
 
-  function handlePointerMove() {
+  function handlePointerMove(event: KonvaEventObject<PointerEvent>) {
+    updateTouchPointer(event.evt);
+
+    if (handleTouchPinch()) {
+      return;
+    }
+
     const cell = getCellFromPointer();
     setHoveredCell(cell);
 
@@ -140,7 +160,15 @@ export function BeadCanvas({
     }
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(event?: KonvaEventObject<PointerEvent>) {
+    if (event) {
+      removeTouchPointer(event.evt);
+    }
+
+    if (touchPointersRef.current.size < 2) {
+      resetPinch();
+    }
+
     if (isPainting) {
       onEditEnd();
     }
@@ -148,7 +176,9 @@ export function BeadCanvas({
     setIsPainting(false);
   }
 
-  function handlePointerLeave() {
+  function handlePointerLeave(event: KonvaEventObject<PointerEvent>) {
+    removeTouchPointer(event.evt);
+    resetPinch();
     setHoveredCell(null);
 
     if (isPainting) {
@@ -156,6 +186,58 @@ export function BeadCanvas({
     }
 
     setIsPainting(false);
+  }
+
+  function updateTouchPointer(event: PointerEvent) {
+    if (event.pointerType !== "touch") {
+      return;
+    }
+
+    const point = getRelativeTouchPoint(event);
+
+    if (point) {
+      touchPointersRef.current.set(event.pointerId, point);
+    }
+  }
+
+  function removeTouchPointer(event: PointerEvent) {
+    if (event.pointerType === "touch") {
+      touchPointersRef.current.delete(event.pointerId);
+    }
+  }
+
+  function getRelativeTouchPoint(event: PointerEvent) {
+    const container = containerRef.current;
+
+    if (!container) {
+      return null;
+    }
+
+    const rect = container.getBoundingClientRect();
+
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  function handleTouchPinch() {
+    const points = Array.from(touchPointersRef.current.values());
+
+    if (points.length < 2) {
+      return false;
+    }
+
+    if (isPainting) {
+      onEditEnd();
+      setIsPainting(false);
+    }
+
+    stageRef.current?.stopDrag();
+    setHoveredCell(null);
+    handlePinchMove([points[0], points[1]]);
+
+    return true;
   }
 
   useEffect(() => {

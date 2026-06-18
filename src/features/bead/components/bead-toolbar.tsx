@@ -44,8 +44,8 @@ export function BeadToolbar({
   onRedo,
 }: BeadToolbarProps) {
   return (
-    <header className="flex h-16 min-w-0 shrink-0 items-center justify-end overflow-hidden border-b px-4 md:px-5">
-      <div className="scrollbar-none flex w-full min-w-0 items-center justify-end gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
+    <header className="flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
+      <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
         <ToolbarIconButton
           icon={Hand}
           isActive={tool === "pan"}
