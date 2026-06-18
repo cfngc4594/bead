@@ -112,6 +112,7 @@ export function BeadEditor({ size }: BeadEditorProps) {
       <BeadMobileColorPanel
         colors={filteredColors}
         letters={colorLetters}
+        onResetView={() => setResetViewSignal((value) => value + 1)}
         onSelectColor={setSelectedColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}

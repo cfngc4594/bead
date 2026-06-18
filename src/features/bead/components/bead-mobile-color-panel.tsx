@@ -17,6 +17,7 @@ type BeadMobileColorPanelProps = {
   selectedLetter: string;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
+  onResetView: () => void;
 };
 
 export function BeadMobileColorPanel({
@@ -26,13 +27,14 @@ export function BeadMobileColorPanel({
   selectedLetter,
   onSelectColor,
   onSelectLetter,
+  onResetView,
 }: BeadMobileColorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <section
       className={cn(
-        "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card transition-[height] duration-200 md:hidden",
+        "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden",
         isExpanded ? "h-[330px] max-h-[50vh]" : "h-14",
       )}
     >
@@ -47,7 +49,10 @@ export function BeadMobileColorPanel({
           aria-expanded={isExpanded}
           aria-label={isExpanded ? "折叠颜色面板" : "展开颜色面板"}
           className="shrink-0 text-muted-foreground"
-          onClick={() => setIsExpanded((value) => !value)}
+          onClick={() => {
+            setIsExpanded((value) => !value);
+            onResetView();
+          }}
           size="icon"
           type="button"
           variant="outline"
