@@ -17,6 +17,7 @@ type UseCanvasNavigationProps = {
   viewport: Viewport;
   isViewportMeasured: boolean;
   resetViewSignal: number;
+  resetViewAfterResizeSignal: number;
   tool: CanvasTool;
   stageRef: React.RefObject<Konva.Stage | null>;
 };
@@ -27,11 +28,16 @@ export function useCanvasNavigation({
   viewport,
   isViewportMeasured,
   resetViewSignal,
+  resetViewAfterResizeSignal,
   tool,
   stageRef,
 }: UseCanvasNavigationProps) {
   const initializedViewKeyRef = useRef<string | null>(null);
   const handledResetSignalRef = useRef(0);
+  const pendingResizeResetRef = useRef<{
+    signal: number;
+    viewport: Viewport;
+  } | null>(null);
   const pinchGestureRef = useRef<{
     center: { x: number; y: number };
     distance: number;
@@ -68,6 +74,39 @@ export function useCanvasNavigation({
       initializedViewKeyRef.current = `${rows}x${cols}`;
     }
   }, [cols, resetViewSignal, rows, viewport]);
+
+  useEffect(() => {
+    if (
+      resetViewAfterResizeSignal === 0 ||
+      resetViewAfterResizeSignal === pendingResizeResetRef.current?.signal
+    ) {
+      return;
+    }
+
+    pendingResizeResetRef.current = {
+      signal: resetViewAfterResizeSignal,
+      viewport,
+    };
+  }, [resetViewAfterResizeSignal, viewport]);
+
+  useEffect(() => {
+    const pendingReset = pendingResizeResetRef.current;
+
+    if (!isViewportMeasured || !pendingReset) {
+      return;
+    }
+
+    if (
+      pendingReset.viewport.width === viewport.width &&
+      pendingReset.viewport.height === viewport.height
+    ) {
+      return;
+    }
+
+    pendingResizeResetRef.current = null;
+    setView(getInitialView(rows, cols, viewport));
+    initializedViewKeyRef.current = `${rows}x${cols}`;
+  }, [cols, isViewportMeasured, rows, viewport]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {

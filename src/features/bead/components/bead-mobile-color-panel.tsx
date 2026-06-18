@@ -17,7 +17,7 @@ type BeadMobileColorPanelProps = {
   selectedLetter: string;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
-  onResetView: () => void;
+  onResetViewAfterResize: () => void;
 };
 
 export function BeadMobileColorPanel({
@@ -27,7 +27,7 @@ export function BeadMobileColorPanel({
   selectedLetter,
   onSelectColor,
   onSelectLetter,
-  onResetView,
+  onResetViewAfterResize,
 }: BeadMobileColorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -35,7 +35,7 @@ export function BeadMobileColorPanel({
     <section
       className={cn(
         "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden",
-        isExpanded ? "h-[330px] max-h-[50vh]" : "h-14",
+        isExpanded ? "h-auto max-h-[50vh]" : "h-14",
       )}
     >
       <div
@@ -51,7 +51,7 @@ export function BeadMobileColorPanel({
           className="shrink-0 text-muted-foreground"
           onClick={() => {
             setIsExpanded((value) => !value);
-            onResetView();
+            onResetViewAfterResize();
           }}
           size="icon"
           type="button"
@@ -76,7 +76,7 @@ export function BeadMobileColorPanel({
             />
           </div>
 
-          <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+          <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
             <BeadColorGrid
               colors={colors}
               layout="mobile"

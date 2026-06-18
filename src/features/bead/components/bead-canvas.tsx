@@ -30,6 +30,7 @@ type BeadCanvasProps = {
   onEditEnd: () => void;
   onPickCell: (cell: GridCell) => void;
   resetViewSignal: number;
+  resetViewAfterResizeSignal: number;
   viewport?: Viewport;
 };
 
@@ -43,6 +44,7 @@ export function BeadCanvas({
   onEditEnd,
   onPickCell,
   resetViewSignal,
+  resetViewAfterResizeSignal,
   viewport = { width: 760, height: 640 },
 }: BeadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,7 @@ export function BeadCanvas({
     cols,
     viewport: stageSize,
     isViewportMeasured: isStageMeasured,
+    resetViewAfterResizeSignal,
     resetViewSignal,
     tool,
     stageRef,

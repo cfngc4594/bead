@@ -21,7 +21,7 @@ export function BeadColorGrid({
         "grid min-w-0 gap-2",
         layout === "desktop"
           ? "grid-cols-5 p-4"
-          : "grid-cols-[repeat(auto-fill,minmax(40px,1fr))] p-3",
+          : "grid-cols-[repeat(auto-fill,40px)] justify-center p-2",
       )}
     >
       {colors.map((color) => {
@@ -32,6 +32,7 @@ export function BeadColorGrid({
             aria-label={`选择颜色 ${color.code}`}
             className={cn(
               "aspect-square rounded-md border font-semibold text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              layout === "mobile" && "size-10",
               isSelected && "ring-2 ring-primary ring-offset-2",
             )}
             key={color.code}

@@ -26,6 +26,8 @@ export function BeadEditor({ size }: BeadEditorProps) {
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
   const [resetViewSignal, setResetViewSignal] = useState(0);
+  const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
+    useState(0);
   const {
     beads,
     beginEdit,
@@ -96,6 +98,7 @@ export function BeadEditor({ size }: BeadEditorProps) {
             onEditEnd={commitEdit}
             onEditStart={beginEdit}
             onPickCell={pickCell}
+            resetViewAfterResizeSignal={resetViewAfterResizeSignal}
             resetViewSignal={resetViewSignal}
           />
         </div>
@@ -112,7 +115,9 @@ export function BeadEditor({ size }: BeadEditorProps) {
       <BeadMobileColorPanel
         colors={filteredColors}
         letters={colorLetters}
-        onResetView={() => setResetViewSignal((value) => value + 1)}
+        onResetViewAfterResize={() =>
+          setResetViewAfterResizeSignal((value) => value + 1)
+        }
         onSelectColor={setSelectedColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}
