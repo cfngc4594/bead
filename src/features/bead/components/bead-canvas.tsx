@@ -158,11 +158,37 @@ export function BeadCanvas({
     setIsPainting(false);
   }
 
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    function preventCanvasTouchDefault(event: TouchEvent) {
+      event.preventDefault();
+    }
+
+    container.addEventListener("touchmove", preventCanvasTouchDefault, {
+      passive: false,
+    });
+
+    return () => {
+      container.removeEventListener("touchmove", preventCanvasTouchDefault);
+    };
+  }, []);
+
   return (
-    <div className="h-full w-full overflow-hidden" ref={containerRef}>
+    <div
+      className="h-full w-full touch-none overflow-hidden overscroll-none"
+      ref={containerRef}
+    >
       <Stage
         ref={stageRef}
-        style={{ cursor: getCanvasCursor(tool, isDraggable) }}
+        style={{
+          cursor: getCanvasCursor(tool, isDraggable),
+          touchAction: "none",
+        }}
         width={stageSize.width}
         height={stageSize.height}
         x={view.x}
@@ -174,6 +200,7 @@ export function BeadCanvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onWheel={handleWheel}
       >

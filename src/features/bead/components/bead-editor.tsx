@@ -74,7 +74,7 @@ export function BeadEditor({ size }: BeadEditorProps) {
   }
 
   return (
-    <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
+    <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <BeadToolbar
           canRedo={canRedo}
@@ -86,7 +86,7 @@ export function BeadEditor({ size }: BeadEditorProps) {
           tool={tool}
         />
 
-        <div className="min-h-0 flex-1 overflow-hidden bg-muted/30">
+        <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
           <BeadCanvas
             rows={size.rows}
             cols={size.cols}
