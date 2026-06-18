@@ -191,19 +191,16 @@ export function PerlerEditor({ size }: PerlerEditorProps) {
           <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
             <div className="flex flex-col gap-1 p-2">
               {colorLetters.map((letter) => (
-                <button
+                <Button
                   aria-label={`显示 ${letter} 色系`}
-                  className={cn(
-                    "flex h-8 items-center justify-center rounded-md font-medium text-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    selectedLetter === letter &&
-                      "bg-primary text-primary-foreground",
-                  )}
+                  className="w-full text-xs"
                   key={letter}
                   onClick={() => setSelectedLetter(letter)}
-                  type="button"
+                  size="icon"
+                  variant={selectedLetter === letter ? "default" : "ghost"}
                 >
                   {letter}
-                </button>
+                </Button>
               ))}
             </div>
           </ScrollArea>

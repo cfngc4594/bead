@@ -7,8 +7,8 @@ import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useCanvasNavigation } from "@/features/perler/hooks/use-canvas-navigation";
 import {
   cellSize,
-  getBoardSize,
   getGridCellFromPoint,
+  getGridOrigin,
 } from "@/features/perler/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/perler/lib/color-utils";
 import type {
@@ -34,6 +34,8 @@ type PerlerCanvasProps = {
 };
 
 const gridColor = "#d9d9d9";
+const labelBackground = "#f3f4f6";
+const labelTextColor = "#6b7280";
 
 export function PerlerCanvas({
   rows,
@@ -63,7 +65,7 @@ export function PerlerCanvas({
       tool,
       stageRef,
     });
-  const board = getBoardSize(rows, cols);
+  const gridOrigin = getGridOrigin();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -180,16 +182,6 @@ export function PerlerCanvas({
         onWheel={handleWheel}
       >
         <Layer>
-          <Rect
-            x={0}
-            y={0}
-            width={board.width}
-            height={board.height}
-            fill="#ffffff"
-            shadowColor="#000000"
-            shadowBlur={14}
-            shadowOpacity={0.1}
-          />
           <Shape
             listening={false}
             sceneFunc={(context, shape) => {
@@ -200,8 +192,8 @@ export function PerlerCanvas({
           {hoveredCell ? (
             <>
               <Rect
-                x={hoveredCell.column * cellSize + 1}
-                y={hoveredCell.row * cellSize + 1}
+                x={gridOrigin.x + hoveredCell.column * cellSize + 1}
+                y={gridOrigin.y + hoveredCell.row * cellSize + 1}
                 width={cellSize - 2}
                 height={cellSize - 2}
                 stroke="#ffffff"
@@ -209,8 +201,8 @@ export function PerlerCanvas({
                 listening={false}
               />
               <Rect
-                x={hoveredCell.column * cellSize + 2.5}
-                y={hoveredCell.row * cellSize + 2.5}
+                x={gridOrigin.x + hoveredCell.column * cellSize + 2.5}
+                y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
                 width={cellSize - 5}
                 height={cellSize - 5}
                 stroke="#111111"
@@ -256,13 +248,18 @@ function drawBoard(
   beads: readonly (BeadFill | null)[],
 ) {
   context.save();
+  drawLabels(context, rows, cols);
+
+  const origin = getGridOrigin();
 
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
-      const x = col * cellSize;
-      const y = row * cellSize;
+      const x = origin.x + col * cellSize;
+      const y = origin.y + row * cellSize;
       const color = beads[row * cols + col];
 
+      context.fillStyle = "#ffffff";
+      context.fillRect(x, y, cellSize, cellSize);
       context.strokeStyle = gridColor;
       context.lineWidth = 1;
       context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
@@ -280,4 +277,45 @@ function drawBoard(
   }
 
   context.restore();
+}
+
+function drawLabels(context: Konva.Context, rows: number, cols: number) {
+  const boardHeight = (rows + 2) * cellSize;
+
+  context.strokeStyle = gridColor;
+  context.lineWidth = 1;
+  context.font = "600 7px sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = labelTextColor;
+
+  for (let col = 0; col < cols; col += 1) {
+    const label = String(col + 1);
+    const x = cellSize + col * cellSize;
+
+    drawLabelCell(context, x, 0, label);
+    drawLabelCell(context, x, boardHeight - cellSize, label);
+  }
+
+  for (let row = 0; row < rows; row += 1) {
+    const label = String(row + 1);
+    const y = cellSize + row * cellSize;
+    const rightLabelX = (cols + 1) * cellSize;
+
+    drawLabelCell(context, 0, y, label);
+    drawLabelCell(context, rightLabelX, y, label);
+  }
+}
+
+function drawLabelCell(
+  context: Konva.Context,
+  x: number,
+  y: number,
+  label: string,
+) {
+  context.fillStyle = labelBackground;
+  context.fillRect(x, y, cellSize, cellSize);
+  context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+  context.fillStyle = labelTextColor;
+  context.fillText(label, x + cellSize / 2, y + cellSize / 2);
 }

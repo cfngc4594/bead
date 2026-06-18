@@ -2,12 +2,21 @@ import type { CanvasView, GridCell, Viewport } from "@/features/perler/types";
 
 export const cellSize = 18;
 export const boardPadding = 24;
+export const labelCells = 1;
+export const boardOrigin = cellSize * labelCells;
 const maxFitScale = 2.5;
 
 export function getBoardSize(rows: number, cols: number) {
   return {
-    width: cols * cellSize,
-    height: rows * cellSize,
+    width: (cols + labelCells * 2) * cellSize,
+    height: (rows + labelCells * 2) * cellSize,
+  };
+}
+
+export function getGridOrigin() {
+  return {
+    x: boardOrigin,
+    y: boardOrigin,
   };
 }
 
@@ -35,8 +44,9 @@ export function getGridCellFromPoint({
   rows: number;
   cols: number;
 }): GridCell | null {
-  const localX = (point.x - view.x) / view.scale;
-  const localY = (point.y - view.y) / view.scale;
+  const origin = getGridOrigin();
+  const localX = (point.x - view.x) / view.scale - origin.x;
+  const localY = (point.y - view.y) / view.scale - origin.y;
   const column = Math.floor(localX / cellSize);
   const row = Math.floor(localY / cellSize);
 
