@@ -76,7 +76,7 @@ export function BeadMobileColorPanel({
             />
           </div>
 
-          <ScrollArea className="min-h-0 flex-1 overscroll-contain">
+          <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
             <BeadColorGrid
               colors={colors}
               layout="mobile"
