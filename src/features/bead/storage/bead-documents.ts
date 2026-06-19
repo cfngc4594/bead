@@ -67,15 +67,18 @@ export function canRedoDocument(document: BeadDocument | undefined) {
 }
 
 export function commitBeadSnapshot({
+  baseIndex,
   beads,
   size,
 }: {
+  baseIndex?: number;
   beads: BeadState;
   size: CanvasSize;
 }) {
   const document = beadDocumentsCollection.get(size.id);
+  const documentIndex = baseIndex ?? document?.currentIndex ?? 0;
   const nextSnapshot = compactBeads(beads);
-  const currentSnapshot = document?.snapshots[document.currentIndex] ?? [];
+  const currentSnapshot = document?.snapshots[documentIndex] ?? [];
 
   if (isSameSnapshot(currentSnapshot, nextSnapshot)) {
     return Promise.resolve();
@@ -85,7 +88,9 @@ export function commitBeadSnapshot({
     getOrCreateDocument(size);
 
     beadDocumentsCollection.update(size.id, (draft) => {
-      draft.snapshots = draft.snapshots.slice(0, draft.currentIndex + 1);
+      const branchIndex = Math.min(documentIndex, draft.snapshots.length - 1);
+
+      draft.snapshots = draft.snapshots.slice(0, branchIndex + 1);
       draft.snapshots.push(nextSnapshot);
       draft.currentIndex = draft.snapshots.length - 1;
       draft.updatedAt = Date.now();

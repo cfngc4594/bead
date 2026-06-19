@@ -36,11 +36,16 @@ export function useBeadSnapshots(size: CanvasSize) {
   const document = documents[0];
   const cellCount = size.rows * size.cols;
   const persistedBeads = getCurrentBeads({ cellCount, document });
+  const editBaseIndexRef = useRef<number | null>(null);
   const draftRef = useRef<BeadState | null>(null);
   const [draftBeads, setDraftBeads] = useState<BeadState | null>(null);
   const beads = draftBeads ?? persistedBeads;
 
   function beginEdit() {
+    editBaseIndexRef.current =
+      beadDocumentsCollection.get(size.id)?.currentIndex ??
+      document?.currentIndex ??
+      0;
     draftRef.current = beads;
     setDraftBeads(draftRef.current);
   }
@@ -59,31 +64,42 @@ export function useBeadSnapshots(size: CanvasSize) {
 
   function commitEdit() {
     const draft = draftRef.current;
+    const baseIndex = editBaseIndexRef.current;
     draftRef.current = null;
+    editBaseIndexRef.current = null;
 
     if (!draft || isSameBeads(draft, persistedBeads)) {
       setDraftBeads(null);
       return;
     }
 
-    persistBeadDocument(commitBeadSnapshot({ beads: draft, size }));
+    persistBeadDocument(
+      commitBeadSnapshot({
+        baseIndex: baseIndex ?? undefined,
+        beads: draft,
+        size,
+      }),
+    );
     setDraftBeads(null);
   }
 
   function undo() {
     draftRef.current = null;
+    editBaseIndexRef.current = null;
     setDraftBeads(null);
     persistBeadDocument(undoBeadDocument(size));
   }
 
   function redo() {
     draftRef.current = null;
+    editBaseIndexRef.current = null;
     setDraftBeads(null);
     persistBeadDocument(redoBeadDocument(size));
   }
 
   function clear() {
     draftRef.current = null;
+    editBaseIndexRef.current = null;
     setDraftBeads(null);
     persistBeadDocument(clearBeadDocument(size));
   }
