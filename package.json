@@ -6,11 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "cap": "cap",
+    "cap:add:android": "cap add android",
+    "cap:sync:android": "bun run build && cap sync android",
+    "cap:copy:android": "bun run build && cap copy android",
+    "cap:open:android": "cap open android",
     "lint": "biome check",
     "format": "biome format --write"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
     "@xyflow/react": "^12.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -37,6 +44,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
+    "@capacitor/cli": "^8.4.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
