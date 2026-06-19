@@ -42,11 +42,13 @@ export function useBeadSnapshots(size: CanvasSize) {
   const beads = draftBeads ?? persistedBeads;
 
   function beginEdit() {
-    editBaseIndexRef.current =
-      beadDocumentsCollection.get(size.id)?.currentIndex ??
-      document?.currentIndex ??
-      0;
-    draftRef.current = beads;
+    const currentDocument = beadDocumentsCollection.get(size.id) ?? document;
+
+    editBaseIndexRef.current = currentDocument?.currentIndex ?? 0;
+    draftRef.current = getCurrentBeads({
+      cellCount,
+      document: currentDocument,
+    });
     setDraftBeads(draftRef.current);
   }
 
