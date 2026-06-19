@@ -9,8 +9,7 @@ import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop
 import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
 import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
-import { useBeadCells } from "@/features/bead/hooks/use-bead-cells";
-import { useBeadHistory } from "@/features/bead/hooks/use-bead-history";
+import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
@@ -43,39 +42,38 @@ function BeadEditorContent({ size }: BeadEditorProps) {
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
-  const { beads, applyChanges, clearCells } = useBeadCells(size);
   const {
+    beads,
     beginEdit,
     editCell: setCell,
     commitEdit,
     undo,
     redo,
-    resetHistory,
+    clear,
     canUndo,
     canRedo,
-  } = useBeadHistory(beads);
+  } = useBeadSnapshots(size);
 
   const filteredColors = mardColors.filter((color) =>
     color.code.startsWith(selectedLetter),
   );
 
   function clearDraft() {
-    resetHistory();
-    clearCells();
+    clear();
   }
 
   function undoEdit() {
-    applyChanges(undo(), "before");
+    undo();
   }
 
   function redoEdit() {
-    applyChanges(redo(), "after");
+    redo();
   }
 
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
 
-    const changes = setCell(
+    setCell(
       index,
       tool === "erase"
         ? null
@@ -84,8 +82,6 @@ function BeadEditorContent({ size }: BeadEditorProps) {
             hex: selectedColor.hex,
           },
     );
-
-    applyChanges(changes, "after");
   }
 
   function pickCell({ row, column }: GridCell) {
