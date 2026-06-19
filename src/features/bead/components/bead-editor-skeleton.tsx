@@ -157,7 +157,7 @@ function CurrentColorSkeleton({
           <Skeleton className="h-4 w-16" />
         </div>
       </div>
-      {showAction ? <Skeleton className="size-8 shrink-0 rounded-lg" /> : null}
+      {showAction ? <Skeleton className="size-7 shrink-0 rounded-lg" /> : null}
     </div>
   );
 }

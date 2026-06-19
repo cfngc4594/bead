@@ -48,19 +48,19 @@ export function BeadMobileColorPanel({
         <Button
           aria-expanded={isExpanded}
           aria-label={isExpanded ? "折叠颜色面板" : "展开颜色面板"}
-          className="shrink-0 text-muted-foreground"
+          className="shrink-0"
           onClick={() => {
             setIsExpanded((value) => !value);
             onResetViewAfterResize();
           }}
-          size="icon"
+          size="icon-sm"
           type="button"
           variant="outline"
         >
           {isExpanded ? (
-            <ChevronDown aria-hidden="true" className="size-4" />
+            <ChevronDown aria-hidden="true" />
           ) : (
-            <ChevronUp aria-hidden="true" className="size-4" />
+            <ChevronUp aria-hidden="true" />
           )}
         </Button>
       </div>
