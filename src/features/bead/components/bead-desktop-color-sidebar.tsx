@@ -27,7 +27,7 @@ export function BeadDesktopColorSidebar({
         <BeadCurrentColor color={selectedColor} />
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[44px_1fr] overflow-hidden">
+      <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
         <BeadColorLetterIndex
           letters={letters}
           onSelectLetter={onSelectLetter}

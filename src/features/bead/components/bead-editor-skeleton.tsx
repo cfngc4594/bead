@@ -92,7 +92,7 @@ function DesktopColorSidebarSkeleton() {
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
       <CurrentColorSkeleton className="h-16 border-b px-4" />
 
-      <div className="grid min-h-0 flex-1 grid-cols-[44px_1fr] overflow-hidden">
+      <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
         <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
           <div className="flex flex-col gap-1 p-2">
             {desktopLetterSkeletons.map((letter) => (
@@ -152,9 +152,9 @@ function CurrentColorSkeleton({
     >
       <div className="flex min-w-0 items-center gap-3">
         <Skeleton className="size-8 shrink-0 rounded-full" />
-        <div className="min-w-0">
-          <Skeleton className="h-5 w-10" />
-          <Skeleton className="h-4 w-16" />
+        <div className="flex h-9 min-w-0 flex-col justify-center gap-1">
+          <Skeleton className="h-4 w-12 rounded-sm" />
+          <Skeleton className="h-3 w-16 rounded-sm" />
         </div>
       </div>
       {showAction ? <Skeleton className="size-7 shrink-0 rounded-lg" /> : null}
