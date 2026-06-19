@@ -28,7 +28,7 @@ export type BeadDocument = {
 export const beadDocumentsCollection = createCollection(
   localStorageCollectionOptions<BeadDocument, CanvasSizeId>({
     id: "bead-documents",
-    storageKey: "bead:documents",
+    storageKey: "bead:v2:documents",
     getKey: (document) => document.id,
   }),
 );
@@ -73,14 +73,16 @@ export function commitBeadSnapshot({
   beads: BeadState;
   size: CanvasSize;
 }) {
-  return commitBeadDocumentMutation(() => {
-    const document = getOrCreateDocument(size);
-    const nextSnapshot = compactBeads(beads);
-    const currentSnapshot = document.snapshots[document.currentIndex] ?? [];
+  const document = beadDocumentsCollection.get(size.id);
+  const nextSnapshot = compactBeads(beads);
+  const currentSnapshot = document?.snapshots[document.currentIndex] ?? [];
 
-    if (isSameSnapshot(currentSnapshot, nextSnapshot)) {
-      return;
-    }
+  if (isSameSnapshot(currentSnapshot, nextSnapshot)) {
+    return Promise.resolve();
+  }
+
+  return commitBeadDocumentMutation(() => {
+    getOrCreateDocument(size);
 
     beadDocumentsCollection.update(size.id, (draft) => {
       draft.snapshots = draft.snapshots.slice(0, draft.currentIndex + 1);
@@ -100,9 +102,13 @@ export function redoBeadDocument(size: CanvasSize) {
 }
 
 export function clearBeadDocument(size: CanvasSize) {
-  return commitBeadDocumentMutation(() => {
-    getOrCreateDocument(size);
+  const document = beadDocumentsCollection.get(size.id);
 
+  if (!document || isEmptyDocument(document)) {
+    return Promise.resolve();
+  }
+
+  return commitBeadDocumentMutation(() => {
     beadDocumentsCollection.update(size.id, (draft) => {
       draft.snapshots = [[]];
       draft.currentIndex = 0;
@@ -112,19 +118,19 @@ export function clearBeadDocument(size: CanvasSize) {
 }
 
 function moveBeadDocumentIndex(size: CanvasSize, delta: -1 | 1) {
+  const document = beadDocumentsCollection.get(size.id);
+
+  if (!document) {
+    return Promise.resolve();
+  }
+
+  const nextIndex = document.currentIndex + delta;
+
+  if (nextIndex < 0 || nextIndex >= document.snapshots.length) {
+    return Promise.resolve();
+  }
+
   return commitBeadDocumentMutation(() => {
-    const document = beadDocumentsCollection.get(size.id);
-
-    if (!document) {
-      return;
-    }
-
-    const nextIndex = document.currentIndex + delta;
-
-    if (nextIndex < 0 || nextIndex >= document.snapshots.length) {
-      return;
-    }
-
     beadDocumentsCollection.update(size.id, (draft) => {
       draft.currentIndex = nextIndex;
       draft.updatedAt = Date.now();
@@ -188,6 +194,14 @@ function expandSnapshot(snapshot: BeadSnapshot, cellCount: number): BeadState {
   }
 
   return beads;
+}
+
+function isEmptyDocument(document: BeadDocument) {
+  return (
+    document.currentIndex === 0 &&
+    document.snapshots.length === 1 &&
+    document.snapshots[0]?.length === 0
+  );
 }
 
 function isSameSnapshot(a: BeadSnapshot, b: BeadSnapshot) {
