@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BeadSizePickerFromUrl } from "@/features/bead/components/bead-size-picker-from-url";
+import { BeadSizePickerFromUrl } from "@/app/size-picker-from-url";
 import { BeadSizePickerSkeleton } from "@/features/bead/components/bead-size-picker-skeleton";
 
 export default function Page() {

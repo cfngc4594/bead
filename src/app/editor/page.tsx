@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BeadEditorFromUrl } from "@/features/bead/components/bead-editor-from-url";
+import { BeadEditorFromUrl } from "@/app/editor/editor-from-url";
 import { BeadEditorSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 
 export default function EditorPage() {
