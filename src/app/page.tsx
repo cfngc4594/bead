@@ -1,14 +1,8 @@
-import { canvasSizes, isCanvasSizeId } from "@/config/canvas-sizes";
-import { BeadSizePicker } from "@/features/bead/components/bead-size-picker";
+import { Suspense } from "react";
+import { BeadSizePickerFromUrl } from "@/features/bead/components/bead-size-picker-from-url";
+import { BeadSizePickerSkeleton } from "@/features/bead/components/bead-size-picker-skeleton";
 
-type PageProps = {
-  searchParams: Promise<{ size?: string | string[] }>;
-};
-
-export default async function Page({ searchParams }: PageProps) {
-  const { size } = await searchParams;
-  const selected = isCanvasSizeId(size) ? size : canvasSizes[0].id;
-
+export default function Page() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-5xl space-y-10">
@@ -22,7 +16,9 @@ export default async function Page({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <BeadSizePicker initialSize={selected} />
+        <Suspense fallback={<BeadSizePickerSkeleton />}>
+          <BeadSizePickerFromUrl />
+        </Suspense>
       </div>
     </main>
   );
