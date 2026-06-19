@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const toolbarToolSkeletons = ["pan", "paint", "erase", "picker"];
@@ -39,11 +40,11 @@ const mobileColorSkeletons = Array.from(
 
 export function BeadEditorSkeleton() {
   return (
-    <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
+    <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbarSkeleton />
 
-        <div className="min-h-0 flex-1 overflow-hidden bg-muted/30">
+        <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
           <BeadCanvasSkeleton />
         </div>
       </section>
@@ -56,7 +57,7 @@ export function BeadEditorSkeleton() {
 
 export function BeadCanvasSkeleton() {
   return (
-    <div className="grid h-full w-full place-items-center p-6">
+    <div className="grid h-full w-full touch-none place-items-center overflow-hidden overscroll-none p-6">
       <div className="flex w-full max-w-[min(78vw,520px)] flex-col items-center gap-4">
         <Skeleton className="aspect-square w-full max-w-[min(72vh,520px)] rounded-lg" />
         <div className="flex items-center gap-2">
@@ -71,15 +72,15 @@ export function BeadCanvasSkeleton() {
 function EditorToolbarSkeleton() {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
-      <div className="flex items-center justify-center gap-1.5">
+      <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
         {toolbarToolSkeletons.map((item) => (
-          <Skeleton className="size-7 rounded-lg" key={item} />
+          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
-        <Skeleton className="mx-1 h-6 w-px rounded-none" />
-        <Skeleton className="size-7 rounded-lg" />
-        <Skeleton className="mx-1 h-6 w-px rounded-none" />
+        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
+        <Skeleton className="size-7 shrink-0 rounded-lg" />
+        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
         {toolbarHistorySkeletons.map((item) => (
-          <Skeleton className="size-7 rounded-lg" key={item} />
+          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
       </div>
     </header>
@@ -92,17 +93,21 @@ function DesktopColorSidebarSkeleton() {
       <CurrentColorSkeleton className="h-16 border-b px-4" />
 
       <div className="grid min-h-0 flex-1 grid-cols-[44px_1fr] overflow-hidden">
-        <div className="flex flex-col gap-1 border-r p-2">
-          {desktopLetterSkeletons.map((letter) => (
-            <Skeleton className="size-8 rounded-lg" key={letter} />
-          ))}
-        </div>
+        <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
+          <div className="flex flex-col gap-1 p-2">
+            {desktopLetterSkeletons.map((letter) => (
+              <Skeleton className="size-8 rounded-lg" key={letter} />
+            ))}
+          </div>
+        </ScrollArea>
 
-        <div className="grid grid-cols-5 gap-2 p-4">
-          {desktopColorSkeletons.map((item) => (
-            <Skeleton className="aspect-square rounded-md" key={item} />
-          ))}
-        </div>
+        <ScrollArea className="h-full min-h-0">
+          <div className="grid min-w-0 grid-cols-5 gap-2 p-4">
+            {desktopColorSkeletons.map((item) => (
+              <Skeleton className="aspect-square rounded-md" key={item} />
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </aside>
   );
@@ -110,22 +115,26 @@ function DesktopColorSidebarSkeleton() {
 
 function MobileColorPanelSkeleton() {
   return (
-    <section className="flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
-      <CurrentColorSkeleton className="h-14 px-4" showAction />
+    <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
+      <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
 
-      <div className="min-w-0 shrink-0 border-y">
-        <div className="flex w-max gap-1 p-2">
-          {mobileLetterSkeletons.map((letter) => (
-            <Skeleton className="size-8 rounded-lg" key={letter} />
-          ))}
+      <div className="min-w-0 shrink-0 border-b">
+        <div className="relative min-w-0 overflow-hidden">
+          <div className="flex w-max flex-row gap-1 p-2">
+            {mobileLetterSkeletons.map((letter) => (
+              <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid h-[calc(40px*3+8px*2+8px*2)] grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 overflow-hidden p-2">
-        {mobileColorSkeletons.map((item) => (
-          <Skeleton className="size-10 rounded-md" key={item} />
-        ))}
-      </div>
+      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+        <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
+          {mobileColorSkeletons.map((item) => (
+            <Skeleton className="size-10 rounded-md" key={item} />
+          ))}
+        </div>
+      </ScrollArea>
     </section>
   );
 }
@@ -139,16 +148,16 @@ function CurrentColorSkeleton({
 }) {
   return (
     <div
-      className={`flex shrink-0 items-center justify-between gap-3 ${className}`}
+      className={`flex min-h-0 shrink-0 items-center justify-between gap-3 ${className}`}
     >
       <div className="flex min-w-0 items-center gap-3">
         <Skeleton className="size-8 shrink-0 rounded-full" />
-        <div className="space-y-1.5">
-          <Skeleton className="h-3 w-10" />
-          <Skeleton className="h-2.5 w-16" />
+        <div className="min-w-0">
+          <Skeleton className="h-5 w-10" />
+          <Skeleton className="h-4 w-16" />
         </div>
       </div>
-      {showAction ? <Skeleton className="size-8 rounded-lg" /> : null}
+      {showAction ? <Skeleton className="size-8 shrink-0 rounded-lg" /> : null}
     </div>
   );
 }
