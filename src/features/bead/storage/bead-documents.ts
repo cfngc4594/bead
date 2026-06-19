@@ -89,10 +89,11 @@ export function commitBeadSnapshot({
 
     beadDocumentsCollection.update(size.id, (draft) => {
       const branchIndex = Math.min(documentIndex, draft.snapshots.length - 1);
+      const snapshots = draft.snapshots.slice(0, branchIndex + 1);
 
-      draft.snapshots = draft.snapshots.slice(0, branchIndex + 1);
-      draft.snapshots.push(nextSnapshot);
-      draft.currentIndex = draft.snapshots.length - 1;
+      snapshots.push(nextSnapshot);
+      draft.snapshots = snapshots;
+      draft.currentIndex = snapshots.length - 1;
       draft.updatedAt = Date.now();
     });
   });
