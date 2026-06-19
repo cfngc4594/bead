@@ -6,6 +6,7 @@ import {
   PenLine,
   Pipette,
   Redo2,
+  RotateCcw,
   Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ type BeadToolbarProps = {
   canRedo: boolean;
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
+  onClearDraft: () => void;
   onUndo: () => void;
   onRedo: () => void;
 };
@@ -40,6 +42,7 @@ export function BeadToolbar({
   canRedo,
   onSelectTool,
   onResetView,
+  onClearDraft,
   onUndo,
   onRedo,
 }: BeadToolbarProps) {
@@ -75,6 +78,11 @@ export function BeadToolbar({
           icon={Focus}
           label="居中显示"
           onClick={onResetView}
+        />
+        <ToolbarIconButton
+          icon={RotateCcw}
+          label="清空草稿"
+          onClick={onClearDraft}
         />
         <div className="mx-1 h-6 w-px shrink-0 bg-border" />
         <ToolbarIconButton

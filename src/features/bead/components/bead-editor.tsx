@@ -9,6 +9,7 @@ import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop
 import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
 import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
+import { useBeadCells } from "@/features/bead/hooks/use-bead-cells";
 import { useBeadHistory } from "@/features/bead/hooks/use-bead-history";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
@@ -32,31 +33,49 @@ const colorLetters = Array.from(
 );
 
 export function BeadEditor({ size }: BeadEditorProps) {
+  return <BeadEditorContent key={size.id} size={size} />;
+}
+
+function BeadEditorContent({ size }: BeadEditorProps) {
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
+  const { beads, applyChanges, clearCells } = useBeadCells(size);
   const {
-    beads,
     beginEdit,
     editCell: setCell,
     commitEdit,
     undo,
     redo,
+    resetHistory,
     canUndo,
     canRedo,
-  } = useBeadHistory(size.rows * size.cols);
+  } = useBeadHistory(beads);
 
   const filteredColors = mardColors.filter((color) =>
     color.code.startsWith(selectedLetter),
   );
 
+  function clearDraft() {
+    resetHistory();
+    clearCells();
+  }
+
+  function undoEdit() {
+    applyChanges(undo(), "before");
+  }
+
+  function redoEdit() {
+    applyChanges(redo(), "after");
+  }
+
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
 
-    setCell(
+    const changes = setCell(
       index,
       tool === "erase"
         ? null
@@ -65,6 +84,8 @@ export function BeadEditor({ size }: BeadEditorProps) {
             hex: selectedColor.hex,
           },
     );
+
+    applyChanges(changes, "after");
   }
 
   function pickCell({ row, column }: GridCell) {
@@ -91,10 +112,11 @@ export function BeadEditor({ size }: BeadEditorProps) {
         <BeadToolbar
           canRedo={canRedo}
           canUndo={canUndo}
-          onRedo={redo}
+          onRedo={redoEdit}
           onResetView={() => setResetViewSignal((value) => value + 1)}
+          onClearDraft={clearDraft}
           onSelectTool={setTool}
-          onUndo={undo}
+          onUndo={undoEdit}
           tool={tool}
         />
 
