@@ -1,4 +1,5 @@
-import { mardColors } from "@/data/colors";
+import type { BeadStat } from "@/features/bead/lib/bead-stats";
+import { getBeadStats } from "@/features/bead/lib/bead-stats";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   boardOrigin,
@@ -6,6 +7,7 @@ import {
   getBoardSize,
 } from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
+import { downloadBlob } from "@/features/bead/lib/download-file";
 import type { BeadFill } from "@/features/bead/types";
 
 type ExportBeadImageOptions = {
@@ -28,10 +30,6 @@ const statsItemWidth = statsSwatchSize + 3;
 const statsSwatchRadius = 5;
 const statsCountHeight = 12;
 const statsTopGap = 0;
-
-type BeadStat = BeadFill & {
-  count: number;
-};
 
 export function exportBeadImage({
   rows,
@@ -76,54 +74,6 @@ export function exportBeadImage({
 
     downloadBlob(blob, filename);
   }, "image/png");
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.download = filename;
-  anchor.href = url;
-  anchor.style.display = "none";
-
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function getBeadStats(beads: readonly (BeadFill | null)[]) {
-  const statsByCode = new Map<string, BeadStat>();
-
-  for (const bead of beads) {
-    if (!bead) {
-      continue;
-    }
-
-    const stat = statsByCode.get(bead.code);
-
-    if (stat) {
-      stat.count += 1;
-      continue;
-    }
-
-    statsByCode.set(bead.code, {
-      code: bead.code,
-      hex: bead.hex,
-      count: 1,
-    });
-  }
-
-  return Array.from(statsByCode.values()).sort(compareBeadStats);
-}
-
-function compareBeadStats(a: BeadStat, b: BeadStat) {
-  return getColorSortIndex(a.code) - getColorSortIndex(b.code);
-}
-
-function getColorSortIndex(code: string) {
-  const index = mardColors.findIndex((color) => color.code === code);
-
-  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
 function getStatsHeight(width: number, statsCount: number) {

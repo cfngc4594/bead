@@ -1,6 +1,7 @@
 import {
   Download,
   Eraser,
+  FileDown,
   Focus,
   Hand,
   type LucideIcon,
@@ -26,6 +27,7 @@ type BeadToolbarProps = {
   onResetView: () => void;
   onClearDraft: () => void;
   onExportImage: () => void;
+  onExportTemplate: () => void;
   onUndo: () => void;
   onRedo: () => void;
 };
@@ -46,6 +48,7 @@ export function BeadToolbar({
   onResetView,
   onClearDraft,
   onExportImage,
+  onExportTemplate,
   onUndo,
   onRedo,
 }: BeadToolbarProps) {
@@ -86,6 +89,11 @@ export function BeadToolbar({
           icon={Download}
           label="导出图片"
           onClick={onExportImage}
+        />
+        <ToolbarIconButton
+          icon={FileDown}
+          label="导出模板"
+          onClick={onExportTemplate}
         />
         <ToolbarIconButton
           icon={RotateCcw}
