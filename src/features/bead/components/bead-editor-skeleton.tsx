@@ -1,8 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const toolbarToolSkeletons = ["pan", "paint", "erase", "picker"];
-const toolbarHistorySkeletons = ["undo", "redo"];
+const toolbarEditSkeletons = ["paint", "erase", "picker", "select"];
+const toolbarViewSkeletons = ["pan", "focus", "codes", "guides"];
+const toolbarHistorySkeletons = ["undo", "redo", "clear"];
+const toolbarFileSkeletons = ["import", "template", "image"];
 const desktopLetterSkeletons = [
   "A",
   "B",
@@ -71,15 +73,25 @@ export function BeadCanvasSkeleton() {
 
 function EditorToolbarSkeleton() {
   return (
-    <header className="flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
+    <header className="relative flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
+      <div className="absolute left-4 z-10 md:left-5">
+        <Skeleton className="size-7 shrink-0 rounded-lg" />
+      </div>
+
       <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
-        {toolbarToolSkeletons.map((item) => (
+        {toolbarEditSkeletons.map((item) => (
           <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
         <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
-        <Skeleton className="size-7 shrink-0 rounded-lg" />
+        {toolbarViewSkeletons.map((item) => (
+          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+        ))}
         <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
         {toolbarHistorySkeletons.map((item) => (
+          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+        ))}
+        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
+        {toolbarFileSkeletons.map((item) => (
           <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
       </div>
