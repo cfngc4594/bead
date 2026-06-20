@@ -2,7 +2,7 @@
 
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
@@ -130,21 +130,31 @@ export function BeadCanvas({
     setMoveTargetOrigin(null);
   }, [selectionResetSignal]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current;
 
     if (!container) {
       return;
     }
 
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-
+    const updateStageSize = ({
+      height,
+      width,
+    }: {
+      height: number;
+      width: number;
+    }) => {
       setStageSize({
         width: Math.max(1, width),
         height: Math.max(1, height),
       });
       setIsStageMeasured(true);
+    };
+
+    updateStageSize(container.getBoundingClientRect());
+
+    const observer = new ResizeObserver(([entry]) => {
+      updateStageSize(entry.contentRect);
     });
 
     observer.observe(container);

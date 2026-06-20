@@ -2,7 +2,7 @@
 
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   getInitialView,
@@ -47,7 +47,7 @@ export function useCanvasNavigation({
     getInitialView(rows, cols, viewport),
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isViewportMeasured) {
       return;
     }
@@ -89,7 +89,7 @@ export function useCanvasNavigation({
     };
   }, [resetViewAfterResizeSignal, viewport]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const pendingReset = pendingResizeResetRef.current;
 
     if (!isViewportMeasured || !pendingReset) {
