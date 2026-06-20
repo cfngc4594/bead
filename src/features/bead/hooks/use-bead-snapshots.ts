@@ -4,6 +4,7 @@ import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useRef, useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
+  type BeadDocumentId,
   type BeadState,
   beadDocumentsCollection,
   canRedoDocument,
@@ -16,12 +17,18 @@ import {
 } from "@/features/bead/storage/bead-documents";
 import type { BeadFill } from "@/features/bead/types";
 
-export function useBeadSnapshots(size: CanvasSize) {
+export function useBeadSnapshots({
+  documentId,
+  size,
+}: {
+  documentId: BeadDocumentId;
+  size: CanvasSize;
+}) {
   const { data: documents = [] } = useLiveQuery(
     (query) =>
       query
         .from({ document: beadDocumentsCollection })
-        .where(({ document }) => eq(document.sizeId, size.id))
+        .where(({ document }) => eq(document.id, documentId))
         .select(({ document }) => ({
           id: document.id,
           sizeId: document.sizeId,
@@ -31,7 +38,7 @@ export function useBeadSnapshots(size: CanvasSize) {
           currentIndex: document.currentIndex,
           updatedAt: document.updatedAt,
         })),
-    [size.id],
+    [documentId],
   );
   const document = documents[0];
   const cellCount = size.rows * size.cols;
@@ -42,7 +49,7 @@ export function useBeadSnapshots(size: CanvasSize) {
   const beads = draftBeads ?? persistedBeads;
 
   function beginEdit() {
-    const currentDocument = beadDocumentsCollection.get(size.id) ?? document;
+    const currentDocument = beadDocumentsCollection.get(documentId) ?? document;
 
     editBaseIndexRef.current = currentDocument?.currentIndex ?? 0;
     draftRef.current = getCurrentBeads({
@@ -79,14 +86,14 @@ export function useBeadSnapshots(size: CanvasSize) {
       commitBeadSnapshot({
         baseIndex: baseIndex ?? undefined,
         beads: draft,
-        size,
+        documentId,
       }),
     );
     setDraftBeads(null);
   }
 
   function commitBeads(nextBeads: BeadState) {
-    const currentDocument = beadDocumentsCollection.get(size.id) ?? document;
+    const currentDocument = beadDocumentsCollection.get(documentId) ?? document;
     const baseIndex = currentDocument?.currentIndex ?? 0;
     const currentBeads = getCurrentBeads({
       cellCount,
@@ -105,7 +112,7 @@ export function useBeadSnapshots(size: CanvasSize) {
       commitBeadSnapshot({
         baseIndex,
         beads: [...nextBeads],
-        size,
+        documentId,
       }),
     );
   }
@@ -114,14 +121,14 @@ export function useBeadSnapshots(size: CanvasSize) {
     draftRef.current = null;
     editBaseIndexRef.current = null;
     setDraftBeads(null);
-    persistBeadDocument(undoBeadDocument(size));
+    persistBeadDocument(undoBeadDocument(documentId));
   }
 
   function redo() {
     draftRef.current = null;
     editBaseIndexRef.current = null;
     setDraftBeads(null);
-    persistBeadDocument(redoBeadDocument(size));
+    persistBeadDocument(redoBeadDocument(documentId));
   }
 
   function clear() {

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
@@ -17,6 +18,7 @@ import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
+import type { BeadDocumentId } from "@/features/bead/storage/bead-documents";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
@@ -31,6 +33,7 @@ const BeadCanvas = dynamic<BeadCanvasProps>(
 );
 
 type BeadEditorProps = {
+  documentId: BeadDocumentId;
   size: CanvasSize;
 };
 
@@ -38,11 +41,14 @@ const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
 
-export function BeadEditor({ size }: BeadEditorProps) {
-  return <BeadEditorContent key={size.id} size={size} />;
+export function BeadEditor({ documentId, size }: BeadEditorProps) {
+  return (
+    <BeadEditorContent key={documentId} documentId={documentId} size={size} />
+  );
 }
 
-function BeadEditorContent({ size }: BeadEditorProps) {
+function BeadEditorContent({ documentId, size }: BeadEditorProps) {
+  const router = useRouter();
   const importInputRef = useRef<HTMLInputElement>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
@@ -64,11 +70,12 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     clear,
     canUndo,
     canRedo,
-  } = useBeadSnapshots(size);
+  } = useBeadSnapshots({ documentId, size });
 
   const filteredColors = mardColors.filter((color) =>
     color.code.startsWith(selectedLetter),
   );
+  const hasBeads = beads.some(Boolean);
 
   function resetSelection() {
     setSelectionResetSignal((value) => value + 1);
@@ -190,6 +197,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <BeadToolbar
+          canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
           showBeadCodes={showBeadCodes}
@@ -200,6 +208,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onExportImage={exportImage}
           onExportTemplate={exportTemplate}
           onImportTemplate={importTemplate}
+          onBack={() => router.push("/projects")}
           onSelectTool={selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}

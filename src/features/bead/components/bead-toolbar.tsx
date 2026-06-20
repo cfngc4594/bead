@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Download,
   Eraser,
   Eye,
@@ -28,10 +29,12 @@ type BeadToolbarProps = {
   tool: CanvasTool;
   canUndo: boolean;
   canRedo: boolean;
+  canClear: boolean;
   showBeadCodes: boolean;
   showGuideLines: boolean;
   onToggleBeadCodes: () => void;
   onToggleGuideLines: () => void;
+  onBack: () => void;
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
   onClearDraft: () => void;
@@ -54,10 +57,12 @@ export function BeadToolbar({
   tool,
   canUndo,
   canRedo,
+  canClear,
   showBeadCodes,
   showGuideLines,
   onToggleBeadCodes,
   onToggleGuideLines,
+  onBack,
   onSelectTool,
   onResetView,
   onClearDraft,
@@ -68,7 +73,11 @@ export function BeadToolbar({
   onRedo,
 }: BeadToolbarProps) {
   return (
-    <header className="flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
+    <header className="relative flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
+      <div className="absolute left-4 z-10 md:left-5">
+        <ToolbarIconButton icon={ArrowLeft} label="返回作品" onClick={onBack} />
+      </div>
+
       <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
         <ToolbarIconButton
           icon={PenLine}
@@ -132,6 +141,7 @@ export function BeadToolbar({
           onClick={onRedo}
         />
         <ToolbarIconButton
+          disabled={!canClear}
           icon={RotateCcw}
           label="清空草稿"
           onClick={onClearDraft}

@@ -15,8 +15,10 @@ export type BeadSnapshotCell = {
 
 export type BeadSnapshot = BeadSnapshotCell[];
 
+export type BeadDocumentId = string;
+
 export type BeadDocument = {
-  id: CanvasSizeId;
+  id: BeadDocumentId;
   sizeId: CanvasSizeId;
   rows: number;
   cols: number;
@@ -26,9 +28,9 @@ export type BeadDocument = {
 };
 
 export const beadDocumentsCollection = createCollection(
-  localStorageCollectionOptions<BeadDocument, CanvasSizeId>({
+  localStorageCollectionOptions<BeadDocument, BeadDocumentId>({
     id: "bead-documents",
-    storageKey: "bead:v2:documents",
+    storageKey: "bead:v3:documents",
     getKey: (document) => document.id,
   }),
 );
@@ -69,25 +71,28 @@ export function canRedoDocument(document: BeadDocument | undefined) {
 export function commitBeadSnapshot({
   baseIndex,
   beads,
-  size,
+  documentId,
 }: {
   baseIndex?: number;
   beads: BeadState;
-  size: CanvasSize;
+  documentId: BeadDocumentId;
 }) {
-  const document = beadDocumentsCollection.get(size.id);
-  const documentIndex = baseIndex ?? document?.currentIndex ?? 0;
+  const document = beadDocumentsCollection.get(documentId);
+
+  if (!document) {
+    return Promise.resolve();
+  }
+
+  const documentIndex = baseIndex ?? document.currentIndex;
   const nextSnapshot = compactBeads(beads);
-  const currentSnapshot = document?.snapshots[documentIndex] ?? [];
+  const currentSnapshot = document.snapshots[documentIndex] ?? [];
 
   if (isSameSnapshot(currentSnapshot, nextSnapshot)) {
     return Promise.resolve();
   }
 
   return commitBeadDocumentMutation(() => {
-    getOrCreateDocument(size);
-
-    beadDocumentsCollection.update(size.id, (draft) => {
+    beadDocumentsCollection.update(documentId, (draft) => {
       const branchIndex = Math.min(documentIndex, draft.snapshots.length - 1);
       const snapshots = draft.snapshots.slice(0, branchIndex + 1);
 
@@ -99,16 +104,31 @@ export function commitBeadSnapshot({
   });
 }
 
-export function undoBeadDocument(size: CanvasSize) {
-  return moveBeadDocumentIndex(size, -1);
+export function undoBeadDocument(documentId: BeadDocumentId) {
+  return moveBeadDocumentIndex(documentId, -1);
 }
 
-export function redoBeadDocument(size: CanvasSize) {
-  return moveBeadDocumentIndex(size, 1);
+export function redoBeadDocument(documentId: BeadDocumentId) {
+  return moveBeadDocumentIndex(documentId, 1);
 }
 
-function moveBeadDocumentIndex(size: CanvasSize, delta: -1 | 1) {
-  const document = beadDocumentsCollection.get(size.id);
+export function createBeadDocument(size: CanvasSize) {
+  const document = createBeadDocumentValue({
+    documentId: createBeadDocumentId(),
+    size,
+  });
+
+  return commitBeadDocumentMutation(() => {
+    beadDocumentsCollection.insert(document);
+  }).then(() => document);
+}
+
+export function getBeadDocumentFilledCount(document: BeadDocument) {
+  return document.snapshots[document.currentIndex]?.length ?? 0;
+}
+
+function moveBeadDocumentIndex(documentId: BeadDocumentId, delta: -1 | 1) {
+  const document = beadDocumentsCollection.get(documentId);
 
   if (!document) {
     return Promise.resolve();
@@ -121,22 +141,22 @@ function moveBeadDocumentIndex(size: CanvasSize, delta: -1 | 1) {
   }
 
   return commitBeadDocumentMutation(() => {
-    beadDocumentsCollection.update(size.id, (draft) => {
+    beadDocumentsCollection.update(documentId, (draft) => {
       draft.currentIndex = nextIndex;
       draft.updatedAt = Date.now();
     });
   });
 }
 
-function getOrCreateDocument(size: CanvasSize) {
-  const existing = beadDocumentsCollection.get(size.id);
-
-  if (existing) {
-    return existing;
-  }
-
-  const document: BeadDocument = {
-    id: size.id,
+function createBeadDocumentValue({
+  documentId,
+  size,
+}: {
+  documentId: BeadDocumentId;
+  size: CanvasSize;
+}): BeadDocument {
+  return {
+    id: documentId,
     sizeId: size.id,
     rows: size.rows,
     cols: size.cols,
@@ -144,9 +164,14 @@ function getOrCreateDocument(size: CanvasSize) {
     currentIndex: 0,
     updatedAt: Date.now(),
   };
+}
 
-  beadDocumentsCollection.insert(document);
-  return document;
+function createBeadDocumentId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function commitBeadDocumentMutation(mutator: () => void) {

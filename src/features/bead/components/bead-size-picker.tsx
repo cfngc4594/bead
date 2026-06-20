@@ -1,10 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { type CanvasSizeId, canvasSizes } from "@/config/canvas-sizes";
+import {
+  type CanvasSizeId,
+  canvasSizes,
+  getCanvasSize,
+} from "@/config/canvas-sizes";
+import { createBeadDocument } from "@/features/bead/storage/bead-documents";
 import { cn } from "@/lib/utils";
 
 type BeadSizePickerProps = {
@@ -12,7 +17,25 @@ type BeadSizePickerProps = {
 };
 
 export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
+  const router = useRouter();
   const [selected, setSelected] = useState<CanvasSizeId>(initialSize);
+  const [isCreating, setIsCreating] = useState(false);
+
+  async function createProject() {
+    if (isCreating) {
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const document = await createBeadDocument(getCanvasSize(selected));
+
+      router.push(`/editor?size=${selected}&project=${document.id}`);
+    } finally {
+      setIsCreating(false);
+    }
+  }
 
   return (
     <>
@@ -52,8 +75,14 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
       </div>
 
       <div className="flex justify-center">
-        <Button asChild className="min-w-48 rounded-full" size="lg">
-          <Link href={`/editor?size=${selected}`}>开始创作</Link>
+        <Button
+          className="min-w-48 rounded-full"
+          disabled={isCreating}
+          onClick={createProject}
+          size="lg"
+          type="button"
+        >
+          {isCreating ? "正在创建" : "开始创作"}
         </Button>
       </div>
     </>
