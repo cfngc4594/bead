@@ -33,14 +33,9 @@ export function BeadProjectsPage() {
     <main className="min-h-screen bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-4 border-b pb-5 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-1">
-            <h1 className="font-semibold text-2xl tracking-tight md:text-3xl">
-              我的拼豆
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              打开之前拼过的作品，或新建一个画布
-            </p>
-          </div>
+          <h1 className="font-semibold text-2xl tracking-tight md:text-3xl">
+            我的拼豆
+          </h1>
 
           <Button asChild className="w-full md:w-auto">
             <Link href="/">
