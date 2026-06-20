@@ -213,7 +213,7 @@ function drawStatItem(
   context.fillStyle = "#111827";
   context.font = "600 8px sans-serif";
   context.fillText(
-    String(stat.count),
+    `(${stat.count})`,
     x + statsSwatchSize / 2,
     y + statsSwatchSize + statsCountHeight / 2 + 1,
   );
