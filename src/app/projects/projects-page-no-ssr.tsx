@@ -1,15 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-skeleton";
+import { ProjectsRouteSkeleton } from "@/app/projects/projects-route-skeleton";
 
-export const BeadProjectsPageNoSsr = dynamic(
+const BeadProjectsPageContent = dynamic(
   () =>
     import("@/app/projects/projects-page-content").then(
       (module) => module.BeadProjectsPageContent,
     ),
   {
-    loading: () => <BeadProjectsSkeleton />,
+    loading: () => <ProjectsRouteSkeleton />,
     ssr: false,
   },
 );
+
+export function BeadProjectsPageNoSsr() {
+  return <BeadProjectsPageContent />;
+}
