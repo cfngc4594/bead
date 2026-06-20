@@ -26,7 +26,10 @@ export function drawBoard(
   rows: number,
   cols: number,
   beads: readonly (BeadFill | null)[],
+  options: { showBeadCodes?: boolean } = {},
 ) {
+  const { showBeadCodes = true } = options;
+
   context.save();
   drawLabels(context, rows, cols);
 
@@ -47,11 +50,14 @@ export function drawBoard(
       if (color) {
         context.fillStyle = color.hex;
         context.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
-        context.fillStyle = getReadableTextColor(color.hex);
-        context.font = "600 7px sans-serif";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(color.code, x + cellSize / 2, y + cellSize / 2);
+
+        if (showBeadCodes) {
+          context.fillStyle = getReadableTextColor(color.hex);
+          context.font = "600 7px sans-serif";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(color.code, x + cellSize / 2, y + cellSize / 2);
+        }
       }
     }
   }

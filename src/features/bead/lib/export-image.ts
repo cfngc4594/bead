@@ -15,6 +15,7 @@ type ExportBeadImageOptions = {
   cols: number;
   beads: readonly (BeadFill | null)[];
   filename: string;
+  showBeadCodes: boolean;
 };
 
 const exportScale = 4;
@@ -36,6 +37,7 @@ export function exportBeadImage({
   cols,
   beads,
   filename,
+  showBeadCodes,
 }: ExportBeadImageOptions) {
   const boardSize = getBoardSize(rows, cols);
   const stats = getBeadStats(beads);
@@ -58,7 +60,7 @@ export function exportBeadImage({
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.scale(exportScale, exportScale);
   context.translate(exportHorizontalPadding, exportTopPadding);
-  drawBoard(context, rows, cols, beads);
+  drawBoard(context, rows, cols, beads, { showBeadCodes });
   drawBeadStats(context, {
     stats,
     x: boardOrigin,

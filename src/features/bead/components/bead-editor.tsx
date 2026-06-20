@@ -47,6 +47,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
+  const [showBeadCodes, setShowBeadCodes] = useState(true);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
@@ -101,6 +102,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
       cols: size.cols,
       beads,
       filename: `bead-${size.id}.png`,
+      showBeadCodes,
     });
   }
 
@@ -188,6 +190,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
         <BeadToolbar
           canRedo={canRedo}
           canUndo={canUndo}
+          showBeadCodes={showBeadCodes}
           onRedo={redoEdit}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={clearDraft}
@@ -195,6 +198,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onExportTemplate={exportTemplate}
           onImportTemplate={importTemplate}
           onSelectTool={selectTool}
+          onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onUndo={undoEdit}
           tool={tool}
         />
@@ -212,6 +216,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
             cols={size.cols}
             beads={beads}
             tool={tool}
+            showBeadCodes={showBeadCodes}
             onEditCell={editCell}
             onEditEnd={commitEdit}
             onEditStart={beginEdit}

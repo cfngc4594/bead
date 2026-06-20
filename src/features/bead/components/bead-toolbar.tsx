@@ -1,6 +1,8 @@
 import {
   Download,
   Eraser,
+  Eye,
+  EyeOff,
   FileDown,
   FileUp,
   Focus,
@@ -25,6 +27,8 @@ type BeadToolbarProps = {
   tool: CanvasTool;
   canUndo: boolean;
   canRedo: boolean;
+  showBeadCodes: boolean;
+  onToggleBeadCodes: () => void;
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
   onClearDraft: () => void;
@@ -47,6 +51,8 @@ export function BeadToolbar({
   tool,
   canUndo,
   canRedo,
+  showBeadCodes,
+  onToggleBeadCodes,
   onSelectTool,
   onResetView,
   onClearDraft,
@@ -94,6 +100,12 @@ export function BeadToolbar({
           icon={Focus}
           label="居中显示"
           onClick={onResetView}
+        />
+        <ToolbarIconButton
+          icon={showBeadCodes ? Eye : EyeOff}
+          isActive={!showBeadCodes}
+          label={showBeadCodes ? "隐藏豆色序号" : "显示豆色序号"}
+          onClick={onToggleBeadCodes}
         />
         <ToolbarIconButton
           icon={Download}
