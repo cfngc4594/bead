@@ -71,12 +71,6 @@ export function BeadToolbar({
     <header className="flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
       <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
         <ToolbarIconButton
-          icon={Hand}
-          isActive={tool === "pan"}
-          label="移动"
-          onClick={() => onSelectTool("pan")}
-        />
-        <ToolbarIconButton
           icon={PenLine}
           isActive={tool === "paint"}
           label="画笔"
@@ -102,6 +96,12 @@ export function BeadToolbar({
         />
         <div className="mx-1 h-6 w-px shrink-0 bg-border" />
         <ToolbarIconButton
+          icon={Hand}
+          isActive={tool === "pan"}
+          label="移动画布"
+          onClick={() => onSelectTool("pan")}
+        />
+        <ToolbarIconButton
           icon={Focus}
           label="居中显示"
           onClick={onResetView}
@@ -118,26 +118,6 @@ export function BeadToolbar({
           label={showGuideLines ? "隐藏辅助线" : "显示辅助线"}
           onClick={onToggleGuideLines}
         />
-        <ToolbarIconButton
-          icon={Download}
-          label="导出图片"
-          onClick={onExportImage}
-        />
-        <ToolbarIconButton
-          icon={FileDown}
-          label="导出模板"
-          onClick={onExportTemplate}
-        />
-        <ToolbarIconButton
-          icon={FileUp}
-          label="导入模板"
-          onClick={onImportTemplate}
-        />
-        <ToolbarIconButton
-          icon={RotateCcw}
-          label="清空草稿"
-          onClick={onClearDraft}
-        />
         <div className="mx-1 h-6 w-px shrink-0 bg-border" />
         <ToolbarIconButton
           disabled={!canUndo}
@@ -150,6 +130,27 @@ export function BeadToolbar({
           icon={Redo2}
           label="重做"
           onClick={onRedo}
+        />
+        <ToolbarIconButton
+          icon={RotateCcw}
+          label="清空草稿"
+          onClick={onClearDraft}
+        />
+        <div className="mx-1 h-6 w-px shrink-0 bg-border" />
+        <ToolbarIconButton
+          icon={FileUp}
+          label="导入模板"
+          onClick={onImportTemplate}
+        />
+        <ToolbarIconButton
+          icon={FileDown}
+          label="导出模板"
+          onClick={onExportTemplate}
+        />
+        <ToolbarIconButton
+          icon={Download}
+          label="导出图片"
+          onClick={onExportImage}
         />
       </div>
     </header>
