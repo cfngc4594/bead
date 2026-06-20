@@ -102,6 +102,17 @@ export function BeadCanvas({
     stageRef,
   });
   const gridOrigin = getGridOrigin();
+  const canvasCursor = getCanvasCursor({
+    hoveredCell,
+    isDraggable,
+    isMovingSelection: Boolean(moveStartCell),
+    selection,
+    tool,
+  });
+  const displayedBeads =
+    selection && moveTargetOrigin
+      ? hideSelectedBeads(beads, selection, cols)
+      : beads;
 
   useEffect(() => {
     if (selectionResetSignal === handledSelectionResetSignalRef.current) {
@@ -409,7 +420,7 @@ export function BeadCanvas({
       <Stage
         ref={stageRef}
         style={{
-          cursor: getCanvasCursor(tool, isDraggable),
+          cursor: canvasCursor,
           touchAction: "none",
         }}
         width={stageSize.width}
@@ -431,7 +442,7 @@ export function BeadCanvas({
           <Shape
             listening={false}
             sceneFunc={(context, shape) => {
-              drawBoard(context, rows, cols, beads);
+              drawBoard(context, rows, cols, displayedBeads);
               context.fillStrokeShape(shape);
             }}
           />
@@ -516,7 +527,19 @@ function isEditTool(tool: CanvasTool) {
   return tool === "paint" || tool === "erase";
 }
 
-function getCanvasCursor(tool: CanvasTool, isDraggable: boolean) {
+function getCanvasCursor({
+  hoveredCell,
+  isDraggable,
+  isMovingSelection,
+  selection,
+  tool,
+}: {
+  hoveredCell: GridCell | null;
+  isDraggable: boolean;
+  isMovingSelection: boolean;
+  selection: Selection | null;
+  tool: CanvasTool;
+}) {
   if (isDraggable) {
     return "grab";
   }
@@ -534,7 +557,15 @@ function getCanvasCursor(tool: CanvasTool, isDraggable: boolean) {
   }
 
   if (tool === "select") {
-    return "crosshair";
+    if (isMovingSelection) {
+      return "grabbing";
+    }
+
+    if (hoveredCell && selection && isCellInSelection(hoveredCell, selection)) {
+      return "grab";
+    }
+
+    return "default";
   }
 
   return "default";
@@ -661,6 +692,23 @@ function moveSelectedBeads(
     const targetColumn = targetOrigin.column + item.columnOffset;
 
     next[targetRow * cols + targetColumn] = item.fill;
+  }
+
+  return next;
+}
+
+function hideSelectedBeads(
+  beads: readonly (BeadFill | null)[],
+  selection: Selection,
+  cols: number,
+) {
+  const next = [...beads];
+
+  for (const item of selection.items) {
+    const sourceRow = selection.origin.row + item.rowOffset;
+    const sourceColumn = selection.origin.column + item.columnOffset;
+
+    next[sourceRow * cols + sourceColumn] = null;
   }
 
   return next;
