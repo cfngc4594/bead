@@ -1,4 +1,3 @@
-import type Konva from "konva";
 import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import type { BeadFill } from "@/features/bead/types";
@@ -7,8 +6,23 @@ const gridColor = "#d9d9d9";
 const labelBackground = "#f3f4f6";
 const labelTextColor = "#6b7280";
 
+export type BoardDrawingContext = Pick<
+  CanvasRenderingContext2D,
+  | "fillRect"
+  | "fillStyle"
+  | "fillText"
+  | "font"
+  | "lineWidth"
+  | "restore"
+  | "save"
+  | "strokeRect"
+  | "strokeStyle"
+  | "textAlign"
+  | "textBaseline"
+>;
+
 export function drawBoard(
-  context: Konva.Context,
+  context: BoardDrawingContext,
   rows: number,
   cols: number,
   beads: readonly (BeadFill | null)[],
@@ -45,7 +59,7 @@ export function drawBoard(
   context.restore();
 }
 
-function drawLabels(context: Konva.Context, rows: number, cols: number) {
+function drawLabels(context: BoardDrawingContext, rows: number, cols: number) {
   const boardHeight = (rows + 2) * cellSize;
 
   context.strokeStyle = gridColor;
@@ -74,7 +88,7 @@ function drawLabels(context: Konva.Context, rows: number, cols: number) {
 }
 
 function drawLabelCell(
-  context: Konva.Context,
+  context: BoardDrawingContext,
   x: number,
   y: number,
   label: string,

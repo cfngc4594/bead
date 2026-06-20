@@ -10,6 +10,7 @@ import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skele
 import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
 import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
 import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
+import { exportBeadImage } from "@/features/bead/lib/export-image";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
@@ -70,6 +71,15 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     redo();
   }
 
+  function exportImage() {
+    exportBeadImage({
+      rows: size.rows,
+      cols: size.cols,
+      beads,
+      filename: `bead-${size.id}.png`,
+    });
+  }
+
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
 
@@ -111,6 +121,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onRedo={redoEdit}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={clearDraft}
+          onExportImage={exportImage}
           onSelectTool={setTool}
           onUndo={undoEdit}
           tool={tool}

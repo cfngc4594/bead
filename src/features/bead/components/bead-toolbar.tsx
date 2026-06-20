@@ -1,4 +1,5 @@
 import {
+  Download,
   Eraser,
   Focus,
   Hand,
@@ -24,6 +25,7 @@ type BeadToolbarProps = {
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
   onClearDraft: () => void;
+  onExportImage: () => void;
   onUndo: () => void;
   onRedo: () => void;
 };
@@ -43,6 +45,7 @@ export function BeadToolbar({
   onSelectTool,
   onResetView,
   onClearDraft,
+  onExportImage,
   onUndo,
   onRedo,
 }: BeadToolbarProps) {
@@ -78,6 +81,11 @@ export function BeadToolbar({
           icon={Focus}
           label="居中显示"
           onClick={onResetView}
+        />
+        <ToolbarIconButton
+          icon={Download}
+          label="导出图片"
+          onClick={onExportImage}
         />
         <ToolbarIconButton
           icon={RotateCcw}
