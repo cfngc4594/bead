@@ -26,6 +26,7 @@ export type BeadCanvasProps = {
   beads: readonly (BeadFill | null)[];
   tool: CanvasTool;
   showBeadCodes: boolean;
+  showGuideLines: boolean;
   onEditStart: () => void;
   onEditCell: (cell: GridCell) => void;
   onEditEnd: () => void;
@@ -61,6 +62,7 @@ export function BeadCanvas({
   beads,
   tool,
   showBeadCodes,
+  showGuideLines,
   onEditStart,
   onEditCell,
   onEditEnd,
@@ -446,6 +448,7 @@ export function BeadCanvas({
             sceneFunc={(context, shape) => {
               drawBoard(context, rows, cols, displayedBeads, {
                 showBeadCodes,
+                showGuideLines,
               });
               context.fillStrokeShape(shape);
             }}

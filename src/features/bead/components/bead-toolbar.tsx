@@ -6,6 +6,7 @@ import {
   FileDown,
   FileUp,
   Focus,
+  Grid3x3,
   Hand,
   type LucideIcon,
   MousePointer2,
@@ -28,7 +29,9 @@ type BeadToolbarProps = {
   canUndo: boolean;
   canRedo: boolean;
   showBeadCodes: boolean;
+  showGuideLines: boolean;
   onToggleBeadCodes: () => void;
+  onToggleGuideLines: () => void;
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
   onClearDraft: () => void;
@@ -52,7 +55,9 @@ export function BeadToolbar({
   canUndo,
   canRedo,
   showBeadCodes,
+  showGuideLines,
   onToggleBeadCodes,
+  onToggleGuideLines,
   onSelectTool,
   onResetView,
   onClearDraft,
@@ -106,6 +111,12 @@ export function BeadToolbar({
           isActive={!showBeadCodes}
           label={showBeadCodes ? "隐藏豆色序号" : "显示豆色序号"}
           onClick={onToggleBeadCodes}
+        />
+        <ToolbarIconButton
+          icon={Grid3x3}
+          isActive={showGuideLines}
+          label={showGuideLines ? "隐藏辅助线" : "显示辅助线"}
+          onClick={onToggleGuideLines}
         />
         <ToolbarIconButton
           icon={Download}

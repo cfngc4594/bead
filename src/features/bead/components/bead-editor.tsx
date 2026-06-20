@@ -48,6 +48,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
   const [showBeadCodes, setShowBeadCodes] = useState(true);
+  const [showGuideLines, setShowGuideLines] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
@@ -103,6 +104,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
       beads,
       filename: `bead-${size.id}.png`,
       showBeadCodes,
+      showGuideLines,
     });
   }
 
@@ -191,6 +193,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           canRedo={canRedo}
           canUndo={canUndo}
           showBeadCodes={showBeadCodes}
+          showGuideLines={showGuideLines}
           onRedo={redoEdit}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={clearDraft}
@@ -199,6 +202,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onImportTemplate={importTemplate}
           onSelectTool={selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
+          onToggleGuideLines={() => setShowGuideLines((value) => !value)}
           onUndo={undoEdit}
           tool={tool}
         />
@@ -217,6 +221,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
             beads={beads}
             tool={tool}
             showBeadCodes={showBeadCodes}
+            showGuideLines={showGuideLines}
             onEditCell={editCell}
             onEditEnd={commitEdit}
             onEditStart={beginEdit}
