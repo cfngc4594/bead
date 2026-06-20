@@ -1,5 +1,6 @@
 "use client";
 
+import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import {
@@ -16,7 +17,19 @@ export function BeadEditorFromUrl() {
   const size = searchParams.get("size");
   const project = searchParams.get("project");
   const selected = isCanvasSizeId(size) ? size : canvasSizes[0].id;
-  const document = project ? beadDocumentsCollection.get(project) : undefined;
+  const { data: documents, isReady } = useLiveQuery(
+    (query) =>
+      project
+        ? query
+            .from({ document: beadDocumentsCollection })
+            .where(({ document }) => eq(document.id, project))
+            .select(({ document }) => ({
+              id: document.id,
+            }))
+        : undefined,
+    [project],
+  );
+  const document = documents?.[0];
 
   useEffect(() => {
     if (!project) {
@@ -24,10 +37,10 @@ export function BeadEditorFromUrl() {
       return;
     }
 
-    if (!document) {
+    if (isReady && !document) {
       router.replace("/projects");
     }
-  }, [document, project, router]);
+  }, [document, isReady, project, router]);
 
   if (!project || !document) {
     return null;

@@ -113,10 +113,15 @@ export function redoBeadDocument(documentId: BeadDocumentId) {
 }
 
 export function createBeadDocument(size: CanvasSize) {
-  const document = createBeadDocumentValue({
-    documentId: createBeadDocumentId(),
-    size,
-  });
+  const document: BeadDocument = {
+    id: createBeadDocumentId(),
+    sizeId: size.id,
+    rows: size.rows,
+    cols: size.cols,
+    snapshots: [[]],
+    currentIndex: 0,
+    updatedAt: Date.now(),
+  };
 
   return commitBeadDocumentMutation(() => {
     beadDocumentsCollection.insert(document);
@@ -146,24 +151,6 @@ function moveBeadDocumentIndex(documentId: BeadDocumentId, delta: -1 | 1) {
       draft.updatedAt = Date.now();
     });
   });
-}
-
-function createBeadDocumentValue({
-  documentId,
-  size,
-}: {
-  documentId: BeadDocumentId;
-  size: CanvasSize;
-}): BeadDocument {
-  return {
-    id: documentId,
-    sizeId: size.id,
-    rows: size.rows,
-    cols: size.cols,
-    snapshots: [[]],
-    currentIndex: 0,
-    updatedAt: Date.now(),
-  };
 }
 
 function createBeadDocumentId() {
