@@ -44,11 +44,13 @@ function BeadEditorContent({ size }: BeadEditorProps) {
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
+  const [selectionResetSignal, setSelectionResetSignal] = useState(0);
   const {
     beads,
     beginEdit,
     editCell: setCell,
     commitEdit,
+    commitBeads,
     undo,
     redo,
     clear,
@@ -60,15 +62,30 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     color.code.startsWith(selectedLetter),
   );
 
+  function resetSelection() {
+    setSelectionResetSignal((value) => value + 1);
+  }
+
+  function selectTool(nextTool: CanvasTool) {
+    if (nextTool !== tool) {
+      resetSelection();
+    }
+
+    setTool(nextTool);
+  }
+
   function clearDraft() {
+    resetSelection();
     clear();
   }
 
   function undoEdit() {
+    resetSelection();
     undo();
   }
 
   function redoEdit() {
+    resetSelection();
     redo();
   }
 
@@ -121,6 +138,10 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     setTool("paint");
   }
 
+  function moveSelection(nextBeads: (typeof beads)[number][]) {
+    commitBeads(nextBeads);
+  }
+
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
@@ -132,7 +153,7 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onClearDraft={clearDraft}
           onExportImage={exportImage}
           onExportTemplate={exportTemplate}
-          onSelectTool={setTool}
+          onSelectTool={selectTool}
           onUndo={undoEdit}
           tool={tool}
         />
@@ -146,7 +167,9 @@ function BeadEditorContent({ size }: BeadEditorProps) {
             onEditCell={editCell}
             onEditEnd={commitEdit}
             onEditStart={beginEdit}
+            onMoveSelection={moveSelection}
             onPickCell={pickCell}
+            selectionResetSignal={selectionResetSignal}
             resetViewAfterResizeSignal={resetViewAfterResizeSignal}
             resetViewSignal={resetViewSignal}
           />

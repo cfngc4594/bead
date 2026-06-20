@@ -107,22 +107,6 @@ export function redoBeadDocument(size: CanvasSize) {
   return moveBeadDocumentIndex(size, 1);
 }
 
-export function clearBeadDocument(size: CanvasSize) {
-  const document = beadDocumentsCollection.get(size.id);
-
-  if (!document || isEmptyDocument(document)) {
-    return Promise.resolve();
-  }
-
-  return commitBeadDocumentMutation(() => {
-    beadDocumentsCollection.update(size.id, (draft) => {
-      draft.snapshots = [[]];
-      draft.currentIndex = 0;
-      draft.updatedAt = Date.now();
-    });
-  });
-}
-
 function moveBeadDocumentIndex(size: CanvasSize, delta: -1 | 1) {
   const document = beadDocumentsCollection.get(size.id);
 
@@ -200,14 +184,6 @@ function expandSnapshot(snapshot: BeadSnapshot, cellCount: number): BeadState {
   }
 
   return beads;
-}
-
-function isEmptyDocument(document: BeadDocument) {
-  return (
-    document.currentIndex === 0 &&
-    document.snapshots.length === 1 &&
-    document.snapshots[0]?.length === 0
-  );
 }
 
 function isSameSnapshot(a: BeadSnapshot, b: BeadSnapshot) {

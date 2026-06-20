@@ -5,6 +5,7 @@ import {
   Focus,
   Hand,
   type LucideIcon,
+  MousePointer2,
   PenLine,
   Pipette,
   Redo2,
@@ -78,6 +79,12 @@ export function BeadToolbar({
           isActive={tool === "picker"}
           label="吸管"
           onClick={() => onSelectTool("picker")}
+        />
+        <ToolbarIconButton
+          icon={MousePointer2}
+          isActive={tool === "select"}
+          label="选择移动"
+          onClick={() => onSelectTool("select")}
         />
         <div className="mx-1 h-6 w-px shrink-0 bg-border" />
         <ToolbarIconButton

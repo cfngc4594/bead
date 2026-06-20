@@ -1,4 +1,4 @@
-export type CanvasTool = "pan" | "paint" | "erase" | "picker";
+export type CanvasTool = "pan" | "paint" | "erase" | "picker" | "select";
 
 export type CanvasView = {
   x: number;

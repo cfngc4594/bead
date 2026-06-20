@@ -8,8 +8,8 @@ import {
   beadDocumentsCollection,
   canRedoDocument,
   canUndoDocument,
-  clearBeadDocument,
   commitBeadSnapshot,
+  createEmptyBeads,
   getCurrentBeads,
   redoBeadDocument,
   undoBeadDocument,
@@ -85,6 +85,31 @@ export function useBeadSnapshots(size: CanvasSize) {
     setDraftBeads(null);
   }
 
+  function commitBeads(nextBeads: BeadState) {
+    const currentDocument = beadDocumentsCollection.get(size.id) ?? document;
+    const baseIndex = currentDocument?.currentIndex ?? 0;
+    const currentBeads = getCurrentBeads({
+      cellCount,
+      document: currentDocument,
+    });
+
+    draftRef.current = null;
+    editBaseIndexRef.current = null;
+    setDraftBeads(null);
+
+    if (isSameBeads(nextBeads, currentBeads)) {
+      return;
+    }
+
+    persistBeadDocument(
+      commitBeadSnapshot({
+        baseIndex,
+        beads: [...nextBeads],
+        size,
+      }),
+    );
+  }
+
   function undo() {
     draftRef.current = null;
     editBaseIndexRef.current = null;
@@ -100,10 +125,7 @@ export function useBeadSnapshots(size: CanvasSize) {
   }
 
   function clear() {
-    draftRef.current = null;
-    editBaseIndexRef.current = null;
-    setDraftBeads(null);
-    persistBeadDocument(clearBeadDocument(size));
+    commitBeads(createEmptyBeads(cellCount));
   }
 
   return {
@@ -111,6 +133,7 @@ export function useBeadSnapshots(size: CanvasSize) {
     beginEdit,
     editCell,
     commitEdit,
+    commitBeads,
     undo,
     redo,
     clear,
