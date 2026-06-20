@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
 import type { BeadCanvasProps } from "@/features/bead/components/bead-canvas";
@@ -12,6 +13,10 @@ import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
 import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
 import { exportBeadImage } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
+import {
+  BeadTemplateImportError,
+  parseBeadTemplateFile,
+} from "@/features/bead/lib/import-template";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
@@ -38,6 +43,7 @@ export function BeadEditor({ size }: BeadEditorProps) {
 }
 
 function BeadEditorContent({ size }: BeadEditorProps) {
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -106,6 +112,40 @@ function BeadEditorContent({ size }: BeadEditorProps) {
     });
   }
 
+  function importTemplate() {
+    importInputRef.current?.click();
+  }
+
+  async function importTemplateFile(file: File) {
+    try {
+      const importedBeads = parseBeadTemplateFile({
+        text: await file.text(),
+        size,
+      });
+
+      resetSelection();
+      commitBeads(importedBeads);
+      toast.success("模板已导入");
+    } catch (error) {
+      toast.error(
+        error instanceof BeadTemplateImportError
+          ? error.message
+          : "导入模板失败。",
+      );
+    }
+  }
+
+  function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    void importTemplateFile(file);
+  }
+
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
 
@@ -153,9 +193,17 @@ function BeadEditorContent({ size }: BeadEditorProps) {
           onClearDraft={clearDraft}
           onExportImage={exportImage}
           onExportTemplate={exportTemplate}
+          onImportTemplate={importTemplate}
           onSelectTool={selectTool}
           onUndo={undoEdit}
           tool={tool}
+        />
+        <input
+          accept=".bead.json,application/json"
+          className="hidden"
+          onChange={handleImportFileChange}
+          ref={importInputRef}
+          type="file"
         />
 
         <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">

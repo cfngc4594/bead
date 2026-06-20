@@ -1,28 +1,13 @@
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { getBeadStats } from "@/features/bead/lib/bead-stats";
 import { downloadTextFile } from "@/features/bead/lib/download-file";
+import type { BeadTemplateFile } from "@/features/bead/lib/template-schema";
 import type { BeadFill } from "@/features/bead/types";
 
 type ExportBeadTemplateOptions = {
   size: CanvasSize;
   beads: readonly (BeadFill | null)[];
   filename: string;
-};
-
-type BeadTemplateFile = {
-  version: 1;
-  type: "bead-template";
-  createdAt: string;
-  title: string;
-  palette: "mard";
-  size: {
-    id: string;
-    title: string;
-    rows: number;
-    cols: number;
-  };
-  beads: readonly (BeadFill | null)[];
-  stats: ReturnType<typeof getBeadStats>;
 };
 
 export function exportBeadTemplate({
@@ -42,7 +27,7 @@ export function exportBeadTemplate({
       rows: size.rows,
       cols: size.cols,
     },
-    beads,
+    beads: [...beads],
     stats: getBeadStats(beads),
   };
 
