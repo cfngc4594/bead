@@ -1,6 +1,7 @@
 "use client";
 
 import { eq, useLiveQuery } from "@tanstack/react-db";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import {
@@ -8,10 +9,33 @@ import {
   getCanvasSize,
   isCanvasSizeId,
 } from "@/config/canvas-sizes";
-import { BeadEditor } from "@/features/bead/components/bead-editor";
+import { BeadEditorSkeleton } from "@/features/bead/components/bead-editor-skeleton";
+import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-skeleton";
 import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
 
-export function BeadEditorFromUrl() {
+const BeadProjectsPage = dynamic(
+  () =>
+    import("@/features/bead/components/bead-projects-page").then(
+      (module) => module.BeadProjectsPage,
+    ),
+  {
+    loading: () => <BeadProjectsSkeleton />,
+    ssr: false,
+  },
+);
+
+const BeadEditor = dynamic(
+  () =>
+    import("@/features/bead/components/bead-editor").then(
+      (module) => module.BeadEditor,
+    ),
+  {
+    loading: () => <BeadEditorSkeleton />,
+    ssr: false,
+  },
+);
+
+export function BeadProjectsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const size = searchParams.get("size");
@@ -32,18 +56,17 @@ export function BeadEditorFromUrl() {
   const document = documents?.[0];
 
   useEffect(() => {
-    if (!project) {
-      router.replace("/");
-      return;
-    }
-
-    if (isReady && !document) {
+    if (project && isReady && !document) {
       router.replace("/projects");
     }
   }, [document, isReady, project, router]);
 
-  if (!project || !document) {
-    return null;
+  if (!project) {
+    return <BeadProjectsPage />;
+  }
+
+  if (!document) {
+    return <BeadEditorSkeleton />;
   }
 
   return <BeadEditor documentId={project} size={getCanvasSize(selected)} />;

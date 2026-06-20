@@ -5,8 +5,8 @@ import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-s
 
 export const BeadProjectsPageNoSsr = dynamic(
   () =>
-    import("@/features/bead/components/bead-projects-page").then(
-      (module) => module.BeadProjectsPage,
+    import("@/app/projects/projects-page-content").then(
+      (module) => module.BeadProjectsPageContent,
     ),
   {
     loading: () => <BeadProjectsSkeleton />,
