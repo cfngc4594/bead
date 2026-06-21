@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
         })}
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-2">
         <Button
           className="min-w-48 rounded-full"
           disabled={isCreating}
@@ -83,6 +84,9 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
           type="button"
         >
           {isCreating ? "正在创建" : "开始创作"}
+        </Button>
+        <Button asChild className="min-w-48 rounded-full" variant="outline">
+          <Link href="/projects">返回首页</Link>
         </Button>
       </div>
     </>
