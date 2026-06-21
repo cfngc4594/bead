@@ -31,6 +31,7 @@ export function useBeadSnapshots({
         .where(({ document }) => eq(document.id, documentId))
         .select(({ document }) => ({
           id: document.id,
+          title: document.title,
           sizeId: document.sizeId,
           rows: document.rows,
           cols: document.cols,

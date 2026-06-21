@@ -19,6 +19,7 @@ export type BeadDocumentId = string;
 
 export type BeadDocument = {
   id: BeadDocumentId;
+  title: string;
   sizeId: CanvasSizeId;
   rows: number;
   cols: number;
@@ -112,9 +113,37 @@ export function redoBeadDocument(documentId: BeadDocumentId) {
   return moveBeadDocumentIndex(documentId, 1);
 }
 
+export function renameBeadDocument({
+  documentId,
+  title,
+}: {
+  documentId: BeadDocumentId;
+  title: string;
+}) {
+  const document = beadDocumentsCollection.get(documentId);
+
+  if (!document) {
+    return Promise.resolve();
+  }
+
+  const nextTitle = normalizeBeadDocumentTitle(title);
+
+  if (document.title === nextTitle) {
+    return Promise.resolve();
+  }
+
+  return commitBeadDocumentMutation(() => {
+    beadDocumentsCollection.update(documentId, (draft) => {
+      draft.title = nextTitle;
+      draft.updatedAt = Date.now();
+    });
+  });
+}
+
 export function createBeadDocument(size: CanvasSize) {
   const document: BeadDocument = {
     id: createBeadDocumentId(),
+    title: "",
     sizeId: size.id,
     rows: size.rows,
     cols: size.cols,
@@ -159,6 +188,10 @@ function createBeadDocumentId() {
   }
 
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeBeadDocumentTitle(title: string) {
+  return title.trim().slice(0, 80);
 }
 
 function commitBeadDocumentMutation(mutator: () => void) {

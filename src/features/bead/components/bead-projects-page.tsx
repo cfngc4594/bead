@@ -27,6 +27,7 @@ export function BeadProjectsPage() {
         sizeId: document.sizeId,
         rows: document.rows,
         cols: document.cols,
+        title: document.title,
         snapshots: document.snapshots,
         currentIndex: document.currentIndex,
         updatedAt: document.updatedAt,
@@ -75,7 +76,7 @@ export function BeadProjectsPage() {
 
                         <div className="min-w-0 space-y-1">
                           <p className="truncate font-medium">
-                            {size.title} 作品
+                            {document.title.trim() || `${size.title} 作品`}
                           </p>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-sm">
                             <span className="inline-flex items-center gap-1.5">

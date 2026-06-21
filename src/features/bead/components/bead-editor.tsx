@@ -18,7 +18,10 @@ import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
-import type { BeadDocumentId } from "@/features/bead/storage/bead-documents";
+import {
+  type BeadDocumentId,
+  renameBeadDocument,
+} from "@/features/bead/storage/bead-documents";
 import type { CanvasTool, GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
@@ -35,19 +38,25 @@ const BeadCanvas = dynamic<BeadCanvasProps>(
 type BeadEditorProps = {
   documentId: BeadDocumentId;
   size: CanvasSize;
+  title: string;
 };
 
 const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
 
-export function BeadEditor({ documentId, size }: BeadEditorProps) {
+export function BeadEditor({ documentId, size, title }: BeadEditorProps) {
   return (
-    <BeadEditorContent key={documentId} documentId={documentId} size={size} />
+    <BeadEditorContent
+      key={documentId}
+      documentId={documentId}
+      size={size}
+      title={title}
+    />
   );
 }
 
-function BeadEditorContent({ documentId, size }: BeadEditorProps) {
+function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   const router = useRouter();
   const importInputRef = useRef<HTMLInputElement>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
@@ -193,6 +202,13 @@ function BeadEditorContent({ documentId, size }: BeadEditorProps) {
     commitBeads(nextBeads);
   }
 
+  function renameProject(nextTitle: string) {
+    renameBeadDocument({ documentId, title: nextTitle }).catch((error) => {
+      console.error("Unable to rename bead document", error);
+      toast.error("作品名保存失败");
+    });
+  }
+
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
@@ -200,6 +216,7 @@ function BeadEditorContent({ documentId, size }: BeadEditorProps) {
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
+          projectTitle={title}
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
           onRedo={redoEdit}
@@ -209,6 +226,7 @@ function BeadEditorContent({ documentId, size }: BeadEditorProps) {
           onExportTemplate={exportTemplate}
           onImportTemplate={importTemplate}
           onBack={() => router.push("/projects")}
+          onRenameProject={renameProject}
           onSelectTool={selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}

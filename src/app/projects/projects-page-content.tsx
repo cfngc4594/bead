@@ -43,6 +43,7 @@ export function BeadProjectsPageContent() {
             .where(({ document }) => eq(document.id, projectId))
             .select(({ document }) => ({
               id: document.id,
+              title: document.title,
               sizeId: document.sizeId,
             }))
         : undefined,
@@ -65,6 +66,10 @@ export function BeadProjectsPageContent() {
   }
 
   return (
-    <BeadEditor documentId={projectId} size={getCanvasSize(document.sizeId)} />
+    <BeadEditor
+      documentId={projectId}
+      size={getCanvasSize(document.sizeId)}
+      title={document.title}
+    />
   );
 }
