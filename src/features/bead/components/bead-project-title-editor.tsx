@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type BeadProjectTitleEditorProps = {
   title: string;
+  className?: string;
   onRename: (title: string) => void;
 };
 
 export function BeadProjectTitleEditor({
   title,
+  className,
   onRename,
 }: BeadProjectTitleEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +59,9 @@ export function BeadProjectTitleEditor({
   }
 
   return (
-    <div className="w-[42vw] max-w-56 min-w-28 shrink-0 md:w-56">
+    <div
+      className={cn("w-[42vw] max-w-56 min-w-28 shrink-0 md:w-56", className)}
+    >
       {isEditing ? (
         <input
           aria-label="作品名"
