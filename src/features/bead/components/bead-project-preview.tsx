@@ -11,6 +11,7 @@ type BeadProjectPreviewProps = {
 };
 
 const previewScale = 2;
+const previewPadding = 4;
 
 export function BeadProjectPreview({ document }: BeadProjectPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,8 +30,8 @@ export function BeadProjectPreview({ document }: BeadProjectPreviewProps) {
     });
     const context = canvas.getContext("2d");
 
-    canvas.width = boardSize.width * previewScale;
-    canvas.height = boardSize.height * previewScale;
+    canvas.width = (boardSize.width + previewPadding * 2) * previewScale;
+    canvas.height = (boardSize.height + previewPadding * 2) * previewScale;
 
     if (!context) {
       return;
@@ -39,6 +40,7 @@ export function BeadProjectPreview({ document }: BeadProjectPreviewProps) {
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.scale(previewScale, previewScale);
+    context.translate(previewPadding, previewPadding);
     drawBoard(context, document.rows, document.cols, beads, {
       showBeadCodes: true,
       showGuideLines: false,

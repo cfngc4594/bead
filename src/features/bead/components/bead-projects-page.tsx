@@ -54,7 +54,7 @@ export function BeadProjectsPage() {
         </header>
 
         {sortedDocuments.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sortedDocuments.map((document) => {
               const size = getCanvasSize(document.sizeId);
 
