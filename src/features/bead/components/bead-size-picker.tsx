@@ -31,7 +31,7 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
     try {
       const document = await createBeadDocument(getCanvasSize(selected));
 
-      router.push(`/projects?size=${selected}&project=${document.id}`);
+      router.push(`/projects?project=${document.id}`);
     } finally {
       setIsCreating(false);
     }

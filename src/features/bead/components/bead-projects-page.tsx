@@ -56,7 +56,7 @@ export function BeadProjectsPage() {
               return (
                 <Link
                   className="group block rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                  href={`/projects?size=${document.sizeId}&project=${document.id}`}
+                  href={`/projects?project=${document.id}`}
                   key={document.id}
                 >
                   <Card className="h-full transition-colors group-hover:border-primary/60">

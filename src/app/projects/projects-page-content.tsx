@@ -4,11 +4,7 @@ import { eq, useLiveQuery } from "@tanstack/react-db";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import {
-  canvasSizes,
-  getCanvasSize,
-  isCanvasSizeId,
-} from "@/config/canvas-sizes";
+import { getCanvasSize } from "@/config/canvas-sizes";
 import { BeadEditorSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-skeleton";
 import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
@@ -38,9 +34,7 @@ const BeadEditor = dynamic(
 export function BeadProjectsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const size = searchParams.get("size");
   const project = searchParams.get("project");
-  const selected = isCanvasSizeId(size) ? size : canvasSizes[0].id;
   const { data: documents, isReady } = useLiveQuery(
     (query) =>
       project
@@ -49,6 +43,7 @@ export function BeadProjectsPageContent() {
             .where(({ document }) => eq(document.id, project))
             .select(({ document }) => ({
               id: document.id,
+              sizeId: document.sizeId,
             }))
         : undefined,
     [project],
@@ -69,5 +64,7 @@ export function BeadProjectsPageContent() {
     return <BeadEditorSkeleton />;
   }
 
-  return <BeadEditor documentId={project} size={getCanvasSize(selected)} />;
+  return (
+    <BeadEditor documentId={project} size={getCanvasSize(document.sizeId)} />
+  );
 }
