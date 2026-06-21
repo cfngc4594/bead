@@ -1,19 +1,14 @@
 import {
   ArrowLeft,
   Download,
-  Eraser,
   Eye,
   EyeOff,
   FileDown,
   FileUp,
   Focus,
   Grid3x3,
-  Hand,
   type LucideIcon,
   MoreHorizontal,
-  MousePointer2,
-  PenLine,
-  Pipette,
   Redo2,
   RotateCcw,
   Undo2,
@@ -31,6 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BeadModeToolButtons } from "@/features/bead/components/bead-mode-tool-buttons";
 import { BeadProjectTitleEditor } from "@/features/bead/components/bead-project-title-editor";
 import type { CanvasTool } from "@/features/bead/types";
 
@@ -93,38 +89,6 @@ export function BeadToolbar({
   onUndo,
   onRedo,
 }: BeadToolbarProps) {
-  const modeActions: ToolbarAction[] = [
-    {
-      icon: Hand,
-      isActive: tool === "pan",
-      label: "移动画布",
-      onClick: () => onSelectTool("pan"),
-    },
-    {
-      icon: PenLine,
-      isActive: tool === "paint",
-      label: "画笔",
-      onClick: () => onSelectTool("paint"),
-    },
-    {
-      icon: Eraser,
-      isActive: tool === "erase",
-      label: "橡皮擦",
-      onClick: () => onSelectTool("erase"),
-    },
-    {
-      icon: Pipette,
-      isActive: tool === "picker",
-      label: "吸管",
-      onClick: () => onSelectTool("picker"),
-    },
-    {
-      icon: MousePointer2,
-      isActive: tool === "select",
-      label: "选择移动",
-      onClick: () => onSelectTool("select"),
-    },
-  ];
   const viewActions: ToolbarAction[] = [
     {
       icon: Focus,
@@ -181,7 +145,6 @@ export function BeadToolbar({
       onClick: onExportImage,
     },
   ];
-  const desktopGroups = [modeActions, viewActions, historyActions, fileActions];
   const mobileMoreActions = [...viewActions, ...historyActions, ...fileActions];
 
   return (
@@ -196,19 +159,17 @@ export function BeadToolbar({
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
-        {desktopGroups.map((actions, index) => (
+        <BeadModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+        {[viewActions, historyActions, fileActions].map((actions) => (
           <ToolbarActionGroup
             actions={actions}
             key={actions.map((action) => action.label).join("-")}
-            withSeparator={index > 0}
+            withSeparator
           />
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-        {modeActions.map((action) => (
-          <ToolbarIconButton key={action.label} {...action} />
-        ))}
+      <div className="flex shrink-0 items-center md:hidden">
         <MobileMoreTools actions={mobileMoreActions} />
       </div>
     </header>

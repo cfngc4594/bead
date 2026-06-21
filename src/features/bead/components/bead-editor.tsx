@@ -277,8 +277,10 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
         }
         onSelectColor={setSelectedColor}
         onSelectLetter={setSelectedLetter}
+        onSelectTool={selectTool}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
+        tool={tool}
       />
     </main>
   );

@@ -8,6 +8,8 @@ import type { BeadColor } from "@/data/colors";
 import { BeadColorGrid } from "@/features/bead/components/bead-color-grid";
 import { BeadColorLetterIndex } from "@/features/bead/components/bead-color-letter-index";
 import { BeadCurrentColor } from "@/features/bead/components/bead-current-color";
+import { BeadModeToolButtons } from "@/features/bead/components/bead-mode-tool-buttons";
+import type { CanvasTool } from "@/features/bead/types";
 import { cn } from "@/lib/utils";
 
 type BeadMobileColorPanelProps = {
@@ -15,8 +17,10 @@ type BeadMobileColorPanelProps = {
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   selectedLetter: string;
+  tool: CanvasTool;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
+  onSelectTool: (tool: CanvasTool) => void;
   onResetViewAfterResize: () => void;
 };
 
@@ -25,8 +29,10 @@ export function BeadMobileColorPanel({
   colors,
   selectedColor,
   selectedLetter,
+  tool,
   onSelectColor,
   onSelectLetter,
+  onSelectTool,
   onResetViewAfterResize,
 }: BeadMobileColorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -45,24 +51,27 @@ export function BeadMobileColorPanel({
         )}
       >
         <BeadCurrentColor color={selectedColor} />
-        <Button
-          aria-expanded={isExpanded}
-          aria-label={isExpanded ? "折叠颜色面板" : "展开颜色面板"}
-          className="shrink-0"
-          onClick={() => {
-            setIsExpanded((value) => !value);
-            onResetViewAfterResize();
-          }}
-          size="icon-sm"
-          type="button"
-          variant="outline"
-        >
-          {isExpanded ? (
-            <ChevronDown aria-hidden="true" />
-          ) : (
-            <ChevronUp aria-hidden="true" />
-          )}
-        </Button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <BeadModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+          <Button
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "折叠颜色面板" : "展开颜色面板"}
+            className="shrink-0"
+            onClick={() => {
+              setIsExpanded((value) => !value);
+              onResetViewAfterResize();
+            }}
+            size="icon-sm"
+            type="button"
+            variant="outline"
+          >
+            {isExpanded ? (
+              <ChevronDown aria-hidden="true" />
+            ) : (
+              <ChevronUp aria-hidden="true" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {isExpanded ? (
