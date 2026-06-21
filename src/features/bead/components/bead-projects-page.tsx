@@ -39,7 +39,7 @@ export function BeadProjectsPage() {
 
           {sortedDocuments.length > 0 ? (
             <Button asChild className="w-full md:w-auto">
-              <Link href="/">
+              <Link href="/projects/new">
                 <Plus aria-hidden="true" />
                 新建
               </Link>
@@ -101,7 +101,7 @@ export function BeadProjectsPage() {
               </div>
               <p className="text-muted-foreground text-sm">暂无作品</p>
               <Button asChild>
-                <Link href="/">
+                <Link href="/projects/new">
                   <Plus aria-hidden="true" />
                   新建作品
                 </Link>
