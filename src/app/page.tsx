@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { HomeRedirectNoSsr } from "@/app/home-redirect-no-ssr";
 
 export default function Page() {
-  redirect("/projects");
+  return <HomeRedirectNoSsr />;
 }
