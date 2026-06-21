@@ -1,40 +1,18 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mardColors } from "@/data/colors";
 
-const toolbarEditSkeletons = ["paint", "erase", "picker", "select"];
-const toolbarViewSkeletons = ["pan", "focus", "codes", "guides"];
+const modeToolSkeletons = ["pan", "paint", "erase", "picker", "select"];
+const toolbarViewSkeletons = ["focus", "codes", "guides"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = ["import", "template", "image"];
-const desktopLetterSkeletons = [
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "H",
-  "M",
-  "P",
-  "R",
-  "Y",
-];
+const letterSkeletons = Array.from(
+  new Set(mardColors.map((color) => color.code[0])),
+);
 const desktopColorSkeletons = Array.from(
   { length: 35 },
   (_, index) => `desktop-color-${index + 1}`,
 );
-const mobileLetterSkeletons = [
-  "A",
-  "B",
-  "C",
-  "D",
-  "E",
-  "F",
-  "G",
-  "H",
-  "M",
-  "P",
-];
 const mobileColorSkeletons = Array.from(
   { length: 24 },
   (_, index) => `mobile-color-${index + 1}`,
@@ -73,13 +51,14 @@ export function BeadCanvasSkeleton() {
 
 function EditorToolbarSkeleton() {
   return (
-    <header className="relative flex h-16 min-w-0 shrink-0 items-center justify-center overflow-hidden border-b px-4 md:px-5">
-      <div className="absolute left-4 z-10 md:left-5">
+    <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
+      <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <Skeleton className="size-7 shrink-0 rounded-lg" />
+        <Skeleton className="h-7 w-24 shrink-0 rounded-md" />
       </div>
 
-      <div className="scrollbar-none flex w-full min-w-0 items-center justify-center gap-1.5 overflow-x-auto md:w-auto [&::-webkit-scrollbar]:hidden">
-        {toolbarEditSkeletons.map((item) => (
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
+        {modeToolSkeletons.map((item) => (
           <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
         <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
@@ -95,6 +74,14 @@ function EditorToolbarSkeleton() {
           <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
         ))}
       </div>
+
+      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+        <Skeleton className="size-7 shrink-0 rounded-lg" />
+        {toolbarHistorySkeletons.map((item) => (
+          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+        ))}
+        <Skeleton className="size-7 shrink-0 rounded-lg" />
+      </div>
     </header>
   );
 }
@@ -107,7 +94,7 @@ function DesktopColorSidebarSkeleton() {
       <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
         <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
           <div className="flex flex-col gap-1 p-2">
-            {desktopLetterSkeletons.map((letter) => (
+            {letterSkeletons.map((letter) => (
               <Skeleton className="size-8 rounded-lg" key={letter} />
             ))}
           </div>
@@ -133,7 +120,7 @@ function MobileColorPanelSkeleton() {
       <div className="min-w-0 shrink-0 border-b">
         <div className="relative min-w-0 overflow-hidden">
           <div className="flex w-max flex-row gap-1 p-2">
-            {mobileLetterSkeletons.map((letter) => (
+            {letterSkeletons.map((letter) => (
               <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
             ))}
           </div>
@@ -169,7 +156,14 @@ function CurrentColorSkeleton({
           <Skeleton className="h-3 w-16 rounded-sm" />
         </div>
       </div>
-      {showAction ? <Skeleton className="size-7 shrink-0 rounded-lg" /> : null}
+      {showAction ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {modeToolSkeletons.map((item) => (
+            <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+          ))}
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+        </div>
+      ) : null}
     </div>
   );
 }
