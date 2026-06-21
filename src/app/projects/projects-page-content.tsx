@@ -34,29 +34,29 @@ const BeadEditor = dynamic(
 export function BeadProjectsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const project = searchParams.get("project");
+  const projectId = searchParams.get("projectId");
   const { data: documents, isReady } = useLiveQuery(
     (query) =>
-      project
+      projectId
         ? query
             .from({ document: beadDocumentsCollection })
-            .where(({ document }) => eq(document.id, project))
+            .where(({ document }) => eq(document.id, projectId))
             .select(({ document }) => ({
               id: document.id,
               sizeId: document.sizeId,
             }))
         : undefined,
-    [project],
+    [projectId],
   );
   const document = documents?.[0];
 
   useEffect(() => {
-    if (project && isReady && !document) {
+    if (projectId && isReady && !document) {
       router.replace("/projects");
     }
-  }, [document, isReady, project, router]);
+  }, [document, isReady, projectId, router]);
 
-  if (!project) {
+  if (!projectId) {
     return <BeadProjectsPage />;
   }
 
@@ -65,6 +65,6 @@ export function BeadProjectsPageContent() {
   }
 
   return (
-    <BeadEditor documentId={project} size={getCanvasSize(document.sizeId)} />
+    <BeadEditor documentId={projectId} size={getCanvasSize(document.sizeId)} />
   );
 }

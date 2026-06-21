@@ -8,7 +8,9 @@ export function ProjectsRouteSkeleton() {
     return <main className="min-h-screen bg-background" />;
   }
 
-  const hasProject = new URLSearchParams(window.location.search).has("project");
+  const hasProject = new URLSearchParams(window.location.search).has(
+    "projectId",
+  );
 
   return hasProject ? <BeadEditorSkeleton /> : <BeadProjectsSkeleton />;
 }
