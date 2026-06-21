@@ -28,6 +28,8 @@ export type BeadDocument = {
   updatedAt: number;
 };
 
+export const DEFAULT_BEAD_DOCUMENT_TITLE = "未命名作品";
+
 export const beadDocumentsCollection = createCollection(
   localStorageCollectionOptions<BeadDocument, BeadDocumentId>({
     id: "bead-documents",
@@ -47,10 +49,7 @@ export function getCurrentBeads({
   cellCount: number;
   document: BeadDocument;
 }) {
-  return expandSnapshot(
-    document.snapshots[document.currentIndex] ?? [],
-    cellCount,
-  );
+  return expandSnapshot(document.snapshots[document.currentIndex], cellCount);
 }
 
 export function canUndoDocument(document: BeadDocument) {
@@ -74,7 +73,7 @@ export function commitBeadSnapshot({
 
   const documentIndex = baseIndex ?? document.currentIndex;
   const nextSnapshot = compactBeads(beads);
-  const currentSnapshot = document.snapshots[documentIndex] ?? [];
+  const currentSnapshot = document.snapshots[documentIndex];
 
   if (isSameSnapshot(currentSnapshot, nextSnapshot)) {
     return Promise.resolve();
@@ -101,6 +100,32 @@ export function redoBeadDocument(documentId: BeadDocumentId) {
   return moveBeadDocumentIndex(documentId, 1);
 }
 
+export async function duplicateBeadDocument(documentId: BeadDocumentId) {
+  const document = getRequiredBeadDocument(documentId);
+  const duplicatedDocument: BeadDocument = {
+    ...document,
+    id: createBeadDocumentId(),
+    snapshots: document.snapshots.map((snapshot) =>
+      snapshot.map((cell) => ({ ...cell, fill: { ...cell.fill } })),
+    ),
+    updatedAt: Date.now(),
+  };
+
+  await commitBeadDocumentMutation(() => {
+    beadDocumentsCollection.insert(duplicatedDocument);
+  });
+
+  return duplicatedDocument;
+}
+
+export function deleteBeadDocument(documentId: BeadDocumentId) {
+  getRequiredBeadDocument(documentId);
+
+  return commitBeadDocumentMutation(() => {
+    beadDocumentsCollection.delete(documentId);
+  });
+}
+
 export function renameBeadDocument({
   documentId,
   title,
@@ -110,7 +135,8 @@ export function renameBeadDocument({
 }) {
   const document = getRequiredBeadDocument(documentId);
 
-  const nextTitle = normalizeBeadDocumentTitle(title);
+  const nextTitle =
+    normalizeBeadDocumentTitle(title) || DEFAULT_BEAD_DOCUMENT_TITLE;
 
   if (document.title === nextTitle) {
     return Promise.resolve();
@@ -124,10 +150,10 @@ export function renameBeadDocument({
   });
 }
 
-export function createBeadDocument(size: CanvasSize) {
+export async function createBeadDocument(size: CanvasSize) {
   const document: BeadDocument = {
     id: createBeadDocumentId(),
-    title: "",
+    title: DEFAULT_BEAD_DOCUMENT_TITLE,
     sizeId: size.id,
     rows: size.rows,
     cols: size.cols,
@@ -136,13 +162,15 @@ export function createBeadDocument(size: CanvasSize) {
     updatedAt: Date.now(),
   };
 
-  return commitBeadDocumentMutation(() => {
+  await commitBeadDocumentMutation(() => {
     beadDocumentsCollection.insert(document);
-  }).then(() => document);
+  });
+
+  return document;
 }
 
 export function getBeadDocumentFilledCount(document: BeadDocument) {
-  return document.snapshots[document.currentIndex]?.length ?? 0;
+  return document.snapshots[document.currentIndex].length;
 }
 
 function moveBeadDocumentIndex(documentId: BeadDocumentId, delta: -1 | 1) {
@@ -231,7 +259,7 @@ function isSameSnapshot(a: BeadSnapshot, b: BeadSnapshot) {
     const right = b[index];
 
     if (
-      left?.index !== right?.index ||
+      left.index !== right.index ||
       left.fill.code !== right.fill.code ||
       left.fill.hex !== right.fill.hex
     ) {

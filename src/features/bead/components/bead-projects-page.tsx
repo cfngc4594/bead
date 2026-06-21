@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getCanvasSize } from "@/config/canvas-sizes";
+import { BeadProjectActions } from "@/features/bead/components/bead-project-actions";
 import {
   beadDocumentsCollection,
   getBeadDocumentFilledCount,
@@ -62,13 +63,15 @@ export function BeadProjectsPage() {
               const filledCount = getBeadDocumentFilledCount(document);
 
               return (
-                <Link
-                  className="group block rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                  href={`/projects?projectId=${document.id}`}
+                <Card
+                  className="h-full transition-colors hover:border-primary/60"
                   key={document.id}
                 >
-                  <Card className="h-full transition-colors group-hover:border-primary/60">
-                    <CardContent className="flex items-center justify-between gap-4 p-4">
+                  <CardContent className="flex items-center justify-between gap-4 p-4">
+                    <Link
+                      className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      href={`/projects?projectId=${document.id}`}
+                    >
                       <div className="flex min-w-0 items-center gap-4">
                         <div className="grid size-14 shrink-0 place-items-center rounded-md border bg-muted text-2xl">
                           {size.emoji}
@@ -76,7 +79,7 @@ export function BeadProjectsPage() {
 
                         <div className="min-w-0 space-y-1">
                           <p className="truncate font-medium">
-                            {document.title.trim() || `${size.title} 作品`}
+                            {document.title}
                           </p>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-sm">
                             <span className="inline-flex items-center gap-1.5">
@@ -87,7 +90,9 @@ export function BeadProjectsPage() {
                           </div>
                         </div>
                       </div>
+                    </Link>
 
+                    <div className="flex shrink-0 items-center gap-2">
                       <time
                         className="hidden shrink-0 items-center gap-1.5 text-muted-foreground text-xs md:inline-flex"
                         dateTime={new Date(document.updatedAt).toISOString()}
@@ -95,9 +100,10 @@ export function BeadProjectsPage() {
                         <Clock3 className="size-3.5" aria-hidden="true" />
                         {formatUpdatedAt(document.updatedAt)}
                       </time>
-                    </CardContent>
-                  </Card>
-                </Link>
+                      <BeadProjectActions document={document} />
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>

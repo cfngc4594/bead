@@ -17,14 +17,13 @@ export function BeadProjectTitleEditor({
   const inputRef = useRef<HTMLInputElement>(null);
   const shouldSkipCommitRef = useRef(false);
   const [isEditing, setIsEditing] = useState(false);
-  const displayTitle = title.trim() || "未命名作品";
-  const [draftTitle, setDraftTitle] = useState(displayTitle);
+  const [draftTitle, setDraftTitle] = useState(title);
 
   useEffect(() => {
     if (!isEditing) {
-      setDraftTitle(displayTitle);
+      setDraftTitle(title);
     }
-  }, [displayTitle, isEditing]);
+  }, [isEditing, title]);
 
   useEffect(() => {
     if (isEditing) {
@@ -43,18 +42,14 @@ export function BeadProjectTitleEditor({
 
     setIsEditing(false);
 
-    if (!title.trim() && nextTitle === displayTitle) {
-      return;
-    }
-
-    if (nextTitle !== title.trim()) {
+    if (nextTitle !== title) {
       onRename(nextTitle);
     }
   }
 
   function cancelEdit() {
     shouldSkipCommitRef.current = true;
-    setDraftTitle(displayTitle);
+    setDraftTitle(title);
     setIsEditing(false);
   }
 
@@ -91,13 +86,13 @@ export function BeadProjectTitleEditor({
           aria-label="重命名作品"
           className="w-full truncate rounded-md px-2 py-1 text-left font-medium text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
           onClick={() => {
-            setDraftTitle(displayTitle);
+            setDraftTitle(title);
             setIsEditing(true);
           }}
-          title={displayTitle}
+          title={title}
           type="button"
         >
-          {displayTitle}
+          {title}
         </button>
       )}
     </div>
