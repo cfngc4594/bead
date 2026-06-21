@@ -37,8 +37,6 @@ export function BeadProjectPreview({ document }: BeadProjectPreviewProps) {
       return;
     }
 
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
     context.scale(previewScale, previewScale);
     context.translate(previewPadding, previewPadding);
     drawBoard(context, document.rows, document.cols, beads, {
