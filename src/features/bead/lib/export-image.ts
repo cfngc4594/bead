@@ -55,7 +55,7 @@ export function exportBeadImage({
   const context = canvas.getContext("2d");
 
   if (!context) {
-    return;
+    return Promise.reject(new Error("Unable to create export image."));
   }
 
   context.fillStyle = "#ffffff";
@@ -71,13 +71,16 @@ export function exportBeadImage({
     height: statsHeight,
   });
 
-  canvas.toBlob((blob) => {
-    if (!blob) {
-      return;
-    }
+  return new Promise<void>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Unable to create export image."));
+        return;
+      }
 
-    downloadBlob(blob, filename);
-  }, "image/png");
+      downloadBlob(blob, filename).then(resolve, reject);
+    }, "image/png");
+  });
 }
 
 function getStatsHeight(width: number, statsCount: number) {

@@ -121,6 +121,9 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
       filename: `bead-${size.id}.png`,
       showBeadCodes,
       showGuideLines,
+    }).catch((error) => {
+      console.error("Unable to export image", error);
+      toast.error("导出图片失败");
     });
   }
 
@@ -129,6 +132,9 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
       size,
       beads,
       filename: `bead-${size.id}.bead.json`,
+    }).catch((error) => {
+      console.error("Unable to export template", error);
+      toast.error("导出模板失败");
     });
   }
 

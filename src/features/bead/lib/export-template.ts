@@ -31,7 +31,7 @@ export function exportBeadTemplate({
     stats: getBeadStats(beads),
   };
 
-  downloadTextFile({
+  return downloadTextFile({
     filename,
     text: `${JSON.stringify(template, null, 2)}\n`,
     type: "application/json;charset=utf-8",

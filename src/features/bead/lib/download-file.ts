@@ -1,4 +1,13 @@
-export function downloadBlob(blob: Blob, filename: string) {
+import { Capacitor } from "@capacitor/core";
+import { Directory, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+
+export async function downloadBlob(blob: Blob, filename: string) {
+  if (Capacitor.isNativePlatform()) {
+    await shareNativeFile(blob, filename);
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.download = filename;
@@ -11,7 +20,7 @@ export function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function downloadTextFile({
+export async function downloadTextFile({
   text,
   filename,
   type,
@@ -20,5 +29,40 @@ export function downloadTextFile({
   filename: string;
   type: string;
 }) {
-  downloadBlob(new Blob([text], { type }), filename);
+  await downloadBlob(new Blob([text], { type }), filename);
+}
+
+async function shareNativeFile(blob: Blob, filename: string) {
+  const data = await blobToBase64(blob);
+
+  const { uri } = await Filesystem.writeFile({
+    data,
+    directory: Directory.Cache,
+    path: filename,
+    recursive: true,
+  });
+
+  await Share.share({
+    files: [uri],
+    title: filename,
+  });
+}
+
+function blobToBase64(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result;
+
+      if (typeof result !== "string") {
+        reject(new Error("Unable to read exported file."));
+        return;
+      }
+
+      resolve(result.slice(result.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
