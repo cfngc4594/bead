@@ -10,7 +10,7 @@ export default function NewProjectPage() {
       <Button
         asChild
         className="absolute top-6 left-4 md:left-8"
-        size="icon-sm"
+        size="icon"
         variant="outline"
       >
         <Link aria-label="返回作品" href="/projects">
