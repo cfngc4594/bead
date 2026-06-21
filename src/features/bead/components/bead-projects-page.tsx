@@ -30,19 +30,21 @@ export function BeadProjectsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 md:px-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
         <header className="flex flex-col gap-4 border-b pb-5 md:flex-row md:items-end md:justify-between">
           <h1 className="font-semibold text-2xl tracking-tight md:text-3xl">
             我的拼豆
           </h1>
 
-          <Button asChild className="w-full md:w-auto">
-            <Link href="/">
-              <Plus aria-hidden="true" />
-              新建
-            </Link>
-          </Button>
+          {sortedDocuments.length > 0 ? (
+            <Button asChild className="w-full md:w-auto">
+              <Link href="/">
+                <Plus aria-hidden="true" />
+                新建
+              </Link>
+            </Button>
+          ) : null}
         </header>
 
         {sortedDocuments.length > 0 ? (
@@ -92,17 +94,12 @@ export function BeadProjectsPage() {
             })}
           </div>
         ) : (
-          <div className="grid min-h-[50vh] place-items-center rounded-lg border border-dashed">
+          <div className="grid flex-1 place-items-center rounded-lg border border-dashed">
             <div className="flex max-w-sm flex-col items-center gap-3 text-center">
               <div className="grid size-12 place-items-center rounded-md bg-muted">
                 <Grid2x2 className="size-5" aria-hidden="true" />
               </div>
-              <div className="space-y-1">
-                <h2 className="font-medium">还没有作品</h2>
-                <p className="text-muted-foreground text-sm">
-                  新建一个画布后，作品会自动保存在这里
-                </p>
-              </div>
+              <p className="text-muted-foreground text-sm">暂无作品</p>
               <Button asChild>
                 <Link href="/">
                   <Plus aria-hidden="true" />
