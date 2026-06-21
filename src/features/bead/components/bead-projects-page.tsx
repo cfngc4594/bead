@@ -5,6 +5,13 @@ import { Clock3, Grid2x2, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import {
   beadDocumentsCollection,
@@ -94,20 +101,22 @@ export function BeadProjectsPage() {
             })}
           </div>
         ) : (
-          <div className="grid flex-1 place-items-center rounded-lg border border-dashed">
-            <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-              <div className="grid size-12 place-items-center rounded-md bg-muted">
-                <Grid2x2 className="size-5" aria-hidden="true" />
-              </div>
-              <p className="text-muted-foreground text-sm">还没有拼豆作品</p>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Grid2x2 />
+              </EmptyMedia>
+              <EmptyTitle>还没有拼豆作品</EmptyTitle>
+            </EmptyHeader>
+            <EmptyContent>
               <Button asChild>
                 <Link href="/projects/new">
                   <Plus aria-hidden="true" />
                   开始拼豆
                 </Link>
               </Button>
-            </div>
-          </div>
+            </EmptyContent>
+          </Empty>
         )}
       </div>
     </main>
