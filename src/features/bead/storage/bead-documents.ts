@@ -33,7 +33,7 @@ export const DEFAULT_BEAD_DOCUMENT_TITLE = "未命名作品";
 export const beadDocumentsCollection = createCollection(
   localStorageCollectionOptions<BeadDocument, BeadDocumentId>({
     id: "bead-documents",
-    storageKey: "bead:v3:documents",
+    storageKey: "bead:v4:documents",
     getKey: (document) => document.id,
   }),
 );
