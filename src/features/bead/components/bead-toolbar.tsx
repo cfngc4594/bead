@@ -214,7 +214,7 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
             </Button>
           </SheetTrigger>
         </TooltipTrigger>
-        <TooltipContent>更多工具</TooltipContent>
+        <TooltipContent className="hidden md:block">更多工具</TooltipContent>
       </Tooltip>
       <SheetContent
         className="max-h-[80vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
@@ -276,7 +276,7 @@ function ToolbarIconButton({
           <Icon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent className="hidden md:block">{label}</TooltipContent>
     </Tooltip>
   );
 }

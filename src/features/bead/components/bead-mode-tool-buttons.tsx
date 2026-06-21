@@ -102,7 +102,7 @@ function ModeToolButton({
           <Icon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent className="hidden md:block">{label}</TooltipContent>
     </Tooltip>
   );
 }
