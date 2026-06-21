@@ -1,10 +1,9 @@
 "use client";
 
 import { useLiveQuery } from "@tanstack/react-db";
-import { Clock3, Grid2x2, Plus } from "lucide-react";
+import { Grid2x2, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyContent,
@@ -14,10 +13,8 @@ import {
 } from "@/components/ui/empty";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { BeadProjectActions } from "@/features/bead/components/bead-project-actions";
-import {
-  beadDocumentsCollection,
-  getBeadDocumentFilledCount,
-} from "@/features/bead/storage/bead-documents";
+import { BeadProjectPreview } from "@/features/bead/components/bead-project-preview";
+import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
 
 export function BeadProjectsPage() {
   const { data: documents = [] } = useLiveQuery((query) =>
@@ -57,53 +54,52 @@ export function BeadProjectsPage() {
         </header>
 
         {sortedDocuments.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {sortedDocuments.map((document) => {
               const size = getCanvasSize(document.sizeId);
-              const filledCount = getBeadDocumentFilledCount(document);
 
               return (
-                <Card
-                  className="h-full transition-colors hover:border-primary/60"
+                <article
+                  className="group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50"
                   key={document.id}
                 >
-                  <CardContent className="flex items-center justify-between gap-4 p-4">
+                  <Link
+                    aria-label={`打开 ${document.title}`}
+                    className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+                    href={`/projects?projectId=${document.id}`}
+                  >
+                    <div className="aspect-4/3">
+                      <BeadProjectPreview document={document} />
+                    </div>
+                  </Link>
+
+                  <div className="flex items-center gap-3 border-t bg-card p-4">
+                    <Link
+                      aria-label={`打开 ${document.title}`}
+                      className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted text-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      href={`/projects?projectId=${document.id}`}
+                    >
+                      {size.emoji}
+                    </Link>
+
                     <Link
                       className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                       href={`/projects?projectId=${document.id}`}
                     >
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div className="grid size-14 shrink-0 place-items-center rounded-md border bg-muted text-2xl">
-                          {size.emoji}
-                        </div>
-
-                        <div className="min-w-0 space-y-1">
-                          <p className="truncate font-medium">
-                            {document.title}
-                          </p>
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-sm">
-                            <span className="inline-flex items-center gap-1.5">
-                              <Grid2x2 className="size-4" aria-hidden="true" />
-                              {document.rows} x {document.cols}
-                            </span>
-                            <span>{filledCount} 颗</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-
-                    <div className="flex shrink-0 items-center gap-2">
+                      <p className="truncate font-medium leading-tight">
+                        {document.title}
+                      </p>
                       <time
-                        className="hidden shrink-0 items-center gap-1.5 text-muted-foreground text-xs md:inline-flex"
+                        className="mt-1 block truncate text-muted-foreground text-sm"
                         dateTime={new Date(document.updatedAt).toISOString()}
                       >
-                        <Clock3 className="size-3.5" aria-hidden="true" />
                         {formatUpdatedAt(document.updatedAt)}
                       </time>
-                      <BeadProjectActions document={document} />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </Link>
+
+                    <BeadProjectActions document={document} />
+                  </div>
+                </article>
               );
             })}
           </div>
@@ -131,10 +127,25 @@ export function BeadProjectsPage() {
 }
 
 function formatUpdatedAt(updatedAt: number) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(updatedAt);
+  const elapsedSeconds = Math.max(
+    1,
+    Math.floor((Date.now() - updatedAt) / 1000),
+  );
+  const units = [
+    { label: "年", seconds: 60 * 60 * 24 * 365 },
+    { label: "个月", seconds: 60 * 60 * 24 * 30 },
+    { label: "天", seconds: 60 * 60 * 24 },
+    { label: "小时", seconds: 60 * 60 },
+    { label: "分钟", seconds: 60 },
+  ];
+
+  for (const unit of units) {
+    const value = Math.floor(elapsedSeconds / unit.seconds);
+
+    if (value >= 1) {
+      return `${value} ${unit.label}前编辑`;
+    }
+  }
+
+  return "刚刚编辑";
 }
