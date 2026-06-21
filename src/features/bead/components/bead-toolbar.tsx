@@ -89,12 +89,12 @@ export function BeadToolbar({
   onUndo,
   onRedo,
 }: BeadToolbarProps) {
-  const viewActions: ToolbarAction[] = [
-    {
-      icon: Focus,
-      label: "居中显示",
-      onClick: onResetView,
-    },
+  const resetViewAction: ToolbarAction = {
+    icon: Focus,
+    label: "居中显示",
+    onClick: onResetView,
+  };
+  const displayActions: ToolbarAction[] = [
     {
       icon: showBeadCodes ? Eye : EyeOff,
       isActive: !showBeadCodes,
@@ -108,6 +108,7 @@ export function BeadToolbar({
       onClick: onToggleGuideLines,
     },
   ];
+  const viewActions = [resetViewAction, ...displayActions];
   const historyActions: ToolbarAction[] = [
     {
       disabled: !canUndo,
@@ -145,7 +146,8 @@ export function BeadToolbar({
       onClick: onExportImage,
     },
   ];
-  const mobileMoreActions = fileActions;
+  const mobileTopViewActions = [resetViewAction];
+  const mobileSheetActions = [...displayActions, ...fileActions];
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
@@ -170,13 +172,13 @@ export function BeadToolbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-        {viewActions.map((action) => (
+        {mobileTopViewActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
         {historyActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
-        <MobileMoreTools actions={mobileMoreActions} />
+        <MobileMoreTools actions={mobileSheetActions} />
       </div>
     </header>
   );
