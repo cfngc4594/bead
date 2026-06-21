@@ -1,10 +1,23 @@
-import { Suspense } from "react";
-import { BeadSizePickerFromUrl } from "@/app/size-picker-from-url";
-import { BeadSizePickerSkeleton } from "@/features/bead/components/bead-size-picker-skeleton";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { canvasSizes } from "@/config/canvas-sizes";
+import { BeadSizePicker } from "@/features/bead/components/bead-size-picker";
 
 export default function NewProjectPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="relative flex min-h-screen items-center justify-center px-4">
+      <Button
+        asChild
+        className="absolute top-6 left-4 md:left-8"
+        size="icon-sm"
+        variant="outline"
+      >
+        <Link aria-label="返回作品" href="/projects">
+          <ArrowLeft aria-hidden="true" />
+        </Link>
+      </Button>
+
       <div className="w-full max-w-5xl space-y-10">
         <div className="space-y-2 text-center">
           <h1 className="font-bold text-3xl tracking-tight md:text-5xl">
@@ -16,9 +29,7 @@ export default function NewProjectPage() {
           </p>
         </div>
 
-        <Suspense fallback={<BeadSizePickerSkeleton />}>
-          <BeadSizePickerFromUrl />
-        </Suspense>
+        <BeadSizePicker initialSize={canvasSizes[0].id} />
       </div>
     </main>
   );
