@@ -60,7 +60,10 @@ export function BeadProjectTitleEditor({
 
   return (
     <div
-      className={cn("w-[42vw] max-w-56 min-w-28 shrink-0 md:w-56", className)}
+      className={cn(
+        "w-[76px] max-w-[92px] min-w-16 shrink-0 md:w-[92px]",
+        className,
+      )}
     >
       {isEditing ? (
         <input
