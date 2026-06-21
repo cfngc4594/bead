@@ -45,27 +45,19 @@ export function getCurrentBeads({
   document,
 }: {
   cellCount: number;
-  document: BeadDocument | undefined;
+  document: BeadDocument;
 }) {
-  if (!document) {
-    return createEmptyBeads(cellCount);
-  }
-
   return expandSnapshot(
     document.snapshots[document.currentIndex] ?? [],
     cellCount,
   );
 }
 
-export function canUndoDocument(document: BeadDocument | undefined) {
-  return (document?.currentIndex ?? 0) > 0;
+export function canUndoDocument(document: BeadDocument) {
+  return document.currentIndex > 0;
 }
 
-export function canRedoDocument(document: BeadDocument | undefined) {
-  if (!document) {
-    return false;
-  }
-
+export function canRedoDocument(document: BeadDocument) {
   return document.currentIndex < document.snapshots.length - 1;
 }
 
@@ -78,11 +70,7 @@ export function commitBeadSnapshot({
   beads: BeadState;
   documentId: BeadDocumentId;
 }) {
-  const document = beadDocumentsCollection.get(documentId);
-
-  if (!document) {
-    return Promise.resolve();
-  }
+  const document = getRequiredBeadDocument(documentId);
 
   const documentIndex = baseIndex ?? document.currentIndex;
   const nextSnapshot = compactBeads(beads);
@@ -120,11 +108,7 @@ export function renameBeadDocument({
   documentId: BeadDocumentId;
   title: string;
 }) {
-  const document = beadDocumentsCollection.get(documentId);
-
-  if (!document) {
-    return Promise.resolve();
-  }
+  const document = getRequiredBeadDocument(documentId);
 
   const nextTitle = normalizeBeadDocumentTitle(title);
 
@@ -162,11 +146,7 @@ export function getBeadDocumentFilledCount(document: BeadDocument) {
 }
 
 function moveBeadDocumentIndex(documentId: BeadDocumentId, delta: -1 | 1) {
-  const document = beadDocumentsCollection.get(documentId);
-
-  if (!document) {
-    return Promise.resolve();
-  }
+  const document = getRequiredBeadDocument(documentId);
 
   const nextIndex = document.currentIndex + delta;
 
@@ -188,6 +168,16 @@ function createBeadDocumentId() {
   }
 
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getRequiredBeadDocument(documentId: BeadDocumentId) {
+  const document = beadDocumentsCollection.get(documentId);
+
+  if (!document) {
+    throw new Error(`Bead document not found: ${documentId}`);
+  }
+
+  return document;
 }
 
 function normalizeBeadDocumentTitle(title: string) {

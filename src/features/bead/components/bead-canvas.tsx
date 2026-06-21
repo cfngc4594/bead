@@ -5,6 +5,19 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
+import {
+  type BeadSelection,
+  type BeadSelectionBox,
+  getMovedSelectionOrigin,
+  getSelectionBoxRect,
+  getSelectionFromBox,
+  getSelectionRect,
+  hideSelectedBeads,
+  isCellInSelection,
+  isSameCell,
+  isSelectionInBounds,
+  moveSelectedBeads,
+} from "@/features/bead/lib/bead-selection";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
@@ -38,24 +51,6 @@ export type BeadCanvasProps = {
   viewport?: Viewport;
 };
 
-type Selection = {
-  origin: GridCell;
-  rows: number;
-  cols: number;
-  items: SelectionItem[];
-};
-
-type SelectionItem = {
-  rowOffset: number;
-  columnOffset: number;
-  fill: BeadFill;
-};
-
-type SelectionBox = {
-  start: GridCell;
-  end: GridCell;
-};
-
 export function BeadCanvas({
   rows,
   cols,
@@ -81,8 +76,10 @@ export function BeadCanvas({
   const [isStageMeasured, setIsStageMeasured] = useState(false);
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
   const [isPainting, setIsPainting] = useState(false);
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+  const [selection, setSelection] = useState<BeadSelection | null>(null);
+  const [selectionBox, setSelectionBox] = useState<BeadSelectionBox | null>(
+    null,
+  );
   const [moveStartCell, setMoveStartCell] = useState<GridCell | null>(null);
   const [moveTargetOrigin, setMoveTargetOrigin] = useState<GridCell | null>(
     null,
@@ -554,7 +551,7 @@ function getCanvasCursor({
   hoveredCell: GridCell | null;
   isDraggable: boolean;
   isMovingSelection: boolean;
-  selection: Selection | null;
+  selection: BeadSelection | null;
   tool: CanvasTool;
 }) {
   if (isDraggable) {
@@ -586,151 +583,4 @@ function getCanvasCursor({
   }
 
   return "default";
-}
-
-function normalizeSelectionBox({ start, end }: SelectionBox) {
-  const row = Math.min(start.row, end.row);
-  const column = Math.min(start.column, end.column);
-  const lastRow = Math.max(start.row, end.row);
-  const lastColumn = Math.max(start.column, end.column);
-
-  return {
-    origin: { row, column },
-    rows: lastRow - row + 1,
-    cols: lastColumn - column + 1,
-  };
-}
-
-function getSelectionFromBox(
-  box: SelectionBox,
-  beads: readonly (BeadFill | null)[],
-  rows: number,
-  cols: number,
-) {
-  const bounds = normalizeSelectionBox(box);
-  const items: SelectionItem[] = [];
-
-  for (let rowOffset = 0; rowOffset < bounds.rows; rowOffset += 1) {
-    for (let columnOffset = 0; columnOffset < bounds.cols; columnOffset += 1) {
-      const row = bounds.origin.row + rowOffset;
-      const column = bounds.origin.column + columnOffset;
-
-      if (row < 0 || row >= rows || column < 0 || column >= cols) {
-        continue;
-      }
-
-      const fill = beads[row * cols + column];
-
-      if (fill) {
-        items.push({ rowOffset, columnOffset, fill });
-      }
-    }
-  }
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return {
-    ...bounds,
-    items,
-  };
-}
-
-function getSelectionBoxRect(box: SelectionBox) {
-  return getSelectionRect(normalizeSelectionBox(box));
-}
-
-function getSelectionRect(
-  selection: Pick<Selection, "origin" | "rows" | "cols">,
-  origin = selection.origin,
-) {
-  const gridOrigin = getGridOrigin();
-
-  return {
-    x: gridOrigin.x + origin.column * cellSize + 0.5,
-    y: gridOrigin.y + origin.row * cellSize + 0.5,
-    width: selection.cols * cellSize,
-    height: selection.rows * cellSize,
-  };
-}
-
-function isCellInSelection(cell: GridCell, selection: Selection) {
-  return (
-    cell.row >= selection.origin.row &&
-    cell.row < selection.origin.row + selection.rows &&
-    cell.column >= selection.origin.column &&
-    cell.column < selection.origin.column + selection.cols
-  );
-}
-
-function getMovedSelectionOrigin(
-  selection: Selection,
-  moveStartCell: GridCell,
-  currentCell: GridCell,
-) {
-  return {
-    row: selection.origin.row + currentCell.row - moveStartCell.row,
-    column: selection.origin.column + currentCell.column - moveStartCell.column,
-  };
-}
-
-function isSelectionInBounds(
-  selection: Selection,
-  origin: GridCell,
-  rows: number,
-  cols: number,
-) {
-  return (
-    origin.row >= 0 &&
-    origin.column >= 0 &&
-    origin.row + selection.rows <= rows &&
-    origin.column + selection.cols <= cols
-  );
-}
-
-function moveSelectedBeads(
-  beads: readonly (BeadFill | null)[],
-  selection: Selection,
-  targetOrigin: GridCell,
-  cols: number,
-) {
-  const next = [...beads];
-
-  for (const item of selection.items) {
-    const sourceRow = selection.origin.row + item.rowOffset;
-    const sourceColumn = selection.origin.column + item.columnOffset;
-
-    next[sourceRow * cols + sourceColumn] = null;
-  }
-
-  for (const item of selection.items) {
-    const targetRow = targetOrigin.row + item.rowOffset;
-    const targetColumn = targetOrigin.column + item.columnOffset;
-
-    next[targetRow * cols + targetColumn] = item.fill;
-  }
-
-  return next;
-}
-
-function hideSelectedBeads(
-  beads: readonly (BeadFill | null)[],
-  selection: Selection,
-  cols: number,
-) {
-  const next = [...beads];
-
-  for (const item of selection.items) {
-    const sourceRow = selection.origin.row + item.rowOffset;
-    const sourceColumn = selection.origin.column + item.columnOffset;
-
-    next[sourceRow * cols + sourceColumn] = null;
-  }
-
-  return next;
-}
-
-function isSameCell(a: GridCell, b: GridCell) {
-  return a.row === b.row && a.column === b.column;
 }

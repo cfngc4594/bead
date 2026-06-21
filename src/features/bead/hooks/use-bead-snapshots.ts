@@ -43,7 +43,9 @@ export function useBeadSnapshots({
   );
   const document = documents[0];
   const cellCount = size.rows * size.cols;
-  const persistedBeads = getCurrentBeads({ cellCount, document });
+  const persistedBeads = document
+    ? getCurrentBeads({ cellCount, document })
+    : createEmptyBeads(cellCount);
   const editBaseIndexRef = useRef<number | null>(null);
   const draftRef = useRef<BeadState | null>(null);
   const [draftBeads, setDraftBeads] = useState<BeadState | null>(null);
@@ -52,7 +54,11 @@ export function useBeadSnapshots({
   function beginEdit() {
     const currentDocument = beadDocumentsCollection.get(documentId) ?? document;
 
-    editBaseIndexRef.current = currentDocument?.currentIndex ?? 0;
+    if (!currentDocument) {
+      return;
+    }
+
+    editBaseIndexRef.current = currentDocument.currentIndex;
     draftRef.current = getCurrentBeads({
       cellCount,
       document: currentDocument,
@@ -95,7 +101,12 @@ export function useBeadSnapshots({
 
   function commitBeads(nextBeads: BeadState) {
     const currentDocument = beadDocumentsCollection.get(documentId) ?? document;
-    const baseIndex = currentDocument?.currentIndex ?? 0;
+
+    if (!currentDocument) {
+      return;
+    }
+
+    const baseIndex = currentDocument.currentIndex;
     const currentBeads = getCurrentBeads({
       cellCount,
       document: currentDocument,
@@ -145,8 +156,8 @@ export function useBeadSnapshots({
     undo,
     redo,
     clear,
-    canUndo: canUndoDocument(document),
-    canRedo: canRedoDocument(document),
+    canUndo: document ? canUndoDocument(document) : false,
+    canRedo: document ? canRedoDocument(document) : false,
   };
 }
 

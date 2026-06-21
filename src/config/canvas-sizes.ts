@@ -36,12 +36,10 @@ export const canvasSizes = [
 export type CanvasSize = (typeof canvasSizes)[number];
 export type CanvasSizeId = CanvasSize["id"];
 
-export function isCanvasSizeId(value: unknown): value is CanvasSizeId {
-  return (
-    typeof value === "string" && canvasSizes.some((size) => size.id === value)
-  );
-}
+const canvasSizesById = Object.fromEntries(
+  canvasSizes.map((size) => [size.id, size]),
+) as Record<CanvasSizeId, CanvasSize>;
 
 export function getCanvasSize(id: CanvasSizeId): CanvasSize {
-  return canvasSizes.find((size) => size.id === id) ?? canvasSizes[0];
+  return canvasSizesById[id];
 }
