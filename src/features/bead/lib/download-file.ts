@@ -38,7 +38,7 @@ async function shareNativeFile(blob: Blob, filename: string) {
   const { uri } = await Filesystem.writeFile({
     data,
     directory: Directory.Cache,
-    path: filename,
+    path: createSharePath(filename),
     recursive: true,
   });
 
@@ -65,4 +65,8 @@ function blobToBase64(blob: Blob) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
+}
+
+function createSharePath(filename: string) {
+  return `share-${Date.now().toString(36)}/${filename}`;
 }
