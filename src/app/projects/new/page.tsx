@@ -7,11 +7,11 @@ export default function NewProjectPage() {
       <div className="w-full max-w-5xl space-y-10">
         <div className="space-y-2 text-center">
           <h1 className="font-bold text-3xl tracking-tight md:text-5xl">
-            今天想拼什么？
+            新建拼豆作品
           </h1>
 
           <p className="text-muted-foreground text-sm md:text-base">
-            选择一个画布尺寸开始创作
+            选择拼豆板尺寸
           </p>
         </div>
 

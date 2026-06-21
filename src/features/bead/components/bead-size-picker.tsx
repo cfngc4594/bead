@@ -86,7 +86,7 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
           {isCreating ? "正在创建" : "开始创作"}
         </Button>
         <Button asChild className="min-w-48 rounded-full" variant="outline">
-          <Link href="/projects">返回首页</Link>
+          <Link href="/projects">返回作品</Link>
         </Button>
       </div>
     </>

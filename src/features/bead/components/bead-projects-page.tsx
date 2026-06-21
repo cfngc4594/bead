@@ -99,11 +99,11 @@ export function BeadProjectsPage() {
               <div className="grid size-12 place-items-center rounded-md bg-muted">
                 <Grid2x2 className="size-5" aria-hidden="true" />
               </div>
-              <p className="text-muted-foreground text-sm">暂无作品</p>
+              <p className="text-muted-foreground text-sm">还没有拼豆作品</p>
               <Button asChild>
                 <Link href="/projects/new">
                   <Plus aria-hidden="true" />
-                  新建作品
+                  开始拼豆
                 </Link>
               </Button>
             </div>
