@@ -40,13 +40,13 @@ export function BeadProjectsPage() {
   return (
     <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
-        <header className="flex flex-col gap-4 border-b pb-5 md:flex-row md:items-end md:justify-between">
+        <header className="flex items-center justify-between gap-4 border-b pb-5">
           <h1 className="font-semibold text-2xl tracking-tight md:text-3xl">
             我的拼豆
           </h1>
 
           {sortedDocuments.length > 0 ? (
-            <Button asChild className="w-full md:w-auto">
+            <Button asChild>
               <Link href="/projects/new">
                 <Plus aria-hidden="true" />
                 新建
