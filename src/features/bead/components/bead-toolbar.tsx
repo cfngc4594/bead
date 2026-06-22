@@ -7,6 +7,7 @@ import {
   FileUp,
   Focus,
   Grid3x3,
+  ImageUp,
   type LucideIcon,
   MoreHorizontal,
   Redo2,
@@ -47,9 +48,11 @@ type BeadToolbarProps = {
   onClearDraft: () => void;
   onExportImage: () => void;
   onExportTemplate: () => void;
+  onImportImage: () => void;
   onImportTemplate: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  isImportingImage?: boolean;
 };
 
 type ToolbarIconButtonProps = {
@@ -85,9 +88,11 @@ export function BeadToolbar({
   onClearDraft,
   onExportImage,
   onExportTemplate,
+  onImportImage,
   onImportTemplate,
   onUndo,
   onRedo,
+  isImportingImage = false,
 }: BeadToolbarProps) {
   const resetViewAction: ToolbarAction = {
     icon: Focus,
@@ -130,6 +135,12 @@ export function BeadToolbar({
     },
   ];
   const fileActions: ToolbarAction[] = [
+    {
+      disabled: isImportingImage,
+      icon: ImageUp,
+      label: isImportingImage ? "生成中" : "图片生成",
+      onClick: onImportImage,
+    },
     {
       icon: FileUp,
       label: "导入模板",

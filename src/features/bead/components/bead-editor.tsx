@@ -14,6 +14,7 @@ import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
 import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
 import { exportBeadImage } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
+import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
@@ -59,6 +60,7 @@ export function BeadEditor({ documentId, size, title }: BeadEditorProps) {
 function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   const router = useRouter();
   const importInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -68,6 +70,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
   const [selectionResetSignal, setSelectionResetSignal] = useState(0);
+  const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
   const {
     beads,
     beginEdit,
@@ -142,6 +145,14 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     importInputRef.current?.click();
   }
 
+  function importImage() {
+    if (isGeneratingFromImage) {
+      return;
+    }
+
+    imageInputRef.current?.click();
+  }
+
   async function importTemplateFile(file: File) {
     try {
       const importedBeads = parseBeadTemplateFile({
@@ -161,6 +172,28 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     }
   }
 
+  async function importImageFile(file: File) {
+    setIsGeneratingFromImage(true);
+
+    try {
+      const generatedBeads = await generateBeadsFromImageFile({
+        cols: size.cols,
+        file,
+        palette: mardColors,
+        rows: size.rows,
+      });
+
+      resetSelection();
+      commitBeads(generatedBeads);
+      toast.success("图片已生成豆图");
+    } catch (error) {
+      console.error("Unable to generate bead image", error);
+      toast.error("图片生成失败");
+    } finally {
+      setIsGeneratingFromImage(false);
+    }
+  }
+
   function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -170,6 +203,17 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     }
 
     void importTemplateFile(file);
+  }
+
+  function handleImageFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    void importImageFile(file);
   }
 
   function editCell({ row, column }: GridCell) {
@@ -230,6 +274,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           onClearDraft={clearDraft}
           onExportImage={exportImage}
           onExportTemplate={exportTemplate}
+          onImportImage={importImage}
           onImportTemplate={importTemplate}
           onBack={() => router.push("/projects")}
           onRenameProject={renameProject}
@@ -237,6 +282,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}
           onUndo={undoEdit}
+          isImportingImage={isGeneratingFromImage}
           tool={tool}
         />
         <input
@@ -244,6 +290,13 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           className="hidden"
           onChange={handleImportFileChange}
           ref={importInputRef}
+          type="file"
+        />
+        <input
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageFileChange}
+          ref={imageInputRef}
           type="file"
         />
 

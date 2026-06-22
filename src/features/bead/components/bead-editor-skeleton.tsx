@@ -5,7 +5,7 @@ import { mardColors } from "@/data/colors";
 const modeToolSkeletons = ["pan", "paint", "erase", "picker", "select"];
 const toolbarViewSkeletons = ["focus", "codes", "guides"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
-const toolbarFileSkeletons = ["import", "template", "image"];
+const toolbarFileSkeletons = ["generate", "import", "template", "image"];
 const letterSkeletons = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
