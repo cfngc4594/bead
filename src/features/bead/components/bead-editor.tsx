@@ -70,6 +70,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
   const [selectionResetSignal, setSelectionResetSignal] = useState(0);
+  const [isExportingImage, setIsExportingImage] = useState(false);
   const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
   const {
     beads,
@@ -116,18 +117,31 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     redo();
   }
 
-  function exportImage() {
-    exportBeadImage({
-      rows: size.rows,
-      cols: size.cols,
-      beads,
-      filename: `bead-${size.id}.png`,
-      showBeadCodes,
-      showGuideLines,
-    }).catch((error) => {
+  async function exportImage() {
+    if (isExportingImage) {
+      return;
+    }
+
+    const loadingToastId = toast.loading("正在生成图片...");
+    setIsExportingImage(true);
+
+    try {
+      await waitForNextFrame();
+      await exportBeadImage({
+        rows: size.rows,
+        cols: size.cols,
+        beads,
+        filename: `bead-${size.id}.png`,
+        showBeadCodes,
+        showGuideLines,
+      });
+      toast.dismiss(loadingToastId);
+    } catch (error) {
       console.error("Unable to export image", error);
-      toast.error("导出图片失败");
-    });
+      toast.error("导出图片失败", { id: loadingToastId });
+    } finally {
+      setIsExportingImage(false);
+    }
   }
 
   function exportTemplate() {
@@ -282,6 +296,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}
           onUndo={undoEdit}
+          isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
           tool={tool}
         />
@@ -343,4 +358,10 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
       />
     </main>
   );
+}
+
+function waitForNextFrame() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
 }

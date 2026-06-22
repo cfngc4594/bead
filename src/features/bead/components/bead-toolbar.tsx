@@ -8,12 +8,14 @@ import {
   Focus,
   Grid3x3,
   ImageUp,
+  LoaderCircle,
   type LucideIcon,
   MoreHorizontal,
   Redo2,
   RotateCcw,
   Undo2,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -52,6 +54,7 @@ type BeadToolbarProps = {
   onImportTemplate: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  isExportingImage?: boolean;
   isImportingImage?: boolean;
 };
 
@@ -59,6 +62,7 @@ type ToolbarIconButtonProps = {
   label: string;
   icon: LucideIcon;
   disabled?: boolean;
+  loading?: boolean;
   isActive?: boolean;
   onClick: () => void;
 };
@@ -66,7 +70,9 @@ type ToolbarIconButtonProps = {
 type ToolbarAction = {
   label: string;
   icon: LucideIcon;
+  closeSheetOnClick?: boolean;
   disabled?: boolean;
+  loading?: boolean;
   isActive?: boolean;
   onClick: () => void;
 };
@@ -92,6 +98,7 @@ export function BeadToolbar({
   onImportTemplate,
   onUndo,
   onRedo,
+  isExportingImage = false,
   isImportingImage = false,
 }: BeadToolbarProps) {
   const resetViewAction: ToolbarAction = {
@@ -136,25 +143,31 @@ export function BeadToolbar({
   ];
   const fileActions: ToolbarAction[] = [
     {
+      closeSheetOnClick: true,
       disabled: isImportingImage,
       icon: ImageUp,
-      label: isImportingImage ? "生成中" : "图片生成",
+      label: isImportingImage ? "导入中" : "导入图片",
       onClick: onImportImage,
     },
     {
+      closeSheetOnClick: true,
+      disabled: isExportingImage,
+      icon: Download,
+      label: isExportingImage ? "导出中" : "导出图片",
+      loading: isExportingImage,
+      onClick: onExportImage,
+    },
+    {
+      closeSheetOnClick: true,
       icon: FileUp,
       label: "导入模板",
       onClick: onImportTemplate,
     },
     {
+      closeSheetOnClick: true,
       icon: FileDown,
       label: "导出模板",
       onClick: onExportTemplate,
-    },
-    {
-      icon: Download,
-      label: "导出图片",
-      onClick: onExportImage,
     },
   ];
   const mobileTopViewActions = [resetViewAction];
@@ -217,8 +230,10 @@ function ToolbarSeparator() {
 }
 
 function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
@@ -238,7 +253,16 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
         </SheetHeader>
         <div className="grid grid-cols-2 gap-2 px-4 pb-4">
           {actions.map((action) => (
-            <SheetActionButton key={action.label} {...action} />
+            <SheetActionButton
+              key={action.label}
+              {...action}
+              onClick={() => {
+                if (action.closeSheetOnClick) {
+                  setOpen(false);
+                }
+                action.onClick();
+              }}
+            />
           ))}
         </div>
       </SheetContent>
@@ -250,9 +274,12 @@ function SheetActionButton({
   label,
   icon: Icon,
   disabled = false,
+  loading = false,
   isActive = false,
   onClick,
 }: ToolbarAction) {
+  const IconToRender = loading ? LoaderCircle : Icon;
+
   return (
     <Button
       aria-pressed={isActive || undefined}
@@ -262,7 +289,7 @@ function SheetActionButton({
       type="button"
       variant={isActive ? "default" : "outline"}
     >
-      <Icon />
+      <IconToRender className={loading ? "animate-spin" : undefined} />
       <span className="truncate">{label}</span>
     </Button>
   );
@@ -272,9 +299,12 @@ function ToolbarIconButton({
   label,
   icon: Icon,
   disabled = false,
+  loading = false,
   isActive = false,
   onClick,
 }: ToolbarIconButtonProps) {
+  const IconToRender = loading ? LoaderCircle : Icon;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -286,7 +316,7 @@ function ToolbarIconButton({
           size="icon-sm"
           variant={isActive ? "default" : "outline"}
         >
-          <Icon />
+          <IconToRender className={loading ? "animate-spin" : undefined} />
         </Button>
       </TooltipTrigger>
       <TooltipContent className="hidden md:block">{label}</TooltipContent>
