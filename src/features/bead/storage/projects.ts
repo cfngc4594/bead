@@ -4,6 +4,7 @@ import {
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
 import type { CanvasSize, CanvasSizeId } from "@/config/canvas-sizes";
+import { runStorageMigrations } from "@/features/bead/storage/storage-migrations";
 import type { BeadFill } from "@/features/bead/types";
 
 export type CanvasState = (BeadFill | null)[];
@@ -29,11 +30,20 @@ export type Project = {
 };
 
 export const DEFAULT_PROJECT_TITLE = "未命名作品";
+const PROJECTS_V0_STORAGE_KEY = "bead:v5:documents";
+const PROJECTS_V1_STORAGE_KEY = "bead:projects:v1";
+
+runStorageMigrations([
+  {
+    from: PROJECTS_V0_STORAGE_KEY,
+    to: PROJECTS_V1_STORAGE_KEY,
+  },
+]);
 
 export const projectsCollection = createCollection(
   localStorageCollectionOptions<Project, ProjectId>({
     id: "projects",
-    storageKey: "bead:v5:documents",
+    storageKey: PROJECTS_V1_STORAGE_KEY,
     getKey: (project) => project.id,
   }),
 );
