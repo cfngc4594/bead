@@ -2,19 +2,19 @@ import type { BeadColor } from "@/data/colors";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import { cn } from "@/lib/utils";
 
-type BeadColorGridProps = {
+type ColorGridProps = {
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   layout: "desktop" | "mobile";
   onSelectColor: (color: BeadColor) => void;
 };
 
-export function BeadColorGrid({
+export function ColorGrid({
   colors,
   selectedColor,
   layout,
   onSelectColor,
-}: BeadColorGridProps) {
+}: ColorGridProps) {
   return (
     <div
       className={cn(

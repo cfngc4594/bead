@@ -30,34 +30,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  type BeadDocument,
-  DEFAULT_BEAD_DOCUMENT_TITLE,
-  deleteBeadDocument,
-  duplicateBeadDocument,
-  renameBeadDocument,
-} from "@/features/bead/storage/bead-documents";
+  DEFAULT_PROJECT_TITLE,
+  deleteProject as deleteStoredProject,
+  duplicateProject as duplicateStoredProject,
+  type Project,
+  renameProject as renameStoredProject,
+} from "@/features/bead/storage/projects";
 
-export function BeadProjectActions({ document }: { document: BeadDocument }) {
+export function ProjectActions({ project }: { project: Project }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  async function duplicateProject() {
+  async function handleDuplicateProject() {
     try {
-      await duplicateBeadDocument(document.id);
+      await duplicateStoredProject(project.id);
       toast.success("作品已复制");
     } catch (error) {
-      console.error("Unable to duplicate bead document", error);
+      console.error("Unable to duplicate bead project", error);
       toast.error("复制作品失败");
     }
   }
 
-  async function deleteProject() {
+  async function handleDeleteProject() {
     try {
-      await deleteBeadDocument(document.id);
+      await deleteStoredProject(project.id);
       setIsDeleteOpen(false);
       toast.success("作品已删除");
     } catch (error) {
-      console.error("Unable to delete bead document", error);
+      console.error("Unable to delete bead project", error);
       toast.error("删除作品失败");
     }
   }
@@ -67,7 +67,7 @@ export function BeadProjectActions({ document }: { document: BeadDocument }) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            aria-label={`${document.title} 操作`}
+            aria-label={`${project.title} 操作`}
             size="icon-sm"
             variant="ghost"
           >
@@ -79,7 +79,7 @@ export function BeadProjectActions({ document }: { document: BeadDocument }) {
             <Edit3 />
             重命名
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={duplicateProject}>
+          <DropdownMenuItem onSelect={handleDuplicateProject}>
             <Copy />
             复制
           </DropdownMenuItem>
@@ -96,15 +96,15 @@ export function BeadProjectActions({ document }: { document: BeadDocument }) {
 
       {isRenameOpen ? (
         <RenameProjectDialog
-          document={document}
+          project={project}
           onOpenChange={setIsRenameOpen}
           open={isRenameOpen}
         />
       ) : null}
       {isDeleteOpen ? (
         <DeleteProjectDialog
-          document={document}
-          onConfirm={deleteProject}
+          project={project}
+          onConfirm={handleDeleteProject}
           onOpenChange={setIsDeleteOpen}
           open={isDeleteOpen}
         />
@@ -114,31 +114,31 @@ export function BeadProjectActions({ document }: { document: BeadDocument }) {
 }
 
 function RenameProjectDialog({
-  document,
+  project,
   onOpenChange,
   open,
 }: {
-  document: BeadDocument;
+  project: Project;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
-  const [title, setTitle] = useState(document.title);
+  const [title, setTitle] = useState(project.title);
 
   useEffect(() => {
     if (open) {
-      setTitle(document.title);
+      setTitle(project.title);
     }
-  }, [document.title, open]);
+  }, [project.title, open]);
 
-  async function renameProject(event: FormEvent<HTMLFormElement>) {
+  async function handleRenameProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
-      await renameBeadDocument({ documentId: document.id, title });
+      await renameStoredProject({ projectId: project.id, title });
       toast.success("作品已重命名");
       onOpenChange(false);
     } catch (error) {
-      console.error("Unable to rename bead document", error);
+      console.error("Unable to rename bead project", error);
       toast.error("重命名失败");
     }
   }
@@ -146,7 +146,7 @@ function RenameProjectDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <form className="grid gap-4" onSubmit={renameProject}>
+        <form className="grid gap-4" onSubmit={handleRenameProject}>
           <DialogHeader>
             <DialogTitle>重命名作品</DialogTitle>
           </DialogHeader>
@@ -154,7 +154,7 @@ function RenameProjectDialog({
             autoFocus
             maxLength={80}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder={DEFAULT_BEAD_DOCUMENT_TITLE}
+            placeholder={DEFAULT_PROJECT_TITLE}
             value={title}
           />
           <DialogFooter>
@@ -174,12 +174,12 @@ function RenameProjectDialog({
 }
 
 function DeleteProjectDialog({
-  document,
+  project,
   onConfirm,
   onOpenChange,
   open,
 }: {
-  document: BeadDocument;
+  project: Project;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -190,7 +190,7 @@ function DeleteProjectDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>删除作品？</AlertDialogTitle>
           <AlertDialogDescription>
-            删除「{document.title}」后无法恢复。
+            删除「{project.title}」后无法恢复。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

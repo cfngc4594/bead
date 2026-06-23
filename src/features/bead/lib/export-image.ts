@@ -1,5 +1,3 @@
-import type { BeadStat } from "@/features/bead/lib/bead-stats";
-import { getBeadStats } from "@/features/bead/lib/bead-stats";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   boardOrigin,
@@ -8,6 +6,8 @@ import {
 } from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import { downloadBlob } from "@/features/bead/lib/download-file";
+import type { BeadStat } from "@/features/bead/lib/stats";
+import { getBeadStats } from "@/features/bead/lib/stats";
 import type { BeadFill } from "@/features/bead/types";
 
 type ExportBeadImageOptions = {

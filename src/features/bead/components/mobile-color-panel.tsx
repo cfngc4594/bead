@@ -5,14 +5,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BeadColor } from "@/data/colors";
-import { BeadColorGrid } from "@/features/bead/components/bead-color-grid";
-import { BeadColorLetterIndex } from "@/features/bead/components/bead-color-letter-index";
-import { BeadCurrentColor } from "@/features/bead/components/bead-current-color";
-import { BeadModeToolButtons } from "@/features/bead/components/bead-mode-tool-buttons";
+import { ColorGrid } from "@/features/bead/components/color-grid";
+import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
+import { CurrentColor } from "@/features/bead/components/current-color";
+import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import type { CanvasTool } from "@/features/bead/types";
 import { cn } from "@/lib/utils";
 
-type BeadMobileColorPanelProps = {
+type MobileColorPanelProps = {
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
@@ -24,7 +24,7 @@ type BeadMobileColorPanelProps = {
   onResetViewAfterResize: () => void;
 };
 
-export function BeadMobileColorPanel({
+export function MobileColorPanel({
   letters,
   colors,
   selectedColor,
@@ -34,7 +34,7 @@ export function BeadMobileColorPanel({
   onSelectLetter,
   onSelectTool,
   onResetViewAfterResize,
-}: BeadMobileColorPanelProps) {
+}: MobileColorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -50,9 +50,9 @@ export function BeadMobileColorPanel({
           isExpanded ? "h-14 border-b" : "h-14",
         )}
       >
-        <BeadCurrentColor color={selectedColor} />
+        <CurrentColor color={selectedColor} />
         <div className="flex shrink-0 items-center gap-1.5">
-          <BeadModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+          <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
           <Button
             aria-expanded={isExpanded}
             aria-label={isExpanded ? "折叠颜色面板" : "展开颜色面板"}
@@ -77,7 +77,7 @@ export function BeadMobileColorPanel({
       {isExpanded ? (
         <>
           <div className="min-w-0 shrink-0 border-b">
-            <BeadColorLetterIndex
+            <ColorLetterIndex
               letters={letters}
               onSelectLetter={onSelectLetter}
               orientation="horizontal"
@@ -86,7 +86,7 @@ export function BeadMobileColorPanel({
           </div>
 
           <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-            <BeadColorGrid
+            <ColorGrid
               colors={colors}
               layout="mobile"
               onSelectColor={onSelectColor}

@@ -3,17 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type BeadProjectTitleEditorProps = {
+type ProjectTitleEditorProps = {
   title: string;
   className?: string;
   onRename: (title: string) => void;
 };
 
-export function BeadProjectTitleEditor({
+export function ProjectTitleEditor({
   title,
   className,
   onRename,
-}: BeadProjectTitleEditorProps) {
+}: ProjectTitleEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const shouldSkipCommitRef = useRef(false);
   const [isEditing, setIsEditing] = useState(false);

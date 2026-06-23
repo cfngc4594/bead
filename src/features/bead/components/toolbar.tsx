@@ -29,11 +29,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { BeadModeToolButtons } from "@/features/bead/components/bead-mode-tool-buttons";
-import { BeadProjectTitleEditor } from "@/features/bead/components/bead-project-title-editor";
+import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
+import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
 import type { CanvasTool } from "@/features/bead/types";
 
-type BeadToolbarProps = {
+type EditorToolbarProps = {
   tool: CanvasTool;
   canUndo: boolean;
   canRedo: boolean;
@@ -77,7 +77,7 @@ type ToolbarAction = {
   onClick: () => void;
 };
 
-export function BeadToolbar({
+export function EditorToolbar({
   tool,
   canUndo,
   canRedo,
@@ -100,7 +100,7 @@ export function BeadToolbar({
   onRedo,
   isExportingImage = false,
   isImportingImage = false,
-}: BeadToolbarProps) {
+}: EditorToolbarProps) {
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
@@ -177,7 +177,7 @@ export function BeadToolbar({
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <ToolbarIconButton icon={ArrowLeft} label="返回作品" onClick={onBack} />
-        <BeadProjectTitleEditor
+        <ProjectTitleEditor
           className="min-w-0 flex-1 md:w-56 md:flex-none"
           title={projectTitle}
           onRename={onRenameProject}
@@ -185,7 +185,7 @@ export function BeadToolbar({
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
-        <BeadModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+        <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
         {[viewActions, historyActions, fileActions].map((actions) => (
           <ToolbarActionGroup
             actions={actions}

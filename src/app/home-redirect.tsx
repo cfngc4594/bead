@@ -3,14 +3,14 @@
 import { useLiveQuery } from "@tanstack/react-db";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
+import { projectsCollection } from "@/features/bead/storage/projects";
 
 export function HomeRedirect() {
   const router = useRouter();
-  const { data: documents = [], isReady } = useLiveQuery((query) =>
+  const { data: projects = [], isReady } = useLiveQuery((query) =>
     query
-      .from({ document: beadDocumentsCollection })
-      .select(({ document }) => ({ id: document.id })),
+      .from({ project: projectsCollection })
+      .select(({ project }) => ({ id: project.id })),
   );
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export function HomeRedirect() {
       return;
     }
 
-    router.replace(documents.length > 0 ? "/projects" : "/projects/new");
-  }, [documents.length, isReady, router]);
+    router.replace(projects.length > 0 ? "/projects" : "/projects/new");
+  }, [projects.length, isReady, router]);
 
   return <main className="min-h-screen bg-background" />;
 }

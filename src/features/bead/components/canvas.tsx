@@ -2,28 +2,25 @@
 
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
-import {
-  type BeadSelection,
-  type BeadSelectionBox,
-  getMovedSelectionOrigin,
-  getSelectionBoxRect,
-  getSelectionFromBox,
-  getSelectionRect,
-  hideSelectedBeads,
-  isCellInSelection,
-  isSameCell,
-  isSelectionInBounds,
-  moveSelectedBeads,
-} from "@/features/bead/lib/bead-selection";
+import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
+import { useStageSize } from "@/features/bead/hooks/use-stage-size";
+import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
 } from "@/features/bead/lib/canvas-geometry";
+import {
+  type BeadSelection,
+  getSelectionBoxRect,
+  getSelectionRect,
+  isCellInSelection,
+  isSelectionInBounds,
+} from "@/features/bead/lib/selection";
 import type {
   BeadFill,
   CanvasTool,
@@ -33,7 +30,7 @@ import type {
 
 export type { GridCell };
 
-export type BeadCanvasProps = {
+export type CanvasBoardProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
@@ -51,7 +48,7 @@ export type BeadCanvasProps = {
   viewport?: Viewport;
 };
 
-export function BeadCanvas({
+export function CanvasBoard({
   rows,
   cols,
   beads,
@@ -67,23 +64,15 @@ export function BeadCanvas({
   resetViewSignal,
   resetViewAfterResizeSignal,
   viewport = { width: 760, height: 640 },
-}: BeadCanvasProps) {
+}: CanvasBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
-  const touchPointersRef = useRef(new Map<number, { x: number; y: number }>());
-  const handledSelectionResetSignalRef = useRef(selectionResetSignal);
-  const [stageSize, setStageSize] = useState(viewport);
-  const [isStageMeasured, setIsStageMeasured] = useState(false);
+  const { isStageMeasured, stageSize } = useStageSize({
+    containerRef,
+    initialViewport: viewport,
+  });
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
   const [isPainting, setIsPainting] = useState(false);
-  const [selection, setSelection] = useState<BeadSelection | null>(null);
-  const [selectionBox, setSelectionBox] = useState<BeadSelectionBox | null>(
-    null,
-  );
-  const [moveStartCell, setMoveStartCell] = useState<GridCell | null>(null);
-  const [moveTargetOrigin, setMoveTargetOrigin] = useState<GridCell | null>(
-    null,
-  );
   const {
     view,
     isTemporaryPan,
@@ -102,62 +91,48 @@ export function BeadCanvas({
     tool,
     stageRef,
   });
+  const {
+    handleTouchPinch,
+    removeTouchPointer,
+    resetPinchIfIdle,
+    updateTouchPointer,
+  } = useTouchPinch({
+    containerRef,
+    onPinchMove: handlePinchMove,
+    onPinchStart: () => {
+      if (isPainting) {
+        onEditEnd();
+        setIsPainting(false);
+      }
+      setHoveredCell(null);
+    },
+    stageRef,
+  });
+  const {
+    beginSelection,
+    clearGesture,
+    displayedBeads,
+    finishSelection,
+    isMovingSelection,
+    moveTargetOrigin,
+    selection,
+    selectionBox,
+    updateSelection,
+  } = useSelectionGesture({
+    beads,
+    cols,
+    onMoveSelection,
+    resetSignal: selectionResetSignal,
+    rows,
+  });
   const gridOrigin = getGridOrigin();
   const canvasCursor = getCanvasCursor({
     hoveredCell,
     isDraggable,
-    isMovingSelection: Boolean(moveStartCell),
+    isMovingSelection,
     selection,
     tool,
   });
-  const displayedBeads =
-    selection && moveTargetOrigin
-      ? hideSelectedBeads(beads, selection, cols)
-      : beads;
-
-  useEffect(() => {
-    if (selectionResetSignal === handledSelectionResetSignalRef.current) {
-      return;
-    }
-
-    handledSelectionResetSignalRef.current = selectionResetSignal;
-    setSelection(null);
-    setSelectionBox(null);
-    setMoveStartCell(null);
-    setMoveTargetOrigin(null);
-  }, [selectionResetSignal]);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    const updateStageSize = ({
-      height,
-      width,
-    }: {
-      height: number;
-      width: number;
-    }) => {
-      setStageSize({
-        width: Math.max(1, width),
-        height: Math.max(1, height),
-      });
-      setIsStageMeasured(true);
-    };
-
-    updateStageSize(container.getBoundingClientRect());
-
-    const observer = new ResizeObserver(([entry]) => {
-      updateStageSize(entry.contentRect);
-    });
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, []);
 
   function getCellFromPointer(): GridCell | null {
     const stage = stageRef.current;
@@ -227,7 +202,7 @@ export function BeadCanvas({
     setHoveredCell(cell);
 
     if (tool === "select") {
-      handleSelectPointerMove(cell);
+      updateSelection(cell);
       return;
     }
 
@@ -241,16 +216,14 @@ export function BeadCanvas({
       removeTouchPointer(event.evt);
     }
 
-    if (touchPointersRef.current.size < 2) {
-      resetPinch();
-    }
+    resetPinchIfIdle(resetPinch);
 
     if (isPainting) {
       onEditEnd();
     }
 
     if (tool === "select") {
-      finishSelectionGesture();
+      finishSelection();
     }
 
     setIsPainting(false);
@@ -266,13 +239,7 @@ export function BeadCanvas({
     }
 
     setIsPainting(false);
-    clearSelectionGestureState();
-  }
-
-  function clearSelectionGestureState() {
-    setSelectionBox(null);
-    setMoveStartCell(null);
-    setMoveTargetOrigin(null);
+    clearGesture();
   }
 
   function handleSelectPointerDown(event: KonvaEventObject<PointerEvent>) {
@@ -282,146 +249,12 @@ export function BeadCanvas({
 
     const cell = getCellFromPointer();
 
-    if (!cell) {
-      setSelection(null);
-      return;
+    if (cell) {
+      setHoveredCell(cell);
     }
 
-    setHoveredCell(cell);
-
-    if (selection && isCellInSelection(cell, selection)) {
-      setMoveStartCell(cell);
-      setMoveTargetOrigin(selection.origin);
-      return;
-    }
-
-    setSelection(null);
-    setSelectionBox({ start: cell, end: cell });
+    beginSelection(cell);
   }
-
-  function handleSelectPointerMove(cell: GridCell | null) {
-    if (!cell) {
-      return;
-    }
-
-    if (selectionBox) {
-      setSelectionBox((current) =>
-        current ? { ...current, end: cell } : current,
-      );
-      return;
-    }
-
-    if (selection && moveStartCell) {
-      setMoveTargetOrigin(
-        getMovedSelectionOrigin(selection, moveStartCell, cell),
-      );
-    }
-  }
-
-  function finishSelectionGesture() {
-    if (selectionBox) {
-      const nextSelection = getSelectionFromBox(
-        selectionBox,
-        beads,
-        rows,
-        cols,
-      );
-
-      setSelection(nextSelection);
-      setSelectionBox(null);
-      return;
-    }
-
-    if (selection && moveStartCell && moveTargetOrigin) {
-      if (
-        isSelectionInBounds(selection, moveTargetOrigin, rows, cols) &&
-        !isSameCell(selection.origin, moveTargetOrigin)
-      ) {
-        onMoveSelection(
-          moveSelectedBeads(beads, selection, moveTargetOrigin, cols),
-        );
-        setSelection({
-          ...selection,
-          origin: moveTargetOrigin,
-        });
-      }
-
-      setMoveStartCell(null);
-      setMoveTargetOrigin(null);
-    }
-  }
-
-  function updateTouchPointer(event: PointerEvent) {
-    if (event.pointerType !== "touch") {
-      return;
-    }
-
-    const point = getRelativeTouchPoint(event);
-
-    if (point) {
-      touchPointersRef.current.set(event.pointerId, point);
-    }
-  }
-
-  function removeTouchPointer(event: PointerEvent) {
-    if (event.pointerType === "touch") {
-      touchPointersRef.current.delete(event.pointerId);
-    }
-  }
-
-  function getRelativeTouchPoint(event: PointerEvent) {
-    const container = containerRef.current;
-
-    if (!container) {
-      return null;
-    }
-
-    const rect = container.getBoundingClientRect();
-
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  }
-
-  function handleTouchPinch() {
-    const points = Array.from(touchPointersRef.current.values());
-
-    if (points.length < 2) {
-      return false;
-    }
-
-    if (isPainting) {
-      onEditEnd();
-      setIsPainting(false);
-    }
-
-    stageRef.current?.stopDrag();
-    setHoveredCell(null);
-    handlePinchMove([points[0], points[1]]);
-
-    return true;
-  }
-
-  useEffect(() => {
-    const container = containerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    function preventCanvasTouchDefault(event: TouchEvent) {
-      event.preventDefault();
-    }
-
-    container.addEventListener("touchmove", preventCanvasTouchDefault, {
-      passive: false,
-    });
-
-    return () => {
-      container.removeEventListener("touchmove", preventCanvasTouchDefault);
-    };
-  }, []);
 
   return (
     <div

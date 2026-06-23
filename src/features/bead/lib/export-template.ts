@@ -1,6 +1,6 @@
 import type { CanvasSize } from "@/config/canvas-sizes";
-import { getBeadStats } from "@/features/bead/lib/bead-stats";
 import { downloadTextFile } from "@/features/bead/lib/download-file";
+import { getBeadStats } from "@/features/bead/lib/stats";
 import type { BeadTemplateFile } from "@/features/bead/lib/template-schema";
 import type { BeadFill } from "@/features/bead/types";
 

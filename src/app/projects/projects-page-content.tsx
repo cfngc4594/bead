@@ -5,71 +5,69 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { getCanvasSize } from "@/config/canvas-sizes";
-import { BeadEditorSkeleton } from "@/features/bead/components/bead-editor-skeleton";
-import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-skeleton";
-import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
+import { EditorSkeleton } from "@/features/bead/components/editor-skeleton";
+import { ProjectsSkeleton } from "@/features/bead/components/projects-skeleton";
+import { projectsCollection } from "@/features/bead/storage/projects";
 
-const BeadProjectsPage = dynamic(
+const ProjectsPage = dynamic(
   () =>
-    import("@/features/bead/components/bead-projects-page").then(
-      (module) => module.BeadProjectsPage,
+    import("@/features/bead/components/projects-page").then(
+      (module) => module.ProjectsPage,
     ),
   {
-    loading: () => <BeadProjectsSkeleton />,
+    loading: () => <ProjectsSkeleton />,
     ssr: false,
   },
 );
 
-const BeadEditor = dynamic(
+const Editor = dynamic(
   () =>
-    import("@/features/bead/components/bead-editor").then(
-      (module) => module.BeadEditor,
-    ),
+    import("@/features/bead/components/editor").then((module) => module.Editor),
   {
-    loading: () => <BeadEditorSkeleton />,
+    loading: () => <EditorSkeleton />,
     ssr: false,
   },
 );
 
-export function BeadProjectsPageContent() {
+export function ProjectsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
-  const { data: documents, isReady } = useLiveQuery(
+  const { data: projects, isReady } = useLiveQuery(
     (query) =>
       projectId
         ? query
-            .from({ document: beadDocumentsCollection })
-            .where(({ document }) => eq(document.id, projectId))
-            .select(({ document }) => ({
-              id: document.id,
-              title: document.title,
-              sizeId: document.sizeId,
+            .from({ project: projectsCollection })
+            .where(({ project }) => eq(project.id, projectId))
+            .select(({ project }) => ({
+              id: project.id,
+              title: project.title,
+              sizeId: project.sizeId,
             }))
         : undefined,
     [projectId],
   );
-  const document = documents?.[0];
+  const project = projects?.[0];
 
   useEffect(() => {
-    if (projectId && isReady && !document) {
+    if (projectId && isReady && !project) {
       router.replace("/projects");
     }
-  }, [document, isReady, projectId, router]);
+  }, [project, isReady, projectId, router]);
 
   if (!projectId) {
-    return <BeadProjectsPage />;
+    return <ProjectsPage />;
   }
 
-  if (!document) {
-    return <BeadEditorSkeleton />;
+  if (!project) {
+    return <EditorSkeleton />;
   }
 
   return (
-    <BeadEditor
-      documentId={projectId}
-      size={getCanvasSize(document.sizeId)}
-      title={document.title}
+    <Editor
+      projectId={projectId}
+      size={getCanvasSize(project.sizeId)}
+      title={project.title}
     />
   );
 }

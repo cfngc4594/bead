@@ -10,19 +10,19 @@ import {
   canvasSizes,
   getCanvasSize,
 } from "@/config/canvas-sizes";
-import { createBeadDocument } from "@/features/bead/storage/bead-documents";
+import { createProject as createStoredProject } from "@/features/bead/storage/projects";
 import { cn } from "@/lib/utils";
 
-type BeadSizePickerProps = {
+type SizePickerProps = {
   initialSize: CanvasSizeId;
 };
 
-export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
+export function SizePicker({ initialSize }: SizePickerProps) {
   const router = useRouter();
   const [selected, setSelected] = useState<CanvasSizeId>(initialSize);
   const [isCreating, setIsCreating] = useState(false);
 
-  async function createProject() {
+  async function handleCreateProject() {
     if (isCreating) {
       return;
     }
@@ -30,9 +30,9 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
     setIsCreating(true);
 
     try {
-      const document = await createBeadDocument(getCanvasSize(selected));
+      const project = await createStoredProject(getCanvasSize(selected));
 
-      router.push(`/projects?projectId=${document.id}`);
+      router.push(`/projects?projectId=${project.id}`);
     } finally {
       setIsCreating(false);
     }
@@ -79,7 +79,7 @@ export function BeadSizePicker({ initialSize }: BeadSizePickerProps) {
         <Button
           className="min-w-48 rounded-full"
           disabled={isCreating}
-          onClick={createProject}
+          onClick={handleCreateProject}
           size="lg"
           type="button"
         >

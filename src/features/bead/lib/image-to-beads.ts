@@ -6,11 +6,7 @@ import {
   type PaletteEntry,
   rgbToOklab,
   toBeadFill,
-} from "@/features/bead/lib/bead-color-match";
-import {
-  cleanupSmallRegions,
-  countTinyRegions,
-} from "@/features/bead/lib/bead-region-cleanup";
+} from "@/features/bead/lib/color-match";
 import {
   type SampledCell,
   type SampleMode,
@@ -20,6 +16,10 @@ import {
   loadImageFile,
   renderImageToCanvas,
 } from "@/features/bead/lib/image-raster";
+import {
+  cleanupSmallRegions,
+  countTinyRegions,
+} from "@/features/bead/lib/region-cleanup";
 import type { BeadFill } from "@/features/bead/types";
 
 type CandidateResult = {

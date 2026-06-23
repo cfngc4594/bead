@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const projectSkeletons = ["project-1", "project-2", "project-3"];
 
-export function BeadProjectsSkeleton() {
+export function ProjectsSkeleton() {
   return (
     <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">

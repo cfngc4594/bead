@@ -17,7 +17,7 @@ import {
 import type { CanvasTool } from "@/features/bead/types";
 import { cn } from "@/lib/utils";
 
-type BeadModeToolButtonsProps = {
+type ModeToolButtonsProps = {
   tool: CanvasTool;
   className?: string;
   onSelectTool: (tool: CanvasTool) => void;
@@ -57,11 +57,11 @@ const modeToolActions: ModeToolAction[] = [
   },
 ];
 
-export function BeadModeToolButtons({
+export function ModeToolButtons({
   tool,
   className,
   onSelectTool,
-}: BeadModeToolButtonsProps) {
+}: ModeToolButtonsProps) {
   return (
     <div className={cn("flex shrink-0 items-center gap-1.5", className)}>
       {modeToolActions.map((action) => (

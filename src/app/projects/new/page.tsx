@@ -1,5 +1,5 @@
 import { canvasSizes } from "@/config/canvas-sizes";
-import { BeadSizePicker } from "@/features/bead/components/bead-size-picker";
+import { SizePicker } from "@/features/bead/components/size-picker";
 
 export default function NewProjectPage() {
   return (
@@ -15,7 +15,7 @@ export default function NewProjectPage() {
           </p>
         </div>
 
-        <BeadSizePicker initialSize={canvasSizes[0].id} />
+        <SizePicker initialSize={canvasSizes[0].id} />
       </div>
     </main>
   );

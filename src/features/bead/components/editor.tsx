@@ -5,32 +5,32 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
-import type { BeadCanvasProps } from "@/features/bead/components/bead-canvas";
-import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop-color-sidebar";
-import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skeleton";
-import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
-import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
-import { useBeadEditorActions } from "@/features/bead/hooks/use-bead-editor-actions";
-import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
+import type { CanvasBoardProps } from "@/features/bead/components/canvas";
+import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
+import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
+import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
+import { EditorToolbar } from "@/features/bead/components/toolbar";
+import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
+import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
 import {
-  type BeadDocumentId,
-  renameBeadDocument,
-} from "@/features/bead/storage/bead-documents";
+  type ProjectId,
+  renameProject as renameStoredProject,
+} from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
 
-const BeadCanvas = dynamic<BeadCanvasProps>(
+const CanvasBoard = dynamic<CanvasBoardProps>(
   () =>
-    import("@/features/bead/components/bead-canvas").then(
-      (module) => module.BeadCanvas,
+    import("@/features/bead/components/canvas").then(
+      (module) => module.CanvasBoard,
     ),
   {
-    loading: () => <BeadCanvasSkeleton />,
+    loading: () => <CanvasBoardSkeleton />,
     ssr: false,
   },
 );
 
-type BeadEditorProps = {
-  documentId: BeadDocumentId;
+type EditorProps = {
+  projectId: ProjectId;
   size: CanvasSize;
   title: string;
 };
@@ -39,18 +39,18 @@ const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
 
-export function BeadEditor({ documentId, size, title }: BeadEditorProps) {
+export function Editor({ projectId, size, title }: EditorProps) {
   return (
-    <BeadEditorContent
-      key={documentId}
-      documentId={documentId}
+    <EditorContent
+      key={projectId}
+      projectId={projectId}
       size={size}
       title={title}
     />
   );
 }
 
-function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
+function EditorContent({ projectId, size, title }: EditorProps) {
   const router = useRouter();
   const {
     beads,
@@ -63,7 +63,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     clear,
     canUndo,
     canRedo,
-  } = useBeadSnapshots({ documentId, size });
+  } = useProjectCanvas({ projectId, size });
   const {
     actions,
     handleImageFileChange,
@@ -85,7 +85,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     showBeadCodes,
     showGuideLines,
     tool,
-  } = useBeadEditorActions({
+  } = useEditorActions({
     beads,
     commitBeads,
     size,
@@ -134,9 +134,9 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     commitBeads(nextBeads);
   }
 
-  function renameProject(nextTitle: string) {
-    renameBeadDocument({ documentId, title: nextTitle }).catch((error) => {
-      console.error("Unable to rename bead document", error);
+  function handleRenameProject(nextTitle: string) {
+    renameStoredProject({ projectId, title: nextTitle }).catch((error) => {
+      console.error("Unable to rename bead project", error);
       toast.error("作品名保存失败");
     });
   }
@@ -144,7 +144,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
-        <BeadToolbar
+        <EditorToolbar
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
@@ -159,7 +159,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           onImportImage={actions.importImage}
           onImportTemplate={actions.importTemplate}
           onBack={() => router.push("/projects")}
-          onRenameProject={renameProject}
+          onRenameProject={handleRenameProject}
           onSelectTool={actions.selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}
@@ -184,7 +184,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
         />
 
         <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <BeadCanvas
+          <CanvasBoard
             rows={size.rows}
             cols={size.cols}
             beads={beads}
@@ -203,7 +203,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
         </div>
       </section>
 
-      <BeadDesktopColorSidebar
+      <DesktopColorSidebar
         colors={filteredColors}
         letters={colorLetters}
         onSelectColor={actions.selectColor}
@@ -211,7 +211,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
       />
-      <BeadMobileColorPanel
+      <MobileColorPanel
         colors={filteredColors}
         letters={colorLetters}
         onResetViewAfterResize={() =>

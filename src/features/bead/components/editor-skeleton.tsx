@@ -23,14 +23,14 @@ const mobileColorSkeletons = Array.from(
   (_, index) => `mobile-color-${index + 1}`,
 );
 
-export function BeadEditorSkeleton() {
+export function EditorSkeleton() {
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbarSkeleton />
 
         <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <BeadCanvasSkeleton />
+          <CanvasBoardSkeleton />
         </div>
       </section>
 
@@ -40,7 +40,7 @@ export function BeadEditorSkeleton() {
   );
 }
 
-export function BeadCanvasSkeleton() {
+export function CanvasBoardSkeleton() {
   return (
     <div className="grid h-full w-full touch-none place-items-center overflow-hidden overscroll-none p-6">
       <div className="flex w-full max-w-[min(78vw,520px)] flex-col items-center gap-4">

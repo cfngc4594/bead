@@ -1,7 +1,7 @@
 "use client";
 
-import { BeadEditorSkeleton } from "@/features/bead/components/bead-editor-skeleton";
-import { BeadProjectsSkeleton } from "@/features/bead/components/bead-projects-skeleton";
+import { EditorSkeleton } from "@/features/bead/components/editor-skeleton";
+import { ProjectsSkeleton } from "@/features/bead/components/projects-skeleton";
 
 export function ProjectsRouteSkeleton() {
   if (typeof window === "undefined") {
@@ -12,5 +12,5 @@ export function ProjectsRouteSkeleton() {
     "projectId",
   );
 
-  return hasProject ? <BeadEditorSkeleton /> : <BeadProjectsSkeleton />;
+  return hasProject ? <EditorSkeleton /> : <ProjectsSkeleton />;
 }

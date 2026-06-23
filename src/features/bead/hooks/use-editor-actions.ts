@@ -11,26 +11,26 @@ import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
-import type { BeadState } from "@/features/bead/storage/bead-documents";
+import type { CanvasState } from "@/features/bead/storage/projects";
 import type { CanvasTool } from "@/features/bead/types";
 
-type UseBeadEditorActionsProps = {
-  beads: BeadState;
-  commitBeads: (beads: BeadState) => void;
+type UseEditorActionsProps = {
+  beads: CanvasState;
+  commitBeads: (beads: CanvasState) => void;
   size: CanvasSize;
   onClear: () => void;
   onRedo: () => void;
   onUndo: () => void;
 };
 
-export function useBeadEditorActions({
+export function useEditorActions({
   beads,
   commitBeads,
   size,
   onClear,
   onRedo,
   onUndo,
-}: UseBeadEditorActionsProps) {
+}: UseEditorActionsProps) {
   const importInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);

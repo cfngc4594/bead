@@ -12,26 +12,24 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getCanvasSize } from "@/config/canvas-sizes";
-import { BeadProjectActions } from "@/features/bead/components/bead-project-actions";
-import { BeadProjectPreview } from "@/features/bead/components/bead-project-preview";
-import { beadDocumentsCollection } from "@/features/bead/storage/bead-documents";
+import { ProjectActions } from "@/features/bead/components/project-actions";
+import { ProjectPreview } from "@/features/bead/components/project-preview";
+import { projectsCollection } from "@/features/bead/storage/projects";
 
-export function BeadProjectsPage() {
-  const { data: documents = [] } = useLiveQuery((query) =>
-    query
-      .from({ document: beadDocumentsCollection })
-      .select(({ document }) => ({
-        id: document.id,
-        sizeId: document.sizeId,
-        rows: document.rows,
-        cols: document.cols,
-        title: document.title,
-        snapshots: document.snapshots,
-        currentIndex: document.currentIndex,
-        updatedAt: document.updatedAt,
-      })),
+export function ProjectsPage() {
+  const { data: projects = [] } = useLiveQuery((query) =>
+    query.from({ project: projectsCollection }).select(({ project }) => ({
+      id: project.id,
+      sizeId: project.sizeId,
+      rows: project.rows,
+      cols: project.cols,
+      title: project.title,
+      snapshots: project.snapshots,
+      currentIndex: project.currentIndex,
+      updatedAt: project.updatedAt,
+    })),
   );
-  const sortedDocuments = [...documents].sort(
+  const sortedDocuments = [...projects].sort(
     (left, right) => right.updatedAt - left.updatedAt,
   );
 
@@ -55,49 +53,49 @@ export function BeadProjectsPage() {
 
         {sortedDocuments.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {sortedDocuments.map((document) => {
-              const size = getCanvasSize(document.sizeId);
+            {sortedDocuments.map((project) => {
+              const size = getCanvasSize(project.sizeId);
 
               return (
                 <article
                   className="group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50"
-                  key={document.id}
+                  key={project.id}
                 >
                   <Link
-                    aria-label={`打开 ${document.title}`}
+                    aria-label={`打开 ${project.title}`}
                     className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-                    href={`/projects?projectId=${document.id}`}
+                    href={`/projects?projectId=${project.id}`}
                   >
                     <div className="aspect-4/3">
-                      <BeadProjectPreview document={document} />
+                      <ProjectPreview project={project} />
                     </div>
                   </Link>
 
                   <div className="flex items-center gap-3 border-t bg-card p-4">
                     <Link
-                      aria-label={`打开 ${document.title}`}
+                      aria-label={`打开 ${project.title}`}
                       className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted text-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                      href={`/projects?projectId=${document.id}`}
+                      href={`/projects?projectId=${project.id}`}
                     >
                       {size.emoji}
                     </Link>
 
                     <Link
                       className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                      href={`/projects?projectId=${document.id}`}
+                      href={`/projects?projectId=${project.id}`}
                     >
                       <p className="truncate font-medium leading-tight">
-                        {document.title}
+                        {project.title}
                       </p>
                       <time
                         className="mt-1 block truncate text-muted-foreground text-sm"
-                        dateTime={new Date(document.updatedAt).toISOString()}
+                        dateTime={new Date(project.updatedAt).toISOString()}
                       >
-                        {formatUpdatedAt(document.updatedAt)}
+                        {formatUpdatedAt(project.updatedAt)}
                       </time>
                     </Link>
 
-                    <BeadProjectActions document={document} />
+                    <ProjectActions project={project} />
                   </div>
                 </article>
               );
