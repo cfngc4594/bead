@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
@@ -11,19 +10,13 @@ import { BeadDesktopColorSidebar } from "@/features/bead/components/bead-desktop
 import { BeadCanvasSkeleton } from "@/features/bead/components/bead-editor-skeleton";
 import { BeadMobileColorPanel } from "@/features/bead/components/bead-mobile-color-panel";
 import { BeadToolbar } from "@/features/bead/components/bead-toolbar";
+import { useBeadEditorActions } from "@/features/bead/hooks/use-bead-editor-actions";
 import { useBeadSnapshots } from "@/features/bead/hooks/use-bead-snapshots";
-import { exportBeadImage } from "@/features/bead/lib/export-image";
-import { exportBeadTemplate } from "@/features/bead/lib/export-template";
-import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
-import {
-  BeadTemplateImportError,
-  parseBeadTemplateFile,
-} from "@/features/bead/lib/import-template";
 import {
   type BeadDocumentId,
   renameBeadDocument,
 } from "@/features/bead/storage/bead-documents";
-import type { CanvasTool, GridCell } from "@/features/bead/types";
+import type { GridCell } from "@/features/bead/types";
 
 const BeadCanvas = dynamic<BeadCanvasProps>(
   () =>
@@ -59,19 +52,6 @@ export function BeadEditor({ documentId, size, title }: BeadEditorProps) {
 
 function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
   const router = useRouter();
-  const importInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const [selectedColor, setSelectedColor] = useState(mardColors[0]);
-  const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
-  const [tool, setTool] = useState<CanvasTool>("pan");
-  const [showBeadCodes, setShowBeadCodes] = useState(true);
-  const [showGuideLines, setShowGuideLines] = useState(false);
-  const [resetViewSignal, setResetViewSignal] = useState(0);
-  const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
-    useState(0);
-  const [selectionResetSignal, setSelectionResetSignal] = useState(0);
-  const [isExportingImage, setIsExportingImage] = useState(false);
-  const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
   const {
     beads,
     beginEdit,
@@ -84,151 +64,40 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
     canUndo,
     canRedo,
   } = useBeadSnapshots({ documentId, size });
+  const {
+    actions,
+    handleImageFileChange,
+    handleImportFileChange,
+    imageInputRef,
+    importInputRef,
+    isExportingImage,
+    isGeneratingFromImage,
+    resetViewAfterResizeSignal,
+    resetViewSignal,
+    selectedColor,
+    selectedLetter,
+    selectionResetSignal,
+    setResetViewAfterResizeSignal,
+    setResetViewSignal,
+    setSelectedLetter,
+    setShowBeadCodes,
+    setShowGuideLines,
+    showBeadCodes,
+    showGuideLines,
+    tool,
+  } = useBeadEditorActions({
+    beads,
+    commitBeads,
+    size,
+    onClear: clear,
+    onRedo: redo,
+    onUndo: undo,
+  });
 
   const filteredColors = mardColors.filter((color) =>
     color.code.startsWith(selectedLetter),
   );
   const hasBeads = beads.some(Boolean);
-
-  function resetSelection() {
-    setSelectionResetSignal((value) => value + 1);
-  }
-
-  function selectTool(nextTool: CanvasTool) {
-    if (nextTool !== tool) {
-      resetSelection();
-    }
-
-    setTool(nextTool);
-  }
-
-  function clearDraft() {
-    resetSelection();
-    clear();
-  }
-
-  function undoEdit() {
-    resetSelection();
-    undo();
-  }
-
-  function redoEdit() {
-    resetSelection();
-    redo();
-  }
-
-  async function exportImage() {
-    if (isExportingImage) {
-      return;
-    }
-
-    const loadingToastId = toast.loading("正在生成图片...");
-    setIsExportingImage(true);
-
-    try {
-      await waitForNextFrame();
-      await exportBeadImage({
-        rows: size.rows,
-        cols: size.cols,
-        beads,
-        filename: `bead-${size.id}.png`,
-        showBeadCodes,
-        showGuideLines,
-      });
-      toast.dismiss(loadingToastId);
-    } catch (error) {
-      console.error("Unable to export image", error);
-      toast.error("导出图片失败", { id: loadingToastId });
-    } finally {
-      setIsExportingImage(false);
-    }
-  }
-
-  function exportTemplate() {
-    exportBeadTemplate({
-      size,
-      beads,
-      filename: `bead-${size.id}.bead.json`,
-    }).catch((error) => {
-      console.error("Unable to export template", error);
-      toast.error("导出模板失败");
-    });
-  }
-
-  function importTemplate() {
-    importInputRef.current?.click();
-  }
-
-  function importImage() {
-    if (isGeneratingFromImage) {
-      return;
-    }
-
-    imageInputRef.current?.click();
-  }
-
-  async function importTemplateFile(file: File) {
-    try {
-      const importedBeads = parseBeadTemplateFile({
-        text: await file.text(),
-        size,
-      });
-
-      resetSelection();
-      commitBeads(importedBeads);
-      toast.success("模板已导入");
-    } catch (error) {
-      toast.error(
-        error instanceof BeadTemplateImportError
-          ? error.message
-          : "导入模板失败。",
-      );
-    }
-  }
-
-  async function importImageFile(file: File) {
-    setIsGeneratingFromImage(true);
-
-    try {
-      const generatedBeads = await generateBeadsFromImageFile({
-        cols: size.cols,
-        file,
-        palette: mardColors,
-        rows: size.rows,
-      });
-
-      resetSelection();
-      commitBeads(generatedBeads);
-      toast.success("图片已生成豆图");
-    } catch (error) {
-      console.error("Unable to generate bead image", error);
-      toast.error("图片生成失败");
-    } finally {
-      setIsGeneratingFromImage(false);
-    }
-  }
-
-  function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    void importTemplateFile(file);
-  }
-
-  function handleImageFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    void importImageFile(file);
-  }
 
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
@@ -257,9 +126,8 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
       return;
     }
 
-    setSelectedColor(color);
-    setSelectedLetter(color.code[0]);
-    setTool("paint");
+    actions.selectColor(color);
+    actions.selectTool("paint");
   }
 
   function moveSelection(nextBeads: (typeof beads)[number][]) {
@@ -283,19 +151,19 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
           projectTitle={title}
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
-          onRedo={redoEdit}
+          onRedo={actions.redoEdit}
           onResetView={() => setResetViewSignal((value) => value + 1)}
-          onClearDraft={clearDraft}
-          onExportImage={exportImage}
-          onExportTemplate={exportTemplate}
-          onImportImage={importImage}
-          onImportTemplate={importTemplate}
+          onClearDraft={actions.clearDraft}
+          onExportImage={actions.exportImage}
+          onExportTemplate={actions.exportTemplate}
+          onImportImage={actions.importImage}
+          onImportTemplate={actions.importTemplate}
           onBack={() => router.push("/projects")}
           onRenameProject={renameProject}
-          onSelectTool={selectTool}
+          onSelectTool={actions.selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
           onToggleGuideLines={() => setShowGuideLines((value) => !value)}
-          onUndo={undoEdit}
+          onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
           tool={tool}
@@ -338,7 +206,7 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
       <BeadDesktopColorSidebar
         colors={filteredColors}
         letters={colorLetters}
-        onSelectColor={setSelectedColor}
+        onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
@@ -349,19 +217,13 @@ function BeadEditorContent({ documentId, size, title }: BeadEditorProps) {
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }
-        onSelectColor={setSelectedColor}
+        onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
-        onSelectTool={selectTool}
+        onSelectTool={actions.selectTool}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
         tool={tool}
       />
     </main>
   );
-}
-
-function waitForNextFrame() {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
-  });
 }

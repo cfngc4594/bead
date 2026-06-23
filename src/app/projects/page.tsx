@@ -1,10 +1,19 @@
-import { Suspense } from "react";
-import { BeadProjectsPageNoSsr } from "@/app/projects/projects-page-no-ssr";
+"use client";
+
+import dynamic from "next/dynamic";
+import { ProjectsRouteSkeleton } from "@/app/projects/projects-route-skeleton";
+
+const BeadProjectsPageContent = dynamic(
+  () =>
+    import("@/app/projects/projects-page-content").then(
+      (module) => module.BeadProjectsPageContent,
+    ),
+  {
+    loading: () => <ProjectsRouteSkeleton />,
+    ssr: false,
+  },
+);
 
 export default function ProjectsPage() {
-  return (
-    <Suspense fallback={<main className="min-h-screen bg-background" />}>
-      <BeadProjectsPageNoSsr />
-    </Suspense>
-  );
+  return <BeadProjectsPageContent />;
 }
