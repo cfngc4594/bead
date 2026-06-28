@@ -4,7 +4,10 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
-import { exportBeadImage } from "@/features/bead/lib/export-image";
+import {
+  createBeadImageBlob,
+  exportBeadImage,
+} from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
 import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
@@ -99,6 +102,31 @@ export function useEditorActions({
     } catch (error) {
       console.error("Unable to export image", error);
       toast.error("导出图片失败", { id: loadingToastId });
+    } finally {
+      setIsExportingImage(false);
+    }
+  }
+
+  async function createExportImageBlob() {
+    if (isExportingImage) {
+      return null;
+    }
+
+    setIsExportingImage(true);
+
+    try {
+      await waitForNextFrame();
+      return await createBeadImageBlob({
+        rows: size.rows,
+        cols: size.cols,
+        beads,
+        showBeadCodes,
+        showGuideLines,
+      });
+    } catch (error) {
+      console.error("Unable to create export image", error);
+      toast.error("图片生成失败");
+      return null;
     } finally {
       setIsExportingImage(false);
     }
@@ -213,6 +241,7 @@ export function useEditorActions({
     tool,
     actions: {
       clearDraft,
+      createExportImageBlob,
       exportImage,
       exportTemplate,
       importImage,

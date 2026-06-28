@@ -5,7 +5,7 @@ import {
   getBoardSize,
 } from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
-import { downloadBlob } from "@/features/bead/lib/download-file";
+import { downloadImageBlob } from "@/features/bead/lib/download-file";
 import type { BeadStat } from "@/features/bead/lib/stats";
 import { getBeadStats } from "@/features/bead/lib/stats";
 import type { BeadFill } from "@/features/bead/types";
@@ -14,9 +14,12 @@ type ExportBeadImageOptions = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
-  filename: string;
   showBeadCodes: boolean;
   showGuideLines: boolean;
+};
+
+type DownloadBeadImageOptions = ExportBeadImageOptions & {
+  filename: string;
 };
 
 const exportScale = 4;
@@ -33,11 +36,10 @@ const statsSwatchRadius = 5;
 const statsCountHeight = 12;
 const statsTopGap = 0;
 
-export function exportBeadImage({
+export function createBeadImageBlob({
   rows,
   cols,
   beads,
-  filename,
   showBeadCodes,
   showGuideLines,
 }: ExportBeadImageOptions) {
@@ -71,16 +73,24 @@ export function exportBeadImage({
     height: statsHeight,
   });
 
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (!blob) {
         reject(new Error("Unable to create export image."));
         return;
       }
 
-      downloadBlob(blob, filename).then(resolve, reject);
+      resolve(blob);
     }, "image/png");
   });
+}
+
+export async function exportBeadImage({
+  filename,
+  ...options
+}: DownloadBeadImageOptions) {
+  const blob = await createBeadImageBlob(options);
+  await downloadImageBlob(blob, filename);
 }
 
 function getStatsHeight(width: number, statsCount: number) {

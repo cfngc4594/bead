@@ -5,6 +5,7 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
+  getInitialScale,
   getInitialView,
   getPinchedView,
   getZoomedView,
@@ -46,6 +47,7 @@ export function useCanvasNavigation({
   const [view, setView] = useState<CanvasView>(() =>
     getInitialView(rows, cols, viewport),
   );
+  const minScale = getInitialScale(rows, cols, viewport);
 
   useLayoutEffect(() => {
     if (!isViewportMeasured) {
@@ -156,6 +158,7 @@ export function useCanvasNavigation({
         view: current,
         point: pointer,
         deltaY: event.evt.deltaY,
+        minScale,
       }),
     );
   }
@@ -176,7 +179,7 @@ export function useCanvasNavigation({
 
     pinchGestureRef.current = gesture;
 
-    if (!previousGesture) {
+    if (!previousGesture || previousGesture.distance === 0) {
       return;
     }
 
@@ -186,6 +189,7 @@ export function useCanvasNavigation({
         previousCenter: previousGesture.center,
         nextCenter: gesture.center,
         scaleFactor: gesture.distance / previousGesture.distance,
+        minScale,
       }),
     );
   }

@@ -1,7 +1,9 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
@@ -9,6 +11,7 @@ import { BeadModelPreview } from "@/features/bead/components/bead-model-preview"
 import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
+import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
 import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
@@ -55,6 +58,8 @@ export function Editor({ projectId, size, title }: EditorProps) {
 function EditorContent({ projectId, size, title }: EditorProps) {
   const router = useRouter();
   const modelPreview = useModelPreview();
+  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
+  const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
   const {
     beads,
     beginEdit,
@@ -101,6 +106,7 @@ function EditorContent({ projectId, size, title }: EditorProps) {
     color.code.startsWith(selectedLetter),
   );
   const hasBeads = beads.some(Boolean);
+  const exportImageFilename = `bead-${size.id}.png`;
 
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
@@ -144,6 +150,25 @@ function EditorContent({ projectId, size, title }: EditorProps) {
     });
   }
 
+  function createExportImage() {
+    actions.createExportImageBlob().then((blob) => {
+      if (blob) {
+        setExportImageBlob(blob);
+      }
+    });
+  }
+
+  function handleExportImage() {
+    if (Capacitor.getPlatform() !== "android") {
+      actions.exportImage();
+      return;
+    }
+
+    setExportImageBlob(null);
+    setIsExportSheetOpen(true);
+    createExportImage();
+  }
+
   return (
     <main className="grid h-screen min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
@@ -160,7 +185,7 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           onPreviewModel={modelPreview.toggle}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={actions.clearDraft}
-          onExportImage={actions.exportImage}
+          onExportImage={handleExportImage}
           onExportTemplate={actions.exportTemplate}
           onImportImage={actions.importImage}
           onImportTemplate={actions.importTemplate}
@@ -173,6 +198,14 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
           tool={tool}
+        />
+        <ExportImageSheet
+          blob={exportImageBlob}
+          filename={exportImageFilename}
+          isCreating={isExportingImage}
+          open={isExportSheetOpen}
+          onCreateImage={createExportImage}
+          onOpenChange={setIsExportSheetOpen}
         />
         <input
           accept=".bead.json,application/json"

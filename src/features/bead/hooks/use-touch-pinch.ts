@@ -17,6 +17,7 @@ export function useTouchPinch({
   stageRef: React.RefObject<Konva.Stage | null>;
 }) {
   const touchPointersRef = useRef(new Map<number, TouchPoint>());
+  const isPinchingRef = useRef(false);
 
   function updateTouchPointer(event: PointerEvent) {
     if (event.pointerType !== "touch") {
@@ -38,6 +39,7 @@ export function useTouchPinch({
 
   function resetPinchIfIdle(resetPinch: () => void) {
     if (touchPointersRef.current.size < 2) {
+      isPinchingRef.current = false;
       resetPinch();
     }
   }
@@ -49,7 +51,11 @@ export function useTouchPinch({
       return false;
     }
 
-    onPinchStart();
+    if (!isPinchingRef.current) {
+      isPinchingRef.current = true;
+      onPinchStart();
+    }
+
     stageRef.current?.stopDrag();
     onPinchMove([points[0], points[1]]);
 
@@ -87,6 +93,8 @@ export function useTouchPinch({
     });
 
     return () => {
+      touchPointersRef.current.clear();
+      isPinchingRef.current = false;
       container.removeEventListener("touchmove", preventCanvasTouchDefault);
     };
   }, [containerRef]);

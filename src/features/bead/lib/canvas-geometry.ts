@@ -5,7 +5,6 @@ export const boardPadding = 24;
 export const labelCells = 1;
 export const boardOrigin = cellSize * labelCells;
 const maxFitScale = 2.5;
-const minZoomScale = 0.35;
 const maxZoomScale = 3;
 
 export function getBoardSize(rows: number, cols: number) {
@@ -63,16 +62,18 @@ export function getZoomedView({
   view,
   point,
   deltaY,
+  minScale,
 }: {
   view: CanvasView;
   point: { x: number; y: number };
   deltaY: number;
+  minScale: number;
 }): CanvasView {
   const scaleBy = 1.08;
   const scale =
     deltaY > 0
-      ? clampZoomScale(view.scale / scaleBy)
-      : clampZoomScale(view.scale * scaleBy);
+      ? clampZoomScale(view.scale / scaleBy, minScale)
+      : clampZoomScale(view.scale * scaleBy, minScale);
   const pointOnBoard = {
     x: (point.x - view.x) / view.scale,
     y: (point.y - view.y) / view.scale,
@@ -90,13 +91,15 @@ export function getPinchedView({
   previousCenter,
   nextCenter,
   scaleFactor,
+  minScale,
 }: {
   view: CanvasView;
   previousCenter: { x: number; y: number };
   nextCenter: { x: number; y: number };
   scaleFactor: number;
+  minScale: number;
 }): CanvasView {
-  const scale = clampZoomScale(view.scale * scaleFactor);
+  const scale = clampZoomScale(view.scale * scaleFactor, minScale);
   const pointOnBoard = {
     x: (previousCenter.x - view.x) / view.scale,
     y: (previousCenter.y - view.y) / view.scale,
@@ -109,7 +112,11 @@ export function getPinchedView({
   };
 }
 
-function getInitialScale(rows: number, cols: number, viewport: Viewport) {
+export function getInitialScale(
+  rows: number,
+  cols: number,
+  viewport: Viewport,
+) {
   const board = getBoardSize(rows, cols);
   const availableWidth = viewport.width - boardPadding * 2;
   const availableHeight = viewport.height - boardPadding * 2;
@@ -121,6 +128,6 @@ function getInitialScale(rows: number, cols: number, viewport: Viewport) {
   );
 }
 
-function clampZoomScale(scale: number) {
-  return Math.min(maxZoomScale, Math.max(minZoomScale, scale));
+function clampZoomScale(scale: number, minScale: number) {
+  return Math.min(maxZoomScale, Math.max(minScale, scale));
 }

@@ -5,6 +5,7 @@
       "name": "bead",
       "dependencies": {
         "@base-ui/react": "^1.5.0",
+        "@capacitor-community/media": "^9.1.0",
         "@capacitor/android": "^8.4.0",
         "@capacitor/app": "^8.1.0",
         "@capacitor/core": "^8.4.0",
@@ -137,6 +138,8 @@
     "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.2.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-n9a1/f2CwIDmNMNkFs+JI0ZjFnMO0jdOyGNtihgUNFnlmd84yIYY2KMTBmMV58ZlVHjgmY5Y6E1hVTnSRieggA=="],
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.2.0", "", { "os": "win32", "cpu": "x64" }, "sha512-Nawu5nHjP/zPKTIryh2AavzTc/KEg4um/MxWdXW0A6P/RZOyIpa7+QSjeXwAwX/utJGaCoXRPWtF3m5U/bB3Ww=="],
+
+    "@capacitor-community/media": ["@capacitor-community/media@9.1.0", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-HTd+n2pPBE7otRqYzr09sOrAb59t/bVzCME19dVixKmDP09rxB+Mt6aj0c5AhMoKS8Jw4712r5tk+gifHTlW/Q=="],
 
     "@capacitor/android": ["@capacitor/android@8.4.0", "", { "peerDependencies": { "@capacitor/core": "^8.4.0" } }, "sha512-K1ZPkQzvRzPEALz9nBdLx5p5nAPzp5fsTYWk7LRiKZeH/NXqjDvqfTv7lrLgrziQNoDeaL6ijg64oBREzXiV+g=="],
 
