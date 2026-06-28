@@ -27,6 +27,7 @@ type BeadModelPreviewProps = {
   className?: string;
   rows: number;
   cols: number;
+  resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
 };
 
@@ -34,6 +35,7 @@ export function BeadModelPreview({
   className,
   rows,
   cols,
+  resetViewSignal,
   beads,
 }: BeadModelPreviewProps) {
   const hasBeads = beads.some(Boolean);
@@ -47,7 +49,12 @@ export function BeadModelPreview({
       )}
     >
       {hasBeads ? (
-        <BeadModelScene beads={beads} cols={cols} rows={rows} />
+        <BeadModelScene
+          beads={beads}
+          cols={cols}
+          resetViewSignal={resetViewSignal}
+          rows={rows}
+        />
       ) : (
         <Empty className="h-full rounded-none border-0">
           <EmptyHeader>

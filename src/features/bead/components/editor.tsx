@@ -191,7 +191,12 @@ function EditorContent({ projectId, size, title }: EditorProps) {
 
         <div className="min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
           {modelPreview.isOpen ? (
-            <BeadModelPreview beads={beads} cols={size.cols} rows={size.rows} />
+            <BeadModelPreview
+              beads={beads}
+              cols={size.cols}
+              resetViewSignal={resetViewSignal}
+              rows={size.rows}
+            />
           ) : (
             <CanvasBoard
               rows={size.rows}

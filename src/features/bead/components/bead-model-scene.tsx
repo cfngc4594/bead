@@ -2,13 +2,15 @@
 
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadModelSceneProps = {
   rows: number;
   cols: number;
+  resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
 };
 
@@ -21,7 +23,13 @@ const beadRadius = 0.48;
 const beadHeight = 0.14;
 const beadSegments = 36;
 
-export function BeadModelScene({ rows, cols, beads }: BeadModelSceneProps) {
+export function BeadModelScene({
+  rows,
+  cols,
+  resetViewSignal,
+  beads,
+}: BeadModelSceneProps) {
+  const controlsRef = useRef<OrbitControlsImpl>(null);
   const groups = useMemo(
     () => createBeadGroups({ rows, cols, beads }),
     [beads, cols, rows],
@@ -57,10 +65,38 @@ export function BeadModelScene({ rows, cols, beads }: BeadModelSceneProps) {
         maxPolarAngle={Math.PI / 2 + 0.45}
         minDistance={cameraDistance * 0.3}
         minPolarAngle={Math.PI / 2 - 0.45}
+        ref={controlsRef}
         target={[0, 0, 0]}
+      />
+      <ResetModelView
+        cameraDistance={cameraDistance}
+        controlsRef={controlsRef}
+        key={resetViewSignal}
       />
     </Canvas>
   );
+}
+
+function ResetModelView({
+  cameraDistance,
+  controlsRef,
+}: {
+  cameraDistance: number;
+  controlsRef: RefObject<OrbitControlsImpl | null>;
+}) {
+  useLayoutEffect(() => {
+    const controls = controlsRef.current;
+
+    if (!controls) {
+      return;
+    }
+
+    controls.object.position.set(0, 0, cameraDistance);
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }, [cameraDistance, controlsRef]);
+
+  return null;
 }
 
 function BeadInstances({ group }: { group: BeadColorGroup }) {
@@ -125,7 +161,7 @@ function createBeadGroups({
   rows,
   cols,
   beads,
-}: BeadModelSceneProps): BeadColorGroup[] {
+}: Pick<BeadModelSceneProps, "rows" | "cols" | "beads">): BeadColorGroup[] {
   const groups = new Map<string, BeadColorGroup>();
   const xOffset = (cols - 1) / 2;
   const yOffset = (rows - 1) / 2;
