@@ -3,7 +3,7 @@
 import { Capacitor } from "@capacitor/core";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
@@ -15,6 +15,7 @@ import { ExportImageSheet } from "@/features/bead/components/export-image-sheet"
 import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
+import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
 import {
@@ -101,25 +102,49 @@ function EditorContent({ projectId, size, title }: EditorProps) {
     onRedo: redo,
     onUndo: undo,
   });
+  const mixedBeadBrush = useMixedBeadBrush({ beads, size });
 
-  const filteredColors = mardColors.filter((color) =>
-    color.code.startsWith(selectedLetter),
+  const filteredColors = useMemo(
+    () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
+    [selectedLetter],
   );
   const hasBeads = beads.some(Boolean);
   const exportImageFilename = `bead-${size.id}.png`;
 
+  function beginCellEdit() {
+    if (tool === "mix") {
+      mixedBeadBrush.beginStroke();
+    }
+
+    beginEdit();
+  }
+
   function editCell({ row, column }: GridCell) {
     const index = row * size.cols + column;
+    const fill = getEditFill(index);
 
-    setCell(
-      index,
-      tool === "erase"
-        ? null
-        : {
-            code: selectedColor.code,
-            hex: selectedColor.hex,
-          },
-    );
+    setCell(index, fill);
+    mixedBeadBrush.commitCell(index, fill);
+  }
+
+  function getEditFill(index: number) {
+    if (tool === "erase") {
+      return null;
+    }
+
+    if (tool === "mix") {
+      return mixedBeadBrush.pickFill(index);
+    }
+
+    return {
+      code: selectedColor.code,
+      hex: selectedColor.hex,
+    };
+  }
+
+  function finishCellEdit() {
+    mixedBeadBrush.endStroke();
+    commitEdit();
   }
 
   function pickCell({ row, column }: GridCell) {
@@ -239,8 +264,8 @@ function EditorContent({ projectId, size, title }: EditorProps) {
               showBeadCodes={showBeadCodes}
               showGuideLines={showGuideLines}
               onEditCell={editCell}
-              onEditEnd={commitEdit}
-              onEditStart={beginEdit}
+              onEditEnd={finishCellEdit}
+              onEditStart={beginCellEdit}
               onMoveSelection={moveSelection}
               onPickCell={pickCell}
               selectionResetSignal={selectionResetSignal}

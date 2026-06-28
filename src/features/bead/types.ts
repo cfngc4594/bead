@@ -1,4 +1,10 @@
-export type CanvasTool = "pan" | "paint" | "erase" | "picker" | "select";
+export type CanvasTool =
+  | "pan"
+  | "paint"
+  | "mix"
+  | "erase"
+  | "picker"
+  | "select";
 
 export type CanvasView = {
   x: number;

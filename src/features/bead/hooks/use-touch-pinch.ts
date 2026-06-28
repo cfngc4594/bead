@@ -2,8 +2,7 @@
 
 import type Konva from "konva";
 import { useEffect, useRef } from "react";
-
-type TouchPoint = { x: number; y: number };
+import type { TouchPoint } from "@/features/bead/lib/touch-gesture";
 
 export function useTouchPinch({
   containerRef,

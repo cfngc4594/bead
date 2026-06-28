@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mardColors } from "@/data/colors";
 
-const modeToolSkeletons = ["pan", "paint", "erase", "picker", "select"];
+const modeToolSkeletons = ["pan", "paint", "mix", "erase", "picker", "select"];
 const toolbarViewSkeletons = ["focus", "model-preview", "codes", "guides"];
 const mobileToolbarViewSkeletons = ["focus", "model-preview"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];

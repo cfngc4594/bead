@@ -10,6 +10,11 @@ import {
   getPinchedView,
   getZoomedView,
 } from "@/features/bead/lib/canvas-geometry";
+import {
+  getThresholdedPinchScaleFactor,
+  getTwoTouchGesture,
+  type TwoTouchGesture,
+} from "@/features/bead/lib/touch-gesture";
 import type { CanvasTool, CanvasView, Viewport } from "@/features/bead/types";
 
 type UseCanvasNavigationProps = {
@@ -39,10 +44,8 @@ export function useCanvasNavigation({
     signal: number;
     viewport: Viewport;
   } | null>(null);
-  const pinchGestureRef = useRef<{
-    center: { x: number; y: number };
-    distance: number;
-  } | null>(null);
+  const pinchGestureRef = useRef<TwoTouchGesture | null>(null);
+  const pinchScaleDistanceRef = useRef<number | null>(null);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [view, setView] = useState<CanvasView>(() =>
     getInitialView(rows, cols, viewport),
@@ -174,13 +177,24 @@ export function useCanvasNavigation({
   function handlePinchMove(
     points: [{ x: number; y: number }, { x: number; y: number }],
   ) {
-    const gesture = getPinchGesture(points);
+    const gesture = getTwoTouchGesture(points);
     const previousGesture = pinchGestureRef.current;
 
     pinchGestureRef.current = gesture;
 
     if (!previousGesture || previousGesture.distance === 0) {
+      pinchScaleDistanceRef.current = gesture.distance;
       return;
+    }
+
+    const scaleFactor = getThresholdedPinchScaleFactor({
+      previousDistance:
+        pinchScaleDistanceRef.current ?? previousGesture.distance,
+      nextDistance: gesture.distance,
+    });
+
+    if (scaleFactor !== 1) {
+      pinchScaleDistanceRef.current = gesture.distance;
     }
 
     setView((current) =>
@@ -188,7 +202,7 @@ export function useCanvasNavigation({
         view: current,
         previousCenter: previousGesture.center,
         nextCenter: gesture.center,
-        scaleFactor: gesture.distance / previousGesture.distance,
+        scaleFactor,
         minScale,
       }),
     );
@@ -196,6 +210,7 @@ export function useCanvasNavigation({
 
   function resetPinch() {
     pinchGestureRef.current = null;
+    pinchScaleDistanceRef.current = null;
   }
 
   return {
@@ -206,19 +221,6 @@ export function useCanvasNavigation({
     handleDragEnd,
     handlePinchMove,
     resetPinch,
-  };
-}
-
-function getPinchGesture([first, second]: [
-  { x: number; y: number },
-  { x: number; y: number },
-]) {
-  return {
-    center: {
-      x: (first.x + second.x) / 2,
-      y: (first.y + second.y) / 2,
-    },
-    distance: Math.hypot(first.x - second.x, first.y - second.y),
   };
 }
 

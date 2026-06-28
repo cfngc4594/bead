@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { useModelSceneNavigation } from "@/features/bead/hooks/use-model-scene-navigation";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadModelSceneProps = {
@@ -29,7 +30,7 @@ export function BeadModelScene({
   resetViewSignal,
   beads,
 }: BeadModelSceneProps) {
-  const controlsRef = useRef<OrbitControlsImpl>(null);
+  const navigation = useModelSceneNavigation();
   const groups = useMemo(
     () => createBeadGroups({ rows, cols, beads }),
     [beads, cols, rows],
@@ -37,43 +38,58 @@ export function BeadModelScene({
   const cameraDistance = Math.max(22, Math.max(rows, cols) * 1.95);
 
   return (
-    <Canvas
-      camera={{
-        far: cameraDistance * 6,
-        fov: 32,
-        near: 0.1,
-        position: [0, 0, cameraDistance],
-      }}
-      className="h-full w-full"
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true }}
+    <div
+      className="h-full w-full touch-none"
+      onPointerCancelCapture={navigation.handlePointerEndCapture}
+      onPointerDownCapture={navigation.handlePointerDownCapture}
+      onPointerLeave={navigation.handlePointerEndCapture}
+      onPointerMoveCapture={navigation.handlePointerMoveCapture}
+      onPointerUpCapture={navigation.handlePointerEndCapture}
+      onWheelCapture={navigation.handleWheelCapture}
     >
-      <ambientLight intensity={1.2} />
-      <hemisphereLight color="#ffffff" groundColor="#d4d4d8" intensity={1.1} />
-      <directionalLight intensity={2.1} position={[8, 10, 14]} />
-      <directionalLight intensity={0.6} position={[-10, -6, 8]} />
-      {groups.map((group) => (
-        <BeadInstances group={group} key={group.hex} />
-      ))}
-      <OrbitControls
-        autoRotate
-        autoRotateSpeed={0.65}
-        dampingFactor={0.08}
-        enableDamping
-        makeDefault
-        maxDistance={cameraDistance * 2.4}
-        maxPolarAngle={Math.PI / 2 + 0.45}
-        minDistance={cameraDistance * 0.3}
-        minPolarAngle={Math.PI / 2 - 0.45}
-        ref={controlsRef}
-        target={[0, 0, 0]}
-      />
-      <ResetModelView
-        cameraDistance={cameraDistance}
-        controlsRef={controlsRef}
-        key={resetViewSignal}
-      />
-    </Canvas>
+      <Canvas
+        camera={{
+          far: cameraDistance * 6,
+          fov: 32,
+          near: 0.1,
+          position: [0, 0, cameraDistance],
+        }}
+        className="h-full w-full"
+        dpr={[1, 2]}
+        gl={{ antialias: true, alpha: true }}
+      >
+        <ambientLight intensity={1.2} />
+        <hemisphereLight
+          color="#ffffff"
+          groundColor="#d4d4d8"
+          intensity={1.1}
+        />
+        <directionalLight intensity={2.1} position={[8, 10, 14]} />
+        <directionalLight intensity={0.6} position={[-10, -6, 8]} />
+        {groups.map((group) => (
+          <BeadInstances group={group} key={group.hex} />
+        ))}
+        <OrbitControls
+          autoRotate
+          autoRotateSpeed={0.65}
+          dampingFactor={0.08}
+          enableDamping
+          makeDefault
+          maxDistance={cameraDistance * 2.4}
+          maxPolarAngle={Math.PI / 2 + 0.45}
+          minDistance={cameraDistance * 0.3}
+          minPolarAngle={Math.PI / 2 - 0.45}
+          ref={navigation.controlsRef}
+          screenSpacePanning
+          target={[0, 0, 0]}
+        />
+        <ResetModelView
+          cameraDistance={cameraDistance}
+          controlsRef={navigation.controlsRef}
+          key={resetViewSignal}
+        />
+      </Canvas>
+    </div>
   );
 }
 

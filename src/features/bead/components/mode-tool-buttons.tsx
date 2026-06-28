@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Blend,
   Eraser,
   Hand,
   type LucideIcon,
@@ -39,6 +40,11 @@ const modeToolActions: ModeToolAction[] = [
     icon: PenLine,
     label: "画笔",
     tool: "paint",
+  },
+  {
+    icon: Blend,
+    label: "混豆画笔",
+    tool: "mix",
   },
   {
     icon: Eraser,

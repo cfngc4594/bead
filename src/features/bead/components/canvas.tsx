@@ -371,7 +371,7 @@ export function CanvasBoard({
 }
 
 function isEditTool(tool: CanvasTool) {
-  return tool === "paint" || tool === "erase";
+  return tool === "paint" || tool === "mix" || tool === "erase";
 }
 
 function getCanvasCursor({
@@ -391,7 +391,7 @@ function getCanvasCursor({
     return "grab";
   }
 
-  if (tool === "paint") {
+  if (tool === "paint" || tool === "mix") {
     return "crosshair";
   }
 
