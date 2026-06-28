@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
+import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
+import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
 import {
   type ProjectId,
@@ -52,6 +54,7 @@ export function Editor({ projectId, size, title }: EditorProps) {
 
 function EditorContent({ projectId, size, title }: EditorProps) {
   const router = useRouter();
+  const modelPreview = useModelPreview();
   const {
     beads,
     beginEdit,
@@ -148,10 +151,13 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
+          isModelPreviewOpen={modelPreview.isOpen}
+          isPreparingModelPreview={modelPreview.isPreparing}
           projectTitle={title}
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
           onRedo={actions.redoEdit}
+          onPreviewModel={modelPreview.toggle}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={actions.clearDraft}
           onExportImage={actions.exportImage}
@@ -183,23 +189,27 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           type="file"
         />
 
-        <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <CanvasBoard
-            rows={size.rows}
-            cols={size.cols}
-            beads={beads}
-            tool={tool}
-            showBeadCodes={showBeadCodes}
-            showGuideLines={showGuideLines}
-            onEditCell={editCell}
-            onEditEnd={commitEdit}
-            onEditStart={beginEdit}
-            onMoveSelection={moveSelection}
-            onPickCell={pickCell}
-            selectionResetSignal={selectionResetSignal}
-            resetViewAfterResizeSignal={resetViewAfterResizeSignal}
-            resetViewSignal={resetViewSignal}
-          />
+        <div className="min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
+          {modelPreview.isOpen ? (
+            <BeadModelPreview beads={beads} cols={size.cols} rows={size.rows} />
+          ) : (
+            <CanvasBoard
+              rows={size.rows}
+              cols={size.cols}
+              beads={beads}
+              tool={tool}
+              showBeadCodes={showBeadCodes}
+              showGuideLines={showGuideLines}
+              onEditCell={editCell}
+              onEditEnd={commitEdit}
+              onEditStart={beginEdit}
+              onMoveSelection={moveSelection}
+              onPickCell={pickCell}
+              selectionResetSignal={selectionResetSignal}
+              resetViewAfterResizeSignal={resetViewAfterResizeSignal}
+              resetViewSignal={resetViewSignal}
+            />
+          )}
         </div>
       </section>
 

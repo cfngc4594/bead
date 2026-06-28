@@ -9,7 +9,7 @@ export function ProjectsSkeleton() {
         <div className="flex flex-1 flex-col gap-4">
           <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <Skeleton className="h-8 w-40 rounded-lg lg:w-56" />
+              <Skeleton className="h-8 w-32 rounded-lg sm:w-48 lg:w-56" />
               <Skeleton className="h-8 w-18 rounded-lg" />
             </div>
             <Skeleton className="ml-auto h-8 w-[72px] rounded-lg" />

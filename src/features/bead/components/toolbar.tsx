@@ -11,7 +11,9 @@ import {
   LoaderCircle,
   type LucideIcon,
   MoreHorizontal,
+  PanelTop,
   Redo2,
+  Rotate3D,
   RotateCcw,
   Undo2,
 } from "lucide-react";
@@ -41,12 +43,14 @@ type EditorToolbarProps = {
   projectTitle: string;
   showBeadCodes: boolean;
   showGuideLines: boolean;
+  isModelPreviewOpen: boolean;
   onToggleBeadCodes: () => void;
   onToggleGuideLines: () => void;
   onBack: () => void;
   onRenameProject: (title: string) => void;
   onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
+  onPreviewModel: () => void;
   onClearDraft: () => void;
   onExportImage: () => void;
   onExportTemplate: () => void;
@@ -56,6 +60,7 @@ type EditorToolbarProps = {
   onRedo: () => void;
   isExportingImage?: boolean;
   isImportingImage?: boolean;
+  isPreparingModelPreview?: boolean;
 };
 
 type ToolbarIconButtonProps = {
@@ -85,12 +90,14 @@ export function EditorToolbar({
   projectTitle,
   showBeadCodes,
   showGuideLines,
+  isModelPreviewOpen,
   onToggleBeadCodes,
   onToggleGuideLines,
   onBack,
   onRenameProject,
   onSelectTool,
   onResetView,
+  onPreviewModel,
   onClearDraft,
   onExportImage,
   onExportTemplate,
@@ -100,11 +107,25 @@ export function EditorToolbar({
   onRedo,
   isExportingImage = false,
   isImportingImage = false,
+  isPreparingModelPreview = false,
 }: EditorToolbarProps) {
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
     onClick: onResetView,
+  };
+  const previewModelAction: ToolbarAction = {
+    closeSheetOnClick: true,
+    disabled: isPreparingModelPreview,
+    icon: isModelPreviewOpen ? PanelTop : Rotate3D,
+    isActive: isModelPreviewOpen,
+    label: isPreparingModelPreview
+      ? "准备 3D"
+      : isModelPreviewOpen
+        ? "返回画布"
+        : "3D 预览",
+    loading: isPreparingModelPreview,
+    onClick: onPreviewModel,
   };
   const displayActions: ToolbarAction[] = [
     {
@@ -120,7 +141,7 @@ export function EditorToolbar({
       onClick: onToggleGuideLines,
     },
   ];
-  const viewActions = [resetViewAction, ...displayActions];
+  const viewActions = [resetViewAction, previewModelAction, ...displayActions];
   const historyActions: ToolbarAction[] = [
     {
       disabled: !canUndo,
@@ -170,7 +191,7 @@ export function EditorToolbar({
       onClick: onExportTemplate,
     },
   ];
-  const mobileTopViewActions = [resetViewAction];
+  const mobileTopViewActions = [resetViewAction, previewModelAction];
   const mobileSheetActions = [...displayActions, ...fileActions];
 
   return (

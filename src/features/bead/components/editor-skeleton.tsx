@@ -3,13 +3,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { mardColors } from "@/data/colors";
 
 const modeToolSkeletons = ["pan", "paint", "erase", "picker", "select"];
-const toolbarViewSkeletons = ["focus", "codes", "guides"];
+const toolbarViewSkeletons = ["focus", "model-preview", "codes", "guides"];
+const mobileToolbarViewSkeletons = ["focus", "model-preview"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [
   "image-import",
   "image-export",
   "template-import",
   "template-export",
+];
+const desktopToolbarActionGroups = [
+  toolbarViewSkeletons,
+  toolbarHistorySkeletons,
+  toolbarFileSkeletons,
 ];
 const letterSkeletons = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
@@ -58,37 +64,49 @@ function EditorToolbarSkeleton() {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
-        <Skeleton className="size-7 shrink-0 rounded-lg" />
-        <Skeleton className="h-7 w-24 shrink-0 rounded-md" />
+        <ToolbarIconSkeleton />
+        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
         {modeToolSkeletons.map((item) => (
-          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+          <ToolbarIconSkeleton key={item} />
         ))}
-        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
-        {toolbarViewSkeletons.map((item) => (
-          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
-        ))}
-        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
-        {toolbarHistorySkeletons.map((item) => (
-          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
-        ))}
-        <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />
-        {toolbarFileSkeletons.map((item) => (
-          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+        {desktopToolbarActionGroups.map((group) => (
+          <ToolbarSkeletonGroup group={group} key={group.join("-")} />
         ))}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-        <Skeleton className="size-7 shrink-0 rounded-lg" />
-        {toolbarHistorySkeletons.map((item) => (
-          <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+        {mobileToolbarViewSkeletons.map((item) => (
+          <ToolbarIconSkeleton key={item} />
         ))}
-        <Skeleton className="size-7 shrink-0 rounded-lg" />
+        {toolbarHistorySkeletons.map((item) => (
+          <ToolbarIconSkeleton key={item} />
+        ))}
+        <ToolbarIconSkeleton />
       </div>
     </header>
   );
+}
+
+function ToolbarSkeletonGroup({ group }: { group: readonly string[] }) {
+  return (
+    <>
+      <ToolbarSeparatorSkeleton />
+      {group.map((item) => (
+        <ToolbarIconSkeleton key={item} />
+      ))}
+    </>
+  );
+}
+
+function ToolbarIconSkeleton() {
+  return <Skeleton className="size-7 shrink-0 rounded-lg" />;
+}
+
+function ToolbarSeparatorSkeleton() {
+  return <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />;
 }
 
 function DesktopColorSidebarSkeleton() {
