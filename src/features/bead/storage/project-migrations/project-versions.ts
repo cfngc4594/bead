@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const canvasSizeIdSchema = z.enum(["16x16", "29x29", "58x58", "87x87"]);
+import { canvasSizeIdSchema } from "@/config/canvas-sizes";
 
 const beadFillSchema = z
   .object({

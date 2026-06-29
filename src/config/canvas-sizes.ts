@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const canvasSizes = [
   {
     id: "16x16",
@@ -33,8 +35,13 @@ export const canvasSizes = [
   },
 ] as const;
 
-export type CanvasSize = (typeof canvasSizes)[number];
-export type CanvasSizeId = CanvasSize["id"];
+export const canvasSizeIdSchema = z.enum(["16x16", "29x29", "58x58", "87x87"]);
+
+export type CanvasSizeId = z.infer<typeof canvasSizeIdSchema>;
+export type CanvasSize = Extract<
+  (typeof canvasSizes)[number],
+  { id: CanvasSizeId }
+>;
 
 const canvasSizesById = Object.fromEntries(
   canvasSizes.map((size) => [size.id, size]),
