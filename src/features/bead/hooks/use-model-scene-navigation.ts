@@ -2,7 +2,6 @@
 
 import {
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
   useCallback,
   useLayoutEffect,
   useRef,
@@ -20,14 +19,21 @@ const trackpadPanSpeed = 1;
 const touchPanSpeed = 1;
 
 export function useModelSceneNavigation() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const touchPointersRef = useRef(new Map<number, TouchPoint>());
   const touchGestureRef = useRef<TwoTouchGesture | null>(null);
   const touchScaleDistanceRef = useRef<number | null>(null);
   const isCustomTouchGestureRef = useRef(false);
 
-  const handleWheelCapture = useCallback(
-    (event: ReactWheelEvent<HTMLDivElement>) => {
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    function handleWheel(event: WheelEvent) {
       if (event.ctrlKey || event.metaKey) {
         return;
       }
@@ -40,16 +46,25 @@ export function useModelSceneNavigation() {
 
       event.preventDefault();
       event.stopPropagation();
-      event.nativeEvent.stopImmediatePropagation();
+      event.stopImmediatePropagation();
       panControlsByWheel({
         controls,
         deltaX: event.deltaX,
         deltaY: event.deltaY,
-        viewportHeight: event.currentTarget.clientHeight,
+        viewportHeight: container?.clientHeight ?? 0,
       });
-    },
-    [],
-  );
+    }
+
+    container.addEventListener("wheel", handleWheel, {
+      capture: true,
+      passive: false,
+    });
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel, { capture: true });
+    };
+  }, []);
+
   const handlePointerDownCapture = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       updateModelTouchPointer(touchPointersRef.current, event);
@@ -102,11 +117,11 @@ export function useModelSceneNavigation() {
   }, []);
 
   return {
+    containerRef,
     controlsRef,
     handlePointerDownCapture,
     handlePointerEndCapture,
     handlePointerMoveCapture,
-    handleWheelCapture,
   };
 }
 

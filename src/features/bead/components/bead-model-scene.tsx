@@ -46,12 +46,12 @@ export function BeadModelScene({
   return (
     <div
       className="h-full w-full touch-none"
+      ref={navigation.containerRef}
       onPointerCancelCapture={navigation.handlePointerEndCapture}
       onPointerDownCapture={navigation.handlePointerDownCapture}
       onPointerLeave={navigation.handlePointerEndCapture}
       onPointerMoveCapture={navigation.handlePointerMoveCapture}
       onPointerUpCapture={navigation.handlePointerEndCapture}
-      onWheelCapture={navigation.handleWheelCapture}
     >
       <Canvas
         camera={{
