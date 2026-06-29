@@ -35,7 +35,8 @@ export function EditorSkeleton() {
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbarSkeleton />
 
-        <div className="min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
+        <div className="relative min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
+          <Skeleton className="absolute right-3 top-3 z-10 h-8 w-32 rounded-lg md:right-4 md:top-4" />
           <CanvasBoardSkeleton />
         </div>
       </section>

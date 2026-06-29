@@ -4,15 +4,24 @@ import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useRef, useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
+  type CanvasDocumentState,
   type CanvasState,
+  clearDocumentBeads,
+  cloneDocument,
+  createDocumentFromBeads,
+  createEmptyDocument,
+  getLayerByCellIndex,
+  isSameDocument,
+  updateLayersForCell,
+} from "@/features/bead/lib/canvas-document";
+import {
   canRedo,
   canUndo,
-  createEmptyCanvas,
-  getCurrentCanvas,
+  getCurrentDocument,
   type ProjectId,
   projectsCollection,
   redoProject,
-  saveCanvasSnapshot,
+  saveCanvasDocumentSnapshot,
   undoProject,
 } from "@/features/bead/storage/projects";
 import type { BeadFill } from "@/features/bead/types";
@@ -43,13 +52,15 @@ export function useProjectCanvas({
   );
   const project = projects[0];
   const cellCount = size.rows * size.cols;
-  const persistedBeads = project
-    ? getCurrentCanvas({ cellCount, project })
-    : createEmptyCanvas(cellCount);
+  const persistedDocument = project
+    ? getCurrentDocument({ cellCount, project })
+    : createEmptyDocument(cellCount);
   const editBaseIndexRef = useRef<number | null>(null);
-  const draftRef = useRef<CanvasState | null>(null);
-  const [draftBeads, setDraftBeads] = useState<CanvasState | null>(null);
-  const beads = draftBeads ?? persistedBeads;
+  const draftRef = useRef<CanvasDocumentState | null>(null);
+  const [draftDocument, setDraftDocument] =
+    useState<CanvasDocumentState | null>(null);
+  const document = draftDocument ?? persistedDocument;
+  const beads = document.beads;
 
   function beginEdit() {
     const currentProject = projectsCollection.get(projectId) ?? project;
@@ -59,23 +70,38 @@ export function useProjectCanvas({
     }
 
     editBaseIndexRef.current = currentProject.currentIndex;
-    draftRef.current = getCurrentCanvas({
+    draftRef.current = getCurrentDocument({
       cellCount,
       project: currentProject,
     });
-    setDraftBeads(draftRef.current);
+    setDraftDocument(draftRef.current);
   }
 
   function editCell(index: number, fill: BeadFill | null) {
-    const next = [...(draftRef.current ?? beads)];
+    const current = draftRef.current ?? document;
+    const next = cloneDocument(current);
+    const activeLayer = next.layers.find(
+      (layer) => layer.id === next.activeLayerId,
+    );
+    const targetLayer = getLayerByCellIndex(next.layers, index);
 
-    if (isSameBead(next[index] ?? null, fill)) {
+    if (activeLayer?.isLocked || targetLayer?.isLocked) {
       return;
     }
 
-    next[index] = fill;
+    if (isSameBead(next.beads[index] ?? null, fill)) {
+      return;
+    }
+
+    next.beads[index] = fill;
+    next.layers = updateLayersForCell({
+      activeLayerId: next.activeLayerId,
+      fill,
+      index,
+      layers: next.layers,
+    });
     draftRef.current = next;
-    setDraftBeads(next);
+    setDraftDocument(next);
   }
 
   function commitEdit() {
@@ -84,22 +110,26 @@ export function useProjectCanvas({
     draftRef.current = null;
     editBaseIndexRef.current = null;
 
-    if (!draft || isSameBeads(draft, persistedBeads)) {
-      setDraftBeads(null);
+    if (!draft || isSameDocument(draft, persistedDocument)) {
+      setDraftDocument(null);
       return;
     }
 
     persistProject(
-      saveCanvasSnapshot({
+      saveCanvasDocumentSnapshot({
         baseIndex: baseIndex ?? undefined,
-        beads: draft,
+        document: draft,
         projectId,
       }),
     );
-    setDraftBeads(null);
+    setDraftDocument(null);
   }
 
   function commitBeads(nextBeads: CanvasState) {
+    commitDocument(createDocumentFromBeads([...nextBeads]));
+  }
+
+  function commitDocument(nextDocument: CanvasDocumentState) {
     const currentProject = projectsCollection.get(projectId) ?? project;
 
     if (!currentProject) {
@@ -107,23 +137,23 @@ export function useProjectCanvas({
     }
 
     const baseIndex = currentProject.currentIndex;
-    const currentBeads = getCurrentCanvas({
+    const currentDocument = getCurrentDocument({
       cellCount,
       project: currentProject,
     });
 
     draftRef.current = null;
     editBaseIndexRef.current = null;
-    setDraftBeads(null);
+    setDraftDocument(null);
 
-    if (isSameBeads(nextBeads, currentBeads)) {
+    if (isSameDocument(nextDocument, currentDocument)) {
       return;
     }
 
     persistProject(
-      saveCanvasSnapshot({
+      saveCanvasDocumentSnapshot({
         baseIndex,
-        beads: [...nextBeads],
+        document: cloneDocument(nextDocument),
         projectId,
       }),
     );
@@ -132,27 +162,31 @@ export function useProjectCanvas({
   function undo() {
     draftRef.current = null;
     editBaseIndexRef.current = null;
-    setDraftBeads(null);
+    setDraftDocument(null);
     persistProject(undoProject(projectId));
   }
 
   function redo() {
     draftRef.current = null;
     editBaseIndexRef.current = null;
-    setDraftBeads(null);
+    setDraftDocument(null);
     persistProject(redoProject(projectId));
   }
 
   function clear() {
-    commitBeads(createEmptyCanvas(cellCount));
+    commitDocument(clearDocumentBeads(document));
   }
 
   return {
     beads,
+    document,
+    layers: document.layers,
+    activeLayerId: document.activeLayerId,
     beginEdit,
     editCell,
     commitEdit,
     commitBeads,
+    commitDocument,
     undo,
     redo,
     clear,
@@ -165,20 +199,6 @@ function persistProject(persistence: Promise<unknown>) {
   persistence.catch((error) => {
     console.error("Unable to persist bead project", error);
   });
-}
-
-function isSameBeads(a: CanvasState, b: CanvasState) {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  for (let index = 0; index < a.length; index += 1) {
-    if (!isSameBead(a[index] ?? null, b[index] ?? null)) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function isSameBead(a: BeadFill | null, b: BeadFill | null) {

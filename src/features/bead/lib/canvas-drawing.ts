@@ -31,9 +31,17 @@ export function drawBoard(
   rows: number,
   cols: number,
   beads: readonly (BeadFill | null)[],
-  options: { showBeadCodes?: boolean; showGuideLines?: boolean } = {},
+  options: {
+    activeLayerCellIndexes?: ReadonlySet<number>;
+    showBeadCodes?: boolean;
+    showGuideLines?: boolean;
+  } = {},
 ) {
-  const { showBeadCodes = true, showGuideLines = false } = options;
+  const {
+    activeLayerCellIndexes,
+    showBeadCodes = true,
+    showGuideLines = false,
+  } = options;
 
   context.save();
   drawLabels(context, rows, cols);
@@ -53,11 +61,19 @@ export function drawBoard(
       context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
 
       if (color) {
-        context.fillStyle = color.hex;
+        const cellIndex = row * cols + col;
+        const isDimmed =
+          activeLayerCellIndexes !== undefined &&
+          !activeLayerCellIndexes.has(cellIndex);
+        const beadHex = isDimmed ? getDimmedBeadColor(color.hex) : color.hex;
+
+        context.fillStyle = beadHex;
         context.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
 
         if (showBeadCodes) {
-          context.fillStyle = getReadableTextColor(color.hex);
+          context.fillStyle = isDimmed
+            ? "#6b7280"
+            : getReadableTextColor(beadHex);
           context.font = "600 7px sans-serif";
           context.textAlign = "center";
           context.textBaseline = "middle";
@@ -72,6 +88,17 @@ export function drawBoard(
   }
 
   context.restore();
+}
+
+function getDimmedBeadColor(hex: string) {
+  const red = Number.parseInt(hex.slice(1, 3), 16);
+  const green = Number.parseInt(hex.slice(3, 5), 16);
+  const blue = Number.parseInt(hex.slice(5, 7), 16);
+  const luminance = Math.round(red * 0.299 + green * 0.587 + blue * 0.114);
+  const dimmed = Math.round(luminance * 0.55 + 255 * 0.45);
+  const channel = dimmed.toString(16).padStart(2, "0");
+
+  return `#${channel}${channel}${channel}`;
 }
 
 function drawGuideLines(

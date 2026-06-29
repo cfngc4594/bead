@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
+import type { CanvasState } from "@/features/bead/lib/canvas-document";
 import {
   createBeadImageBlob,
   exportBeadImage,
@@ -14,7 +15,6 @@ import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
-import type { CanvasState } from "@/features/bead/storage/projects";
 import type { CanvasTool } from "@/features/bead/types";
 
 type UseEditorActionsProps = {
@@ -247,6 +247,7 @@ export function useEditorActions({
       importImage,
       importTemplate,
       redoEdit,
+      resetSelection,
       selectColor,
       selectTool,
       undoEdit,

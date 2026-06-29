@@ -12,12 +12,23 @@ import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
+import { LayersPanel } from "@/features/bead/components/layers-panel";
 import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import {
+  addLayer as addDocumentLayer,
+  deleteLayer as deleteDocumentLayer,
+  getVisibleBeads,
+  renameLayer as renameDocumentLayer,
+  reorderLayer as reorderDocumentLayer,
+  selectLayer as selectDocumentLayer,
+  toggleLayerHidden as toggleDocumentLayerHidden,
+  toggleLayerLocked as toggleDocumentLayerLocked,
+} from "@/features/bead/lib/canvas-document";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
@@ -63,10 +74,14 @@ function EditorContent({ projectId, size, title }: EditorProps) {
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
   const {
     beads,
+    activeLayerId,
     beginEdit,
     editCell: setCell,
     commitEdit,
     commitBeads,
+    commitDocument,
+    document,
+    layers,
     undo,
     redo,
     clear,
@@ -110,6 +125,7 @@ function EditorContent({ projectId, size, title }: EditorProps) {
   );
   const hasBeads = beads.some(Boolean);
   const exportImageFilename = `bead-${size.id}.png`;
+  const visibleBeads = getVisibleBeads(document);
 
   function beginCellEdit() {
     if (tool === "mix") {
@@ -148,7 +164,7 @@ function EditorContent({ projectId, size, title }: EditorProps) {
   }
 
   function pickCell({ row, column }: GridCell) {
-    const bead = beads[row * size.cols + column];
+    const bead = visibleBeads[row * size.cols + column];
 
     if (!bead) {
       return;
@@ -164,8 +180,8 @@ function EditorContent({ projectId, size, title }: EditorProps) {
     actions.selectTool("paint");
   }
 
-  function moveSelection(nextBeads: (typeof beads)[number][]) {
-    commitBeads(nextBeads);
+  function moveSelection(nextDocument: typeof document) {
+    commitDocument(nextDocument);
   }
 
   function handleRenameProject(nextTitle: string) {
@@ -192,6 +208,41 @@ function EditorContent({ projectId, size, title }: EditorProps) {
     setExportImageBlob(null);
     setIsExportSheetOpen(true);
     createExportImage();
+  }
+
+  function selectLayer(layerId: string) {
+    const nextDocument = selectDocumentLayer(document, layerId);
+    actions.resetSelection();
+    commitDocument(nextDocument);
+  }
+
+  function addLayer() {
+    actions.resetSelection();
+    commitDocument(addDocumentLayer(document));
+  }
+
+  function renameLayer(layerId: string, name: string) {
+    commitDocument(renameDocumentLayer({ document, layerId, name }));
+  }
+
+  function deleteLayer(layerId: string) {
+    actions.resetSelection();
+    commitDocument(deleteDocumentLayer(document, layerId));
+  }
+
+  function reorderLayer(fromIndex: number, toIndex: number) {
+    actions.resetSelection();
+    commitDocument(reorderDocumentLayer({ document, fromIndex, toIndex }));
+  }
+
+  function toggleLayerHidden(layerId: string) {
+    actions.resetSelection();
+    commitDocument(toggleDocumentLayerHidden(document, layerId));
+  }
+
+  function toggleLayerLocked(layerId: string) {
+    actions.resetSelection();
+    commitDocument(toggleDocumentLayerLocked(document, layerId));
   }
 
   return (
@@ -247,10 +298,10 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           type="file"
         />
 
-        <div className="min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
+        <div className="relative min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
           {modelPreview.isOpen ? (
             <BeadModelPreview
-              beads={beads}
+              beads={visibleBeads}
               cols={size.cols}
               resetViewSignal={resetViewSignal}
               rows={size.rows}
@@ -259,7 +310,8 @@ function EditorContent({ projectId, size, title }: EditorProps) {
             <CanvasBoard
               rows={size.rows}
               cols={size.cols}
-              beads={beads}
+              beads={visibleBeads}
+              document={document}
               tool={tool}
               showBeadCodes={showBeadCodes}
               showGuideLines={showGuideLines}
@@ -273,6 +325,19 @@ function EditorContent({ projectId, size, title }: EditorProps) {
               resetViewSignal={resetViewSignal}
             />
           )}
+          {!modelPreview.isOpen ? (
+            <LayersPanel
+              activeLayerId={activeLayerId}
+              layers={layers}
+              onAddLayer={addLayer}
+              onDeleteLayer={deleteLayer}
+              onRenameLayer={renameLayer}
+              onReorderLayer={reorderLayer}
+              onSelectLayer={selectLayer}
+              onToggleLayerHidden={toggleLayerHidden}
+              onToggleLayerLocked={toggleLayerLocked}
+            />
+          ) : null}
         </div>
       </section>
 
