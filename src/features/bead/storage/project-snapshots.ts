@@ -6,24 +6,15 @@ import {
   createEmptyCanvas,
 } from "@/features/bead/lib/canvas-document";
 import type { BeadFill } from "@/features/bead/types";
+import type {
+  ProjectV2Snapshot,
+  ProjectV2SnapshotCell,
+  ProjectV2SnapshotLayer,
+} from "./migrations/v2/types";
 
-export type CanvasSnapshotCell =
-  | [index: number, code: string]
-  | [index: number, code: string, layerIndex: number];
-
-export type CanvasSnapshotLayer = {
-  id: string;
-  name: string;
-  isHidden?: true;
-  isLocked?: true;
-};
-
-export type CanvasSnapshot = {
-  version: 2;
-  cells: CanvasSnapshotCell[];
-  layers: CanvasSnapshotLayer[];
-  activeLayerId: string;
-};
+export type CanvasSnapshotCell = ProjectV2SnapshotCell;
+export type CanvasSnapshotLayer = ProjectV2SnapshotLayer;
+export type CanvasSnapshot = ProjectV2Snapshot;
 
 export function compactDocument(document: CanvasDocumentState): CanvasSnapshot {
   const layers = normalizeLayers(document);
@@ -31,7 +22,6 @@ export function compactDocument(document: CanvasDocumentState): CanvasSnapshot {
   const cells = compactBeads(document.beads, cellLayerIndexes);
 
   return {
-    version: 2,
     cells,
     layers: layers.map(({ id, isHidden, isLocked, name }) => ({
       id,

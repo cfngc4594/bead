@@ -2,12 +2,12 @@ import { z } from "zod";
 import { canvasSizeIdSchema } from "@/config/canvas-sizes";
 import type { ProjectV2 } from "./types";
 
-const canvasSnapshotCellSchema = z.union([
+export const projectV2SnapshotCellSchema = z.union([
   z.tuple([z.number(), z.string()]),
   z.tuple([z.number(), z.string(), z.number()]),
 ]);
 
-const canvasSnapshotLayerSchema = z
+export const projectV2SnapshotLayerSchema = z
   .object({
     id: z.string(),
     name: z.string(),
@@ -16,11 +16,10 @@ const canvasSnapshotLayerSchema = z
   })
   .strict();
 
-const canvasSnapshotSchema = z
+export const projectV2SnapshotSchema = z
   .object({
-    version: z.literal(2),
-    cells: z.array(canvasSnapshotCellSchema),
-    layers: z.array(canvasSnapshotLayerSchema),
+    cells: z.array(projectV2SnapshotCellSchema),
+    layers: z.array(projectV2SnapshotLayerSchema),
     activeLayerId: z.string(),
   })
   .strict();
@@ -32,7 +31,7 @@ export const projectV2Schema = z
     sizeId: canvasSizeIdSchema,
     rows: z.number(),
     cols: z.number(),
-    snapshots: z.array(canvasSnapshotSchema),
+    snapshots: z.array(projectV2SnapshotSchema),
     currentIndex: z.number(),
     updatedAt: z.number(),
   })

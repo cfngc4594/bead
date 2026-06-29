@@ -73,9 +73,7 @@ describe("project storage migrations", () => {
     expect(isProjectV2({ ...project, cols: "16" })).toBe(false);
     expect(isProjectV2({ ...project, snapshots: {} })).toBe(false);
     expect(isProjectV2({ ...project, extra: true })).toBe(false);
-    expect(isProjectV2({ ...project, snapshots: [{ version: 1 }] })).toBe(
-      false,
-    );
+    expect(isProjectV2({ ...project, snapshots: [{}] })).toBe(false);
     expect(
       isProjectV2({
         ...project,
@@ -128,7 +126,6 @@ describe("project storage migrations", () => {
       ...project,
       snapshots: [
         {
-          version: 2,
           cells: [
             [0, "A1"],
             [4, "B2"],
@@ -362,7 +359,6 @@ function createProjectV2(overrides: Partial<ProjectV2> = {}): ProjectV2 {
     cols: 16,
     snapshots: [
       {
-        version: 2,
         cells: [
           [0, "A1"],
           [4, "B2", 1],
