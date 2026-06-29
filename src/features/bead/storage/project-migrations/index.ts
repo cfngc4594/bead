@@ -1,3 +1,7 @@
+import { isProjectV0, isProjectV1 } from "./project-versions";
+import { migrateProjectV0ToV1 } from "./v0-to-v1";
+import { migrateProjectV1ToV2 } from "./v1-to-v2";
+
 type StoredItem<T> = {
   versionKey: string;
   data: T;
@@ -18,6 +22,12 @@ type TypedProjectMigration<FromProject, ToProject> = {
   readonly to: string;
 };
 
+export const PROJECTS_STORAGE_KEYS = {
+  v0: "bead:v5:documents",
+  v1: "bead:projects:v1",
+  v2: "bead:projects:v2",
+} as const;
+
 export function defineProjectMigration<FromProject, ToProject>({
   from,
   isSourceProject,
@@ -37,9 +47,23 @@ export function defineProjectMigration<FromProject, ToProject>({
   };
 }
 
-export { isProjectV0, isProjectV1 } from "./project-versions";
-export { migrateProjectV0ToV1 } from "./v0-to-v1";
-export { migrateProjectV1ToV2 } from "./v1-to-v2";
+export const projectMigrations = [
+  defineProjectMigration({
+    from: PROJECTS_STORAGE_KEYS.v0,
+    isSourceProject: isProjectV0,
+    migrateProject: migrateProjectV0ToV1,
+    to: PROJECTS_STORAGE_KEYS.v1,
+  }),
+  defineProjectMigration({
+    from: PROJECTS_STORAGE_KEYS.v1,
+    isSourceProject: isProjectV1,
+    migrateProject: migrateProjectV1ToV2,
+    to: PROJECTS_STORAGE_KEYS.v2,
+  }),
+] as const;
+
+export { isProjectV0, isProjectV1 };
+export { migrateProjectV0ToV1, migrateProjectV1ToV2 };
 
 export function runProjectMigrations(
   migrations: readonly ProjectMigration[],
