@@ -65,7 +65,7 @@ const previewOptions: PreviewOption[] = [
   {
     mode: "beads",
     label: "摆豆",
-    description: "未熨烫，保留圆豆和间隔",
+    description: "未熨烫，保留圆豆、中孔和间隔",
     icon: CircleDot,
   },
   {

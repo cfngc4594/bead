@@ -18,27 +18,15 @@ export type BeadColorGroup = {
 };
 
 const beadRadius = 0.48;
-const beadHeight = 0.14;
+const beadHoleRadius = 0.2;
+const beadHeight = 0.96;
 const beadSegments = 36;
 
 export function BeadInstances({ group }: { group: BeadColorGroup }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const transform = useMemo(() => new THREE.Object3D(), []);
   const instanceCount = group.positions.length / 3;
-  const geometry = useMemo(() => {
-    const nextGeometry = new THREE.CylinderGeometry(
-      beadRadius,
-      beadRadius,
-      beadHeight,
-      beadSegments,
-      1,
-      false,
-    );
-
-    nextGeometry.rotateX(Math.PI / 2);
-
-    return nextGeometry;
-  }, []);
+  const geometry = useMemo(() => createUnmeltedBeadGeometry(), []);
 
   useLayoutEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -70,6 +58,30 @@ export function BeadInstances({ group }: { group: BeadColorGroup }) {
       />
     </instancedMesh>
   );
+}
+
+function createUnmeltedBeadGeometry() {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, beadRadius, 0, Math.PI * 2, false);
+
+  const hole = new THREE.Path();
+  hole.absarc(0, 0, beadHoleRadius, 0, Math.PI * 2, true);
+  shape.holes.push(hole);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    bevelEnabled: true,
+    bevelSegments: 2,
+    bevelSize: 0.025,
+    bevelThickness: 0.025,
+    curveSegments: beadSegments,
+    depth: beadHeight,
+    steps: 1,
+  });
+
+  geometry.center();
+  geometry.computeVertexNormals();
+
+  return geometry;
 }
 
 export function MeltedSheet({
