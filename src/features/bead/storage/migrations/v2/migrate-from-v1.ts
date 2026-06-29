@@ -16,14 +16,14 @@ function migrateProjectV1SnapshotToV2(
   snapshot: ProjectV1SnapshotCell[],
 ): CanvasSnapshot {
   return {
-    v: 2,
-    c: snapshot.map(({ fill, index }) => [index, fill.code]),
-    l: [
+    version: 2,
+    cells: snapshot.map(({ fill, index }) => [index, fill.code]),
+    layers: [
       {
         id: BASE_LAYER_ID,
         name: BASE_LAYER_NAME,
       },
     ],
-    a: BASE_LAYER_ID,
+    activeLayerId: BASE_LAYER_ID,
   };
 }

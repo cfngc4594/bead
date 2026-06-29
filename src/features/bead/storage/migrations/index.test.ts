@@ -73,23 +73,27 @@ describe("project storage migrations", () => {
     expect(isProjectV2({ ...project, cols: "16" })).toBe(false);
     expect(isProjectV2({ ...project, snapshots: {} })).toBe(false);
     expect(isProjectV2({ ...project, extra: true })).toBe(false);
-    expect(isProjectV2({ ...project, snapshots: [{ v: 1 }] })).toBe(false);
+    expect(isProjectV2({ ...project, snapshots: [{ version: 1 }] })).toBe(
+      false,
+    );
     expect(
       isProjectV2({
         ...project,
-        snapshots: [{ ...project.snapshots[0], c: [[0]] }],
+        snapshots: [{ ...project.snapshots[0], cells: [[0]] }],
       }),
     ).toBe(false);
     expect(
       isProjectV2({
         ...project,
-        snapshots: [{ ...project.snapshots[0], l: [{ id: "layer-base" }] }],
+        snapshots: [
+          { ...project.snapshots[0], layers: [{ id: "layer-base" }] },
+        ],
       }),
     ).toBe(false);
     expect(
       isProjectV2({
         ...project,
-        snapshots: [{ ...project.snapshots[0], a: 1 }],
+        snapshots: [{ ...project.snapshots[0], activeLayerId: 1 }],
       }),
     ).toBe(false);
     expect(isProjectV2({ ...project, currentIndex: "0" })).toBe(false);
@@ -124,13 +128,13 @@ describe("project storage migrations", () => {
       ...project,
       snapshots: [
         {
-          v: 2,
-          c: [
+          version: 2,
+          cells: [
             [0, "A1"],
             [4, "B2"],
           ],
-          l: [{ id: "layer-base", name: "图层 1" }],
-          a: "layer-base",
+          layers: [{ id: "layer-base", name: "图层 1" }],
+          activeLayerId: "layer-base",
         },
       ],
     } satisfies ProjectV2;
@@ -358,16 +362,26 @@ function createProjectV2(overrides: Partial<ProjectV2> = {}): ProjectV2 {
     cols: 16,
     snapshots: [
       {
-        v: 2,
-        c: [
+        version: 2,
+        cells: [
           [0, "A1"],
           [4, "B2", 1],
         ],
-        l: [
-          { id: "layer-base", name: "图层 1", h: 1, k: 1 },
-          { id: "layer-detail", name: "Detail layer", h: 1, k: 1 },
+        layers: [
+          {
+            id: "layer-base",
+            name: "图层 1",
+            isHidden: true,
+            isLocked: true,
+          },
+          {
+            id: "layer-detail",
+            name: "Detail layer",
+            isHidden: true,
+            isLocked: true,
+          },
         ],
-        a: "layer-detail",
+        activeLayerId: "layer-detail",
       },
     ],
     currentIndex: 0,

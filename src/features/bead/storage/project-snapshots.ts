@@ -14,15 +14,15 @@ export type CanvasSnapshotCell =
 export type CanvasSnapshotLayer = {
   id: string;
   name: string;
-  h?: 1;
-  k?: 1;
+  isHidden?: true;
+  isLocked?: true;
 };
 
 export type CanvasSnapshot = {
-  v: 2;
-  c: CanvasSnapshotCell[];
-  l: CanvasSnapshotLayer[];
-  a: string;
+  version: 2;
+  cells: CanvasSnapshotCell[];
+  layers: CanvasSnapshotLayer[];
+  activeLayerId: string;
 };
 
 export function compactDocument(document: CanvasDocumentState): CanvasSnapshot {
@@ -31,15 +31,15 @@ export function compactDocument(document: CanvasDocumentState): CanvasSnapshot {
   const cells = compactBeads(document.beads, cellLayerIndexes);
 
   return {
-    v: 2,
-    c: cells,
-    l: layers.map(({ id, isHidden, isLocked, name }) => ({
+    version: 2,
+    cells,
+    layers: layers.map(({ id, isHidden, isLocked, name }) => ({
       id,
       name,
-      ...(isHidden ? { h: 1 as const } : {}),
-      ...(isLocked ? { k: 1 as const } : {}),
+      ...(isHidden ? { isHidden: true as const } : {}),
+      ...(isLocked ? { isLocked: true as const } : {}),
     })),
-    a: getActiveLayerId(layers, document.activeLayerId),
+    activeLayerId: getActiveLayerId(layers, document.activeLayerId),
   };
 }
 
@@ -51,12 +51,12 @@ export function expandSnapshot({
   snapshot: CanvasSnapshot;
 }): CanvasDocumentState {
   const beads = createEmptyCanvas(cellCount);
-  const layers = snapshot.l.map((layer) => ({
+  const layers = snapshot.layers.map((layer) => ({
     id: layer.id,
     name: layer.name,
     cellIndexes: [] as number[],
-    isHidden: layer.h === 1,
-    isLocked: layer.k === 1,
+    isHidden: layer.isHidden === true,
+    isLocked: layer.isLocked === true,
   }));
 
   if (layers.length === 0) {
@@ -69,7 +69,7 @@ export function expandSnapshot({
     });
   }
 
-  for (const cell of snapshot.c) {
+  for (const cell of snapshot.cells) {
     const index = cell[0];
 
     if (index < 0 || index >= cellCount) {
@@ -88,12 +88,12 @@ export function expandSnapshot({
       ...layer,
       cellIndexes: Array.from(new Set(layer.cellIndexes)).sort((a, b) => a - b),
     })),
-    activeLayerId: getActiveLayerId(layers, snapshot.a),
+    activeLayerId: getActiveLayerId(layers, snapshot.activeLayerId),
   };
 }
 
 export function getSnapshotFilledCount(snapshot: CanvasSnapshot) {
-  return snapshot.c.length;
+  return snapshot.cells.length;
 }
 
 function compactBeads(

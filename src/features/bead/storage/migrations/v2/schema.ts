@@ -11,17 +11,17 @@ const canvasSnapshotLayerSchema = z
   .object({
     id: z.string(),
     name: z.string(),
-    h: z.literal(1).optional(),
-    k: z.literal(1).optional(),
+    isHidden: z.literal(true).optional(),
+    isLocked: z.literal(true).optional(),
   })
   .strict();
 
 const canvasSnapshotSchema = z
   .object({
-    v: z.literal(2),
-    c: z.array(canvasSnapshotCellSchema),
-    l: z.array(canvasSnapshotLayerSchema),
-    a: z.string(),
+    version: z.literal(2),
+    cells: z.array(canvasSnapshotCellSchema),
+    layers: z.array(canvasSnapshotLayerSchema),
+    activeLayerId: z.string(),
   })
   .strict();
 

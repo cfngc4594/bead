@@ -143,8 +143,8 @@ export async function duplicateProject(projectId: ProjectId) {
     id: createProjectId(),
     snapshots: project.snapshots.map((snapshot) => ({
       ...snapshot,
-      c: snapshot.c.map((cell) => [...cell] as typeof cell),
-      l: snapshot.l.map((layer) => ({ ...layer })),
+      cells: snapshot.cells.map((cell) => [...cell] as typeof cell),
+      layers: snapshot.layers.map((layer) => ({ ...layer })),
     })),
     updatedAt: Date.now(),
   };
