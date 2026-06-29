@@ -36,7 +36,6 @@ export function EditorSkeleton() {
         <EditorToolbarSkeleton />
 
         <div className="relative min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <Skeleton className="absolute right-3 top-3 z-10 h-8 w-27 rounded-lg md:right-4 md:top-4" />
           <CanvasBoardSkeleton />
         </div>
       </section>
