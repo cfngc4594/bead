@@ -109,6 +109,7 @@ export function EditorToolbar({
   isImportingImage = false,
   isPreparingModelPreview = false,
 }: EditorToolbarProps) {
+  const disableCanvasEditActions = isModelPreviewOpen;
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
@@ -144,19 +145,19 @@ export function EditorToolbar({
   const viewActions = [resetViewAction, previewModelAction, ...displayActions];
   const historyActions: ToolbarAction[] = [
     {
-      disabled: !canUndo,
+      disabled: disableCanvasEditActions || !canUndo,
       icon: Undo2,
       label: "撤销",
       onClick: onUndo,
     },
     {
-      disabled: !canRedo,
+      disabled: disableCanvasEditActions || !canRedo,
       icon: Redo2,
       label: "重做",
       onClick: onRedo,
     },
     {
-      disabled: !canClear,
+      disabled: disableCanvasEditActions || !canClear,
       icon: RotateCcw,
       label: "清空草稿",
       onClick: onClearDraft,
