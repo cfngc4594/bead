@@ -254,6 +254,27 @@ describe("project storage migrations", () => {
     expect(storage.getItem(PROJECTS_STORAGE_KEYS.v2)).toBeNull();
   });
 
+  test("ignores stored collections with invalid item envelopes", () => {
+    const storage = new MemoryStorage();
+    const project = createProjectV1();
+    const encodedKey = JSON.stringify(project.id);
+
+    storage.setItem(
+      PROJECTS_STORAGE_KEYS.v1,
+      JSON.stringify({
+        [encodedKey]: {
+          versionKey: project.id,
+          data: project,
+          extra: true,
+        },
+      }),
+    );
+
+    runProjectMigrations(projectMigrations, storage);
+
+    expect(storage.getItem(PROJECTS_STORAGE_KEYS.v2)).toBeNull();
+  });
+
   test("preserves existing target projects while migrating new projects", () => {
     const storage = new MemoryStorage();
     const skippedProject = createProjectV1({ id: "skipped" });

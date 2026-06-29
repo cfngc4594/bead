@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   isProjectV0,
   isProjectV1,
@@ -14,6 +15,15 @@ type StoredItem<T> = {
 };
 
 type StoredCollection<T> = Record<string, StoredItem<T>>;
+
+const storedItemSchema = z
+  .object({
+    versionKey: z.string(),
+    data: z.unknown(),
+  })
+  .strict();
+
+const storedCollectionSchema = z.record(z.string(), storedItemSchema);
 
 type ProjectMigration = {
   readonly from: string;
@@ -141,27 +151,14 @@ function readStoredCollection<T>(storage: Storage, key: string) {
 
   try {
     const parsed = JSON.parse(value);
+    const result = storedCollectionSchema.safeParse(parsed);
 
-    if (!isStoredCollection<T>(parsed)) {
+    if (!result.success) {
       return null;
     }
 
-    return parsed;
+    return result.data as StoredCollection<T>;
   } catch {
     return null;
   }
-}
-
-function isStoredCollection<T>(value: unknown): value is StoredCollection<T> {
-  if (!isRecord(value) || Array.isArray(value)) {
-    return false;
-  }
-
-  return Object.values(value).every(
-    (item) => isRecord(item) && "versionKey" in item && "data" in item,
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
