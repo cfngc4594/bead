@@ -5,7 +5,7 @@ export const boardPadding = 24;
 export const labelCells = 1;
 export const boardOrigin = cellSize * labelCells;
 const maxFitScale = 2.5;
-const maxZoomScale = 3;
+export const maxZoomScale = 3;
 
 export function getBoardSize(rows: number, cols: number) {
   return {

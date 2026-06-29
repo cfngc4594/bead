@@ -1,33 +1,39 @@
 "use client";
 
 import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import { type RefObject, useLayoutEffect, useMemo, useRef } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { type RefObject, useLayoutEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import {
+  type BeadColorGroup,
+  BeadInstances,
+  MeltedSheet,
+} from "@/features/bead/components/bead-model-renderers";
 import { useModelSceneNavigation } from "@/features/bead/hooks/use-model-scene-navigation";
+import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
+import {
+  cellSize,
+  getInitialScale,
+  maxZoomScale,
+} from "@/features/bead/lib/canvas-geometry";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadModelSceneProps = {
   rows: number;
   cols: number;
   resetViewSignal: number;
+  previewMode: BeadPreviewMode;
   beads: readonly (BeadFill | null)[];
 };
 
-type BeadColorGroup = {
-  hex: string;
-  positions: number[];
-};
-
-const beadRadius = 0.48;
-const beadHeight = 0.14;
-const beadSegments = 36;
+const cameraFov = 32;
 
 export function BeadModelScene({
   rows,
   cols,
   resetViewSignal,
+  previewMode,
   beads,
 }: BeadModelSceneProps) {
   const navigation = useModelSceneNavigation();
@@ -35,7 +41,7 @@ export function BeadModelScene({
     () => createBeadGroups({ rows, cols, beads }),
     [beads, cols, rows],
   );
-  const cameraDistance = Math.max(22, Math.max(rows, cols) * 1.95);
+  const fallbackCameraDistance = getFallbackCameraDistance({ rows, cols });
 
   return (
     <div
@@ -49,10 +55,10 @@ export function BeadModelScene({
     >
       <Canvas
         camera={{
-          far: cameraDistance * 6,
-          fov: 32,
+          far: fallbackCameraDistance * 6,
+          fov: cameraFov,
           near: 0.1,
-          position: [0, 0, cameraDistance],
+          position: [0, 0, fallbackCameraDistance],
         }}
         className="h-full w-full"
         dpr={[1, 2]}
@@ -66,30 +72,72 @@ export function BeadModelScene({
         />
         <directionalLight intensity={2.1} position={[8, 10, 14]} />
         <directionalLight intensity={0.6} position={[-10, -6, 8]} />
-        {groups.map((group) => (
-          <BeadInstances group={group} key={group.hex} />
-        ))}
-        <OrbitControls
-          autoRotate
-          autoRotateSpeed={0.65}
-          dampingFactor={0.08}
-          enableDamping
-          makeDefault
-          maxDistance={cameraDistance * 2.4}
-          maxPolarAngle={Math.PI / 2 + 0.45}
-          minDistance={cameraDistance * 0.3}
-          minPolarAngle={Math.PI / 2 - 0.45}
-          ref={navigation.controlsRef}
-          screenSpacePanning
-          target={[0, 0, 0]}
-        />
-        <ResetModelView
-          cameraDistance={cameraDistance}
+        <PreviewGeometry groups={groups} previewMode={previewMode} />
+        <ModelCameraControls
+          cols={cols}
           controlsRef={navigation.controlsRef}
           key={resetViewSignal}
+          rows={rows}
         />
       </Canvas>
     </div>
+  );
+}
+
+function PreviewGeometry({
+  groups,
+  previewMode,
+}: {
+  groups: BeadColorGroup[];
+  previewMode: BeadPreviewMode;
+}) {
+  if (previewMode === "beads") {
+    return groups.map((group) => (
+      <BeadInstances group={group} key={group.hex} />
+    ));
+  }
+
+  return <MeltedSheet groups={groups} previewMode={previewMode} />;
+}
+
+function ModelCameraControls({
+  cols,
+  controlsRef,
+  rows,
+}: {
+  cols: number;
+  controlsRef: RefObject<OrbitControlsImpl | null>;
+  rows: number;
+}) {
+  const { size } = useThree();
+  const fitScale = getInitialScale(rows, cols, size);
+  const cameraDistance = getFitCameraDistance({
+    fitScale,
+    viewportHeight: size.height,
+  });
+  const minDistance = Math.max(0.5, (cameraDistance * fitScale) / maxZoomScale);
+
+  return (
+    <>
+      <OrbitControls
+        autoRotate={false}
+        autoRotateSpeed={0.65}
+        dampingFactor={0.08}
+        enableDamping
+        makeDefault
+        maxDistance={cameraDistance}
+        maxPolarAngle={Math.PI / 2 + 0.45}
+        minDistance={minDistance}
+        minPolarAngle={Math.PI / 2 - 0.45}
+        ref={controlsRef}
+        screenSpacePanning
+        target={[0, 0, 0]}
+      />
+      <ResetModelView
+        cameraDistance={cameraDistance}
+        controlsRef={controlsRef}
+      />
+    </>
   );
 }
 
@@ -115,62 +163,27 @@ function ResetModelView({
   return null;
 }
 
-function BeadInstances({ group }: { group: BeadColorGroup }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const transform = useMemo(() => new THREE.Object3D(), []);
-  const instanceCount = group.positions.length / 3;
-  const geometry = useMemo(() => {
-    const nextGeometry = new THREE.CylinderGeometry(
-      beadRadius,
-      beadRadius,
-      beadHeight,
-      beadSegments,
-      1,
-      false,
-    );
+function getFallbackCameraDistance({
+  rows,
+  cols,
+}: {
+  rows: number;
+  cols: number;
+}) {
+  return Math.max(22, Math.max(rows, cols) * 1.95);
+}
 
-    nextGeometry.rotateX(Math.PI / 2);
+function getFitCameraDistance({
+  fitScale,
+  viewportHeight,
+}: {
+  fitScale: number;
+  viewportHeight: number;
+}) {
+  const visibleWorldHeight = viewportHeight / (cellSize * fitScale);
+  const fovRadians = THREE.MathUtils.degToRad(cameraFov);
 
-    return nextGeometry;
-  }, []);
-
-  useLayoutEffect(() => {
-    const mesh = meshRef.current;
-
-    if (!mesh) {
-      return;
-    }
-
-    for (let index = 0; index < instanceCount; index += 1) {
-      const positionIndex = index * 3;
-
-      transform.position.set(
-        group.positions[positionIndex],
-        group.positions[positionIndex + 1],
-        group.positions[positionIndex + 2],
-      );
-      transform.updateMatrix();
-      mesh.setMatrixAt(index, transform.matrix);
-    }
-
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.computeBoundingSphere();
-  }, [group.positions, instanceCount, transform]);
-
-  return (
-    <instancedMesh
-      args={[undefined, undefined, instanceCount]}
-      frustumCulled={false}
-      ref={meshRef}
-    >
-      <primitive attach="geometry" object={geometry} />
-      <meshStandardMaterial
-        color={group.hex}
-        metalness={0.02}
-        roughness={0.45}
-      />
-    </instancedMesh>
-  );
+  return visibleWorldHeight / (2 * Math.tan(fovRadians / 2));
 }
 
 function createBeadGroups({
