@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   isProjectV0,
   isProjectV1,
+  isProjectV2,
   migrateProjectV0ToV1,
   migrateProjectV1ToV2,
   PROJECTS_STORAGE_KEYS,
@@ -11,23 +12,107 @@ import {
 import type { ProjectV0, ProjectV1, ProjectV2 } from "./project-versions";
 
 describe("project storage migrations", () => {
-  test("validates versioned project shapes before migration", () => {
+  test("validates project v0 shape", () => {
     const project = createProjectV0();
 
     expect(isProjectV0(project)).toBe(true);
-    expect(isProjectV1(project)).toBe(true);
+    expect(isProjectV0({ ...project, id: 1 })).toBe(false);
+    expect(isProjectV0({ ...project, title: 1 })).toBe(false);
+    expect(isProjectV0({ ...project, sizeId: 1 })).toBe(false);
+    expect(isProjectV0({ ...project, rows: "16" })).toBe(false);
+    expect(isProjectV0({ ...project, cols: "16" })).toBe(false);
+    expect(isProjectV0({ ...project, snapshots: {} })).toBe(false);
+    expect(isProjectV0({ ...project, extra: true })).toBe(false);
     expect(isProjectV0({ ...project, snapshots: [[{ index: 0 }]] })).toBe(
       false,
     );
+    expect(
+      isProjectV0({
+        ...project,
+        snapshots: [[{ index: 0, fill: { code: "A1" } }]],
+      }),
+    ).toBe(false);
+    expect(isProjectV0({ ...project, currentIndex: "0" })).toBe(false);
+    expect(isProjectV0({ ...project, updatedAt: "1" })).toBe(false);
+  });
+
+  test("validates project v1 shape", () => {
+    const project = createProjectV1();
+
+    expect(isProjectV1(project)).toBe(true);
+    expect(isProjectV1({ ...project, id: 1 })).toBe(false);
+    expect(isProjectV1({ ...project, title: 1 })).toBe(false);
+    expect(isProjectV1({ ...project, sizeId: 1 })).toBe(false);
+    expect(isProjectV1({ ...project, rows: "16" })).toBe(false);
+    expect(isProjectV1({ ...project, cols: "16" })).toBe(false);
+    expect(isProjectV1({ ...project, snapshots: {} })).toBe(false);
+    expect(isProjectV1({ ...project, extra: true })).toBe(false);
     expect(isProjectV1({ ...project, snapshots: [[{ index: 0 }]] })).toBe(
       false,
     );
+    expect(
+      isProjectV1({
+        ...project,
+        snapshots: [[{ index: 0, fill: { code: "A1" } }]],
+      }),
+    ).toBe(false);
+    expect(isProjectV1({ ...project, currentIndex: "0" })).toBe(false);
+    expect(isProjectV1({ ...project, updatedAt: "1" })).toBe(false);
   });
 
-  test("migrates v0 projects to v1 without changing data", () => {
+  test("validates project v2 shape", () => {
+    const project = createProjectV2();
+
+    expect(isProjectV2(project)).toBe(true);
+    expect(isProjectV2({ ...project, id: 1 })).toBe(false);
+    expect(isProjectV2({ ...project, title: 1 })).toBe(false);
+    expect(isProjectV2({ ...project, sizeId: 1 })).toBe(false);
+    expect(isProjectV2({ ...project, rows: "16" })).toBe(false);
+    expect(isProjectV2({ ...project, cols: "16" })).toBe(false);
+    expect(isProjectV2({ ...project, snapshots: {} })).toBe(false);
+    expect(isProjectV2({ ...project, extra: true })).toBe(false);
+    expect(isProjectV2({ ...project, snapshots: [{ v: 1 }] })).toBe(false);
+    expect(
+      isProjectV2({
+        ...project,
+        snapshots: [{ ...project.snapshots[0], c: [[0]] }],
+      }),
+    ).toBe(false);
+    expect(
+      isProjectV2({
+        ...project,
+        snapshots: [{ ...project.snapshots[0], l: [{ id: "layer-base" }] }],
+      }),
+    ).toBe(false);
+    expect(
+      isProjectV2({
+        ...project,
+        snapshots: [{ ...project.snapshots[0], a: 1 }],
+      }),
+    ).toBe(false);
+    expect(isProjectV2({ ...project, currentIndex: "0" })).toBe(false);
+    expect(isProjectV2({ ...project, updatedAt: "1" })).toBe(false);
+  });
+
+  test("keeps v0 and v1 structurally equivalent before snapshot v2 migration", () => {
     const project = createProjectV0();
 
+    expect(isProjectV1(project)).toBe(true);
     expect(migrateProjectV0ToV1(project)).toEqual(project);
+  });
+
+  test("does not treat v2 projects as v0 or v1", () => {
+    const project = createProjectV2();
+
+    expect(isProjectV0(project)).toBe(false);
+    expect(isProjectV1(project)).toBe(false);
+  });
+
+  test("exposes the expected storage migration chain", () => {
+    expect(projectMigrations.map(({ from, to }) => ({ from, to }))).toEqual([
+      { from: PROJECTS_STORAGE_KEYS.v0, to: PROJECTS_STORAGE_KEYS.v1 },
+      { from: PROJECTS_STORAGE_KEYS.v1, to: PROJECTS_STORAGE_KEYS.v2 },
+    ]);
   });
 
   test("migrates v1 snapshots to v2 compact snapshots with a base layer", () => {
@@ -136,6 +221,85 @@ describe("project storage migrations", () => {
     runProjectMigrations(projectMigrations, storage);
 
     expect(storage.getItem(PROJECTS_STORAGE_KEYS.v2)).toBeNull();
+  });
+
+  test("does not migrate data that does not match the source version", () => {
+    const storage = new MemoryStorage();
+    const project = createProjectV2();
+    const encodedKey = JSON.stringify(project.id);
+
+    storage.setItem(
+      PROJECTS_STORAGE_KEYS.v0,
+      JSON.stringify({
+        [encodedKey]: {
+          versionKey: project.id,
+          data: project,
+        },
+      }),
+    );
+
+    runProjectMigrations(projectMigrations, storage);
+
+    expect(storage.getItem(PROJECTS_STORAGE_KEYS.v1)).toBeNull();
+    expect(storage.getItem(PROJECTS_STORAGE_KEYS.v2)).toBeNull();
+  });
+
+  test("ignores invalid stored collections", () => {
+    const storage = new MemoryStorage();
+
+    storage.setItem(PROJECTS_STORAGE_KEYS.v1, JSON.stringify([]));
+
+    runProjectMigrations(projectMigrations, storage);
+
+    expect(storage.getItem(PROJECTS_STORAGE_KEYS.v2)).toBeNull();
+  });
+
+  test("preserves existing target projects while migrating new projects", () => {
+    const storage = new MemoryStorage();
+    const skippedProject = createProjectV1({ id: "skipped" });
+    const migratedProject = createProjectV1({ id: "migrated" });
+    const existingProject = createProjectV2({
+      id: "skipped",
+      title: "Already migrated",
+    });
+    const skippedKey = JSON.stringify(skippedProject.id);
+    const migratedKey = JSON.stringify(migratedProject.id);
+
+    storage.setItem(
+      PROJECTS_STORAGE_KEYS.v1,
+      JSON.stringify({
+        [skippedKey]: {
+          versionKey: skippedProject.id,
+          data: skippedProject,
+        },
+        [migratedKey]: {
+          versionKey: migratedProject.id,
+          data: migratedProject,
+        },
+      }),
+    );
+    storage.setItem(
+      PROJECTS_STORAGE_KEYS.v2,
+      JSON.stringify({
+        [skippedKey]: {
+          versionKey: existingProject.id,
+          data: existingProject,
+        },
+      }),
+    );
+
+    runProjectMigrations(projectMigrations, storage);
+
+    expect(readCollection(storage, PROJECTS_STORAGE_KEYS.v2)).toEqual({
+      [skippedKey]: {
+        versionKey: existingProject.id,
+        data: existingProject,
+      },
+      [migratedKey]: {
+        versionKey: migratedProject.id,
+        data: migrateProjectV1ToV2(migratedProject),
+      },
+    });
   });
 });
 

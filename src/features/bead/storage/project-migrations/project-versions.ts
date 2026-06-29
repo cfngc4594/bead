@@ -1,97 +1,111 @@
-import type { CanvasSizeId } from "@/config/canvas-sizes";
-import type { CanvasSnapshot } from "@/features/bead/storage/project-snapshots";
-import type { BeadFill } from "@/features/bead/types";
+import { z } from "zod";
 
-export type ProjectV0SnapshotCell = {
-  index: number;
-  fill: BeadFill;
-};
+const canvasSizeIdSchema = z.enum(["16x16", "29x29", "58x58", "87x87"]);
 
-type ProjectVersionBase = {
-  id: string;
-  title: string;
-  sizeId: CanvasSizeId;
-  rows: number;
-  cols: number;
-  snapshots: unknown[][];
-  currentIndex: number;
-  updatedAt: number;
-};
+const beadFillSchema = z
+  .object({
+    code: z.string(),
+    hex: z.string(),
+  })
+  .strict();
 
-export type ProjectV0 = Omit<ProjectVersionBase, "snapshots"> & {
-  snapshots: ProjectV0SnapshotCell[][];
-};
+const projectV0SnapshotCellSchema = z
+  .object({
+    index: z.number(),
+    fill: beadFillSchema,
+  })
+  .strict();
 
-export type ProjectV1SnapshotCell = ProjectV0SnapshotCell;
+export const projectV0Schema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    sizeId: canvasSizeIdSchema,
+    rows: z.number(),
+    cols: z.number(),
+    snapshots: z.array(z.array(projectV0SnapshotCellSchema)),
+    currentIndex: z.number(),
+    updatedAt: z.number(),
+  })
+  .strict();
 
-export type ProjectV1 = Omit<ProjectVersionBase, "snapshots"> & {
-  snapshots: ProjectV1SnapshotCell[][];
-};
+const projectV1SnapshotCellSchema = projectV0SnapshotCellSchema;
 
-export type ProjectV2 = Omit<ProjectV1, "snapshots"> & {
-  snapshots: CanvasSnapshot[];
-};
+export const projectV1Schema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    sizeId: canvasSizeIdSchema,
+    rows: z.number(),
+    cols: z.number(),
+    snapshots: z.array(z.array(projectV1SnapshotCellSchema)),
+    currentIndex: z.number(),
+    updatedAt: z.number(),
+  })
+  .strict();
+
+const canvasSnapshotCellSchema = z.union([
+  z.tuple([z.number(), z.string()]),
+  z.tuple([z.number(), z.string(), z.number()]),
+]);
+
+const canvasSnapshotLayerSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    h: z.literal(1).optional(),
+    k: z.literal(1).optional(),
+  })
+  .strict();
+
+const canvasSnapshotSchema = z
+  .object({
+    v: z.literal(2),
+    c: z.array(canvasSnapshotCellSchema),
+    l: z.array(canvasSnapshotLayerSchema),
+    a: z.string(),
+  })
+  .strict();
+
+export const projectV2Schema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    sizeId: canvasSizeIdSchema,
+    rows: z.number(),
+    cols: z.number(),
+    snapshots: z.array(canvasSnapshotSchema),
+    currentIndex: z.number(),
+    updatedAt: z.number(),
+  })
+  .strict();
+
+export type ProjectV0SnapshotCell = z.infer<typeof projectV0SnapshotCellSchema>;
+export type ProjectV0 = z.infer<typeof projectV0Schema>;
+export type ProjectV1SnapshotCell = z.infer<typeof projectV1SnapshotCellSchema>;
+export type ProjectV1 = z.infer<typeof projectV1Schema>;
+export type ProjectV2 = z.infer<typeof projectV2Schema>;
 
 export function isProjectV0(value: unknown): value is ProjectV0 {
-  if (!isProjectVersionBase(value)) {
-    return false;
-  }
+  return projectV0Schema.safeParse(value).success;
+}
 
-  return value.snapshots.every((snapshot) =>
-    snapshot.every(isProjectV0SnapshotCell),
-  );
+export function parseProjectV0(value: unknown) {
+  return projectV0Schema.safeParse(value).data ?? null;
 }
 
 export function isProjectV1(value: unknown): value is ProjectV1 {
-  if (!isProjectVersionBase(value)) {
-    return false;
-  }
-
-  return value.snapshots.every((snapshot) =>
-    snapshot.every(isProjectV1SnapshotCell),
-  );
+  return projectV1Schema.safeParse(value).success;
 }
 
-function isProjectVersionBase(value: unknown): value is ProjectVersionBase {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.id === "string" &&
-    typeof value.title === "string" &&
-    typeof value.sizeId === "string" &&
-    typeof value.rows === "number" &&
-    typeof value.cols === "number" &&
-    Array.isArray(value.snapshots) &&
-    value.snapshots.every(Array.isArray) &&
-    typeof value.currentIndex === "number" &&
-    typeof value.updatedAt === "number"
-  );
+export function parseProjectV1(value: unknown) {
+  return projectV1Schema.safeParse(value).data ?? null;
 }
 
-function isProjectV0SnapshotCell(
-  value: unknown,
-): value is ProjectV0SnapshotCell {
-  if (!isRecord(value) || typeof value.index !== "number") {
-    return false;
-  }
-
-  const { fill } = value;
-
-  return (
-    isRecord(fill) &&
-    typeof fill.code === "string" &&
-    typeof fill.hex === "string"
-  );
+export function isProjectV2(value: unknown): value is ProjectV2 {
+  return projectV2Schema.safeParse(value).success;
 }
 
-function isProjectV1SnapshotCell(
-  value: unknown,
-): value is ProjectV1SnapshotCell {
-  return isProjectV0SnapshotCell(value);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+export function parseProjectV2(value: unknown) {
+  return projectV2Schema.safeParse(value).data ?? null;
 }

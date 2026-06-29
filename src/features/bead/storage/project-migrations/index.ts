@@ -1,4 +1,10 @@
-import { isProjectV0, isProjectV1 } from "./project-versions";
+import {
+  isProjectV0,
+  isProjectV1,
+  isProjectV2,
+  parseProjectV0,
+  parseProjectV1,
+} from "./project-versions";
 import { migrateProjectV0ToV1 } from "./v0-to-v1";
 import { migrateProjectV1ToV2 } from "./v1-to-v2";
 
@@ -17,8 +23,8 @@ type ProjectMigration = {
 
 type TypedProjectMigration<FromProject, ToProject> = {
   readonly from: string;
-  readonly isSourceProject: (project: unknown) => project is FromProject;
   readonly migrateProject: (project: FromProject) => ToProject;
+  readonly parseSourceProject: (project: unknown) => FromProject | null;
   readonly to: string;
 };
 
@@ -30,18 +36,20 @@ export const PROJECTS_STORAGE_KEYS = {
 
 export function defineProjectMigration<FromProject, ToProject>({
   from,
-  isSourceProject,
   migrateProject,
+  parseSourceProject,
   to,
 }: TypedProjectMigration<FromProject, ToProject>): ProjectMigration {
   return {
     from,
     migrateProject(project) {
-      if (!isSourceProject(project)) {
+      const sourceProject = parseSourceProject(project);
+
+      if (!sourceProject) {
         return null;
       }
 
-      return migrateProject(project);
+      return migrateProject(sourceProject);
     },
     to,
   };
@@ -50,19 +58,19 @@ export function defineProjectMigration<FromProject, ToProject>({
 export const projectMigrations = [
   defineProjectMigration({
     from: PROJECTS_STORAGE_KEYS.v0,
-    isSourceProject: isProjectV0,
     migrateProject: migrateProjectV0ToV1,
+    parseSourceProject: parseProjectV0,
     to: PROJECTS_STORAGE_KEYS.v1,
   }),
   defineProjectMigration({
     from: PROJECTS_STORAGE_KEYS.v1,
-    isSourceProject: isProjectV1,
     migrateProject: migrateProjectV1ToV2,
+    parseSourceProject: parseProjectV1,
     to: PROJECTS_STORAGE_KEYS.v2,
   }),
 ] as const;
 
-export { isProjectV0, isProjectV1 };
+export { isProjectV0, isProjectV1, isProjectV2 };
 export { migrateProjectV0ToV1, migrateProjectV1ToV2 };
 
 export function runProjectMigrations(
