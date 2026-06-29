@@ -36,7 +36,7 @@ export function EditorSkeleton() {
         <EditorToolbarSkeleton />
 
         <div className="relative min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <Skeleton className="absolute right-3 top-3 z-10 h-8 w-32 rounded-lg md:right-4 md:top-4" />
+          <Skeleton className="absolute right-3 top-3 z-10 h-8 w-27 rounded-lg md:right-4 md:top-4" />
           <CanvasBoardSkeleton />
         </div>
       </section>
@@ -176,8 +176,7 @@ function CurrentColorSkeleton({
       <div className="flex min-w-0 items-center gap-3">
         <Skeleton className="size-8 shrink-0 rounded-full" />
         <div className="flex h-9 min-w-0 flex-col justify-center gap-1">
-          <Skeleton className="h-4 w-12 rounded-sm" />
-          <Skeleton className="h-3 w-16 rounded-sm" />
+          <Skeleton className="h-4 w-8 rounded-sm" />
         </div>
       </div>
       {showAction ? (

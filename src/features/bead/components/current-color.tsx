@@ -13,7 +13,6 @@ export function CurrentColor({ color }: CurrentColorProps) {
       />
       <div className="min-w-0">
         <p className="font-medium text-sm">{color.code}</p>
-        <p className="truncate text-muted-foreground text-xs">{color.hex}</p>
       </div>
     </div>
   );
