@@ -9,7 +9,9 @@ import {
   projectMigrations,
   runProjectMigrations,
 } from ".";
-import type { ProjectV0, ProjectV1, ProjectV2 } from "./project-versions";
+import type { ProjectV0 } from "./v0/types";
+import type { ProjectV1 } from "./v1/types";
+import type { ProjectV2 } from "./v2/types";
 
 describe("project storage migrations", () => {
   test("validates project v0 shape", () => {

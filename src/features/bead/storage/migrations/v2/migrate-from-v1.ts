@@ -1,9 +1,6 @@
 import type { CanvasSnapshot } from "@/features/bead/storage/project-snapshots";
-import type {
-  ProjectV1,
-  ProjectV1SnapshotCell,
-  ProjectV2,
-} from "./project-versions";
+import type { ProjectV1, ProjectV1SnapshotCell } from "../v1/types";
+import type { ProjectV2 } from "./types";
 
 const BASE_LAYER_ID = "layer-base";
 const BASE_LAYER_NAME = "图层 1";

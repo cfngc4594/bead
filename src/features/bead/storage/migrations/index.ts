@@ -1,13 +1,9 @@
 import { z } from "zod";
-import {
-  isProjectV0,
-  isProjectV1,
-  isProjectV2,
-  parseProjectV0,
-  parseProjectV1,
-} from "./project-versions";
-import { migrateProjectV0ToV1 } from "./v0-to-v1";
-import { migrateProjectV1ToV2 } from "./v1-to-v2";
+import { isProjectV0, parseProjectV0 } from "./v0/schema";
+import { migrateProjectV0ToV1 } from "./v1/migrate-from-v0";
+import { isProjectV1, parseProjectV1 } from "./v1/schema";
+import { migrateProjectV1ToV2 } from "./v2/migrate-from-v1";
+import { isProjectV2 } from "./v2/schema";
 
 type StoredItem<T> = {
   versionKey: string;

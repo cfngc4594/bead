@@ -15,7 +15,7 @@ import {
   PROJECTS_STORAGE_KEYS,
   projectMigrations,
   runProjectMigrations,
-} from "@/features/bead/storage/project-migrations";
+} from "@/features/bead/storage/migrations";
 import {
   type CanvasSnapshot,
   compactDocument,
