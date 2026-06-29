@@ -12,6 +12,14 @@ import {
   isSameDocument,
 } from "@/features/bead/lib/canvas-document";
 import {
+  defineProjectMigration,
+  isProjectV0,
+  isProjectV1,
+  migrateProjectV0ToV1,
+  migrateProjectV1ToV2,
+  runProjectMigrations,
+} from "@/features/bead/storage/project-migrations";
+import {
   type CanvasSnapshot,
   compactDocument,
   expandSnapshot,
@@ -32,12 +40,29 @@ export type Project = {
 };
 
 export const DEFAULT_PROJECT_TITLE = "未命名作品";
-const PROJECTS_STORAGE_KEY = "bead:projects:v2";
+const PROJECTS_V0_STORAGE_KEY = "bead:v5:documents";
+const PROJECTS_V1_STORAGE_KEY = "bead:projects:v1";
+const PROJECTS_V2_STORAGE_KEY = "bead:projects:v2";
+
+runProjectMigrations([
+  defineProjectMigration({
+    from: PROJECTS_V0_STORAGE_KEY,
+    isSourceProject: isProjectV0,
+    migrateProject: migrateProjectV0ToV1,
+    to: PROJECTS_V1_STORAGE_KEY,
+  }),
+  defineProjectMigration({
+    from: PROJECTS_V1_STORAGE_KEY,
+    isSourceProject: isProjectV1,
+    migrateProject: migrateProjectV1ToV2,
+    to: PROJECTS_V2_STORAGE_KEY,
+  }),
+]);
 
 export const projectsCollection = createCollection(
   localStorageCollectionOptions<Project, ProjectId>({
     id: "projects",
-    storageKey: PROJECTS_STORAGE_KEY,
+    storageKey: PROJECTS_V2_STORAGE_KEY,
     getKey: (project) => project.id,
   }),
 );
