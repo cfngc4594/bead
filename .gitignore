@@ -14,8 +14,8 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+/apps/client/.next/
+/apps/client/out/
 
 # production
 /build
@@ -41,4 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # capacitor
-/android
+/apps/client/android/
+
+# nx
+/.nx/
