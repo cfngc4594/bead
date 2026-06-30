@@ -2,15 +2,20 @@
   "name": "bead",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "cap": "cap",
-    "cap:add:android": "cap add android",
-    "cap:sync:android": "bun run build && cap sync android",
-    "cap:copy:android": "bun run build && cap copy android",
-    "cap:open:android": "cap open android",
+    "dev:client": "nx dev client",
+    "dev:all": "nx run-many -t dev -p client",
+    "build:client": "nx build client",
+    "build:all": "nx run-many -t build -p client",
+    "cap": "cd apps/client && cap",
+    "cap:add:android": "cd apps/client && cap add android",
+    "cap:sync:android": "nx build client && cd apps/client && cap sync android",
+    "cap:copy:android": "nx build client && cd apps/client && cap copy android",
+    "cap:open:android": "cd apps/client && cap open android",
     "lint": "biome check",
     "format": "biome format --write",
     "test": "bun test"
@@ -48,6 +53,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "three": "^0.184.0",
+    "three-stdlib": "^2.36.1",
     "tw-animate-css": "^1.4.0",
     "vaul": "^1.1.2",
     "zod": "^4.4.3"
@@ -55,12 +61,15 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@capacitor/cli": "^8.4.0",
+    "@nx/next": "^23.0.1",
     "@tailwindcss/postcss": "^4",
     "@types/bun": "^1.3.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "nx": "^23.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
