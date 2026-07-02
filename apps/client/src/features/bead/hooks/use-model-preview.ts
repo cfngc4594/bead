@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";

@@ -1,5 +1,3 @@
-"use client";
-
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo } from "react";

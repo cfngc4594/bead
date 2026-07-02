@@ -1,5 +1,3 @@
-"use client";
-
 import { Direction } from "radix-ui";
 import type * as React from "react";
 

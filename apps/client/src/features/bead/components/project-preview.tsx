@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import { getBoardSize } from "@/features/bead/lib/canvas-geometry";

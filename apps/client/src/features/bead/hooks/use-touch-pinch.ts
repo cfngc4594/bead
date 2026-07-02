@@ -1,5 +1,3 @@
-"use client";
-
 import type Konva from "konva";
 import { useEffect, useRef } from "react";
 import type { TouchPoint } from "@/features/bead/lib/touch-gesture";

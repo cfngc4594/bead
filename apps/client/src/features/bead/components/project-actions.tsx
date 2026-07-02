@@ -1,5 +1,3 @@
-"use client";
-
 import { Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";

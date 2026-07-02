@@ -1,5 +1,3 @@
-"use client";
-
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useRef, useState } from "react";
