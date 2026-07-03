@@ -197,16 +197,16 @@ export function EditorToolbar({
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
+      <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
         <ToolbarIconButton icon={ArrowLeft} label="返回作品" onClick={onBack} />
         <ProjectTitleEditor
-          className="min-w-0 flex-1 md:w-56 md:flex-none"
+          className="min-w-0 flex-1 lg:w-56 lg:flex-none"
           title={projectTitle}
           onRename={onRenameProject}
         />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 lg:flex">
         <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
         {[viewActions, historyActions, fileActions].map((actions) => (
           <ToolbarActionGroup
@@ -217,7 +217,7 @@ export function EditorToolbar({
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+      <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
         {mobileTopViewActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}

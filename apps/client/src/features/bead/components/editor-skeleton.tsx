@@ -63,12 +63,12 @@ export function CanvasBoardSkeleton() {
 function EditorToolbarSkeleton() {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
+      <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
         <ToolbarIconSkeleton />
-        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
+        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md lg:w-56 lg:flex-none" />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 lg:flex">
         {modeToolSkeletons.map((item) => (
           <ToolbarIconSkeleton key={item} />
         ))}
@@ -77,7 +77,7 @@ function EditorToolbarSkeleton() {
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+      <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
         {mobileToolbarViewSkeletons.map((item) => (
           <ToolbarIconSkeleton key={item} />
         ))}
