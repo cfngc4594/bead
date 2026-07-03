@@ -4,9 +4,14 @@
   "sourceRoot": "apps/client/src",
   "projectType": "application",
   "targets": {
+    "dev": {
+      "cache": false,
+      "command": "vite --config apps/client/vite.config.ts"
+    },
     "build": {
       "cache": true,
-      "outputs": ["{projectRoot}/out", "{projectRoot}/.next"]
+      "command": "vite build --config apps/client/vite.config.ts",
+      "outputs": ["{projectRoot}/out"]
     },
     "typecheck": {
       "cache": true,

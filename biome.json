@@ -7,7 +7,13 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!build",
+      "!apps/client/out",
+      "!apps/client/src/routeTree.gen.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -23,7 +29,6 @@
       }
     },
     "domains": {
-      "next": "recommended",
       "react": "recommended"
     }
   },
