@@ -16,6 +16,7 @@
 
 # tanstack
 /.tanstack/
+/apps/api/out/
 /apps/client/out/
 
 # production

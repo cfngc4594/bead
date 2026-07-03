@@ -1,0 +1,21 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "cache": false,
+      "command": "bun --hot apps/api/src/index.ts"
+    },
+    "build": {
+      "cache": true,
+      "command": "bun build apps/api/src/index.ts --target bun --outdir apps/api/out",
+      "outputs": ["{projectRoot}/out"]
+    },
+    "typecheck": {
+      "cache": true,
+      "command": "tsc -p apps/api/tsconfig.json --noEmit"
+    }
+  }
+}

@@ -11,6 +11,7 @@
       "**",
       "!node_modules",
       "!build",
+      "!apps/api/out",
       "!apps/client/out",
       "!apps/client/src/routeTree.gen.ts"
     ]
