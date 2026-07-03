@@ -1,7 +1,3 @@
-"use client";
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,15 +6,23 @@ import {
   canvasSizes,
   getCanvasSize,
 } from "@/config/canvas-sizes";
-import { createProject as createStoredProject } from "@/features/bead/storage/projects";
+import {
+  createProject as createStoredProject,
+  type Project,
+} from "@/features/bead/storage/projects";
 import { cn } from "@/lib/utils";
 
 type SizePickerProps = {
   initialSize: CanvasSizeId;
+  onCancel: () => void;
+  onProjectCreated: (project: Project) => void;
 };
 
-export function SizePicker({ initialSize }: SizePickerProps) {
-  const router = useRouter();
+export function SizePicker({
+  initialSize,
+  onCancel,
+  onProjectCreated,
+}: SizePickerProps) {
   const [selected, setSelected] = useState<CanvasSizeId>(initialSize);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -32,7 +36,7 @@ export function SizePicker({ initialSize }: SizePickerProps) {
     try {
       const project = await createStoredProject(getCanvasSize(selected));
 
-      router.push(`/projects?projectId=${project.id}`);
+      onProjectCreated(project);
     } finally {
       setIsCreating(false);
     }
@@ -85,8 +89,13 @@ export function SizePicker({ initialSize }: SizePickerProps) {
         >
           {isCreating ? "正在创建" : "开始创作"}
         </Button>
-        <Button asChild className="min-w-48 rounded-full" variant="outline">
-          <Link href="/projects">返回作品</Link>
+        <Button
+          className="min-w-48 rounded-full"
+          onClick={onCancel}
+          type="button"
+          variant="outline"
+        >
+          返回作品
         </Button>
       </div>
     </>

@@ -1,9 +1,5 @@
-"use client";
-
 import { Capacitor } from "@capacitor/core";
-import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { type ComponentType, lazy, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
@@ -35,40 +31,39 @@ import {
 } from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
 
-const CanvasBoard = dynamic<CanvasBoardProps>(
+const CanvasBoard = lazy(
   () =>
-    import("@/features/bead/components/canvas").then(
-      (module) => module.CanvasBoard,
-    ),
-  {
-    loading: () => <CanvasBoardSkeleton />,
-    ssr: false,
-  },
+    import("@/features/bead/components/canvas").then((module) => ({
+      default: module.CanvasBoard,
+    })) as Promise<{
+      default: ComponentType<CanvasBoardProps>;
+    }>,
 );
 
 type EditorProps = {
   projectId: ProjectId;
   size: CanvasSize;
   title: string;
+  onBack: () => void;
 };
 
 const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
 
-export function Editor({ projectId, size, title }: EditorProps) {
+export function Editor({ projectId, size, title, onBack }: EditorProps) {
   return (
     <EditorContent
       key={projectId}
       projectId={projectId}
       size={size}
       title={title}
+      onBack={onBack}
     />
   );
 }
 
-function EditorContent({ projectId, size, title }: EditorProps) {
-  const router = useRouter();
+function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const modelPreview = useModelPreview();
   const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
@@ -265,7 +260,7 @@ function EditorContent({ projectId, size, title }: EditorProps) {
           onExportTemplate={actions.exportTemplate}
           onImportImage={actions.importImage}
           onImportTemplate={actions.importTemplate}
-          onBack={() => router.push("/projects")}
+          onBack={onBack}
           onRenameProject={handleRenameProject}
           onSelectTool={actions.selectTool}
           onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
@@ -307,23 +302,25 @@ function EditorContent({ projectId, size, title }: EditorProps) {
               rows={size.rows}
             />
           ) : (
-            <CanvasBoard
-              rows={size.rows}
-              cols={size.cols}
-              beads={visibleBeads}
-              document={document}
-              tool={tool}
-              showBeadCodes={showBeadCodes}
-              showGuideLines={showGuideLines}
-              onEditCell={editCell}
-              onEditEnd={finishCellEdit}
-              onEditStart={beginCellEdit}
-              onMoveSelection={moveSelection}
-              onPickCell={pickCell}
-              selectionResetSignal={selectionResetSignal}
-              resetViewAfterResizeSignal={resetViewAfterResizeSignal}
-              resetViewSignal={resetViewSignal}
-            />
+            <Suspense fallback={<CanvasBoardSkeleton />}>
+              <CanvasBoard
+                rows={size.rows}
+                cols={size.cols}
+                beads={visibleBeads}
+                document={document}
+                tool={tool}
+                showBeadCodes={showBeadCodes}
+                showGuideLines={showGuideLines}
+                onEditCell={editCell}
+                onEditEnd={finishCellEdit}
+                onEditStart={beginCellEdit}
+                onMoveSelection={moveSelection}
+                onPickCell={pickCell}
+                selectionResetSignal={selectionResetSignal}
+                resetViewAfterResizeSignal={resetViewAfterResizeSignal}
+                resetViewSignal={resetViewSignal}
+              />
+            </Suspense>
           )}
           {!modelPreview.isOpen ? (
             <LayersPanel

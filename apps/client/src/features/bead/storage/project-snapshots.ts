@@ -6,15 +6,7 @@ import {
   createEmptyCanvas,
 } from "@/features/bead/lib/canvas-document";
 import type { BeadFill } from "@/features/bead/types";
-import type {
-  ProjectV2Snapshot,
-  ProjectV2SnapshotCell,
-  ProjectV2SnapshotLayer,
-} from "./migrations/v2/types";
-
-export type CanvasSnapshotCell = ProjectV2SnapshotCell;
-export type CanvasSnapshotLayer = ProjectV2SnapshotLayer;
-export type CanvasSnapshot = ProjectV2Snapshot;
+import type { CanvasSnapshot, CanvasSnapshotCell } from "./project-schema";
 
 export function compactDocument(document: CanvasDocumentState): CanvasSnapshot {
   const layers = normalizeLayers(document);
@@ -50,23 +42,23 @@ export function expandSnapshot({
   }));
 
   if (layers.length === 0) {
-    layers.push({
-      id: "layer-base",
-      name: "图层 1",
-      cellIndexes: [],
-      isHidden: false,
-      isLocked: false,
-    });
+    throw new Error("Cannot expand a snapshot without layers.");
   }
 
   for (const cell of snapshot.cells) {
     const index = cell[0];
 
     if (index < 0 || index >= cellCount) {
-      continue;
+      throw new Error(`Snapshot cell index is outside the canvas: ${index}`);
     }
 
-    const layerIndex = layers[cell[2] ?? 0] ? (cell[2] ?? 0) : 0;
+    const layerIndex = cell[2];
+
+    if (!layers[layerIndex]) {
+      throw new Error(
+        `Snapshot cell layer index does not exist: ${layerIndex}`,
+      );
+    }
 
     beads[index] = getFillByCode(cell[1]);
     layers[layerIndex].cellIndexes.push(index);
@@ -96,11 +88,13 @@ function compactBeads(
     const fill = beads[index];
 
     if (fill) {
-      const layerIndex = cellLayerIndexes.get(index) ?? 0;
+      const layerIndex = cellLayerIndexes.get(index);
 
-      snapshot.push(
-        layerIndex > 0 ? [index, fill.code, layerIndex] : [index, fill.code],
-      );
+      if (layerIndex === undefined) {
+        throw new Error(`Filled cell is not assigned to a layer: ${index}`);
+      }
+
+      snapshot.push([index, fill.code, layerIndex]);
     }
   }
 
@@ -108,49 +102,56 @@ function compactBeads(
 }
 
 function normalizeLayers(document: CanvasDocumentState) {
+  if (document.layers.length === 0) {
+    throw new Error("Cannot compact a document without layers.");
+  }
+
   const filledCellIndexes = new Set(
     document.beads
       .map((bead, index) => (bead ? index : null))
       .filter((index) => index !== null),
   );
   const claimedIndexes = new Set<number>();
-  const layers = document.layers.map((layer, index) => {
-    const cellIndexes = layer.cellIndexes.filter((cellIndex) => {
+  const layers = document.layers.map((layer) => {
+    const name = layer.name.trim();
+
+    if (!name) {
+      throw new Error(`Layer name must not be empty: ${layer.id}`);
+    }
+
+    const cellIndexes = layer.cellIndexes.map((cellIndex) => {
       if (
+        !Number.isInteger(cellIndex) ||
         cellIndex < 0 ||
-        cellIndex >= document.beads.length ||
-        !filledCellIndexes.has(cellIndex) ||
-        claimedIndexes.has(cellIndex)
+        cellIndex >= document.beads.length
       ) {
-        return false;
+        throw new Error(`Layer cell index is outside the canvas: ${cellIndex}`);
+      }
+
+      if (!filledCellIndexes.has(cellIndex)) {
+        throw new Error(`Layer references an empty cell: ${cellIndex}`);
+      }
+
+      if (claimedIndexes.has(cellIndex)) {
+        throw new Error(`Cell is assigned to multiple layers: ${cellIndex}`);
       }
 
       claimedIndexes.add(cellIndex);
-      return true;
+      return cellIndex;
     });
 
     return {
       id: layer.id,
-      name: layer.name.trim() || `图层 ${index + 1}`,
+      name,
       cellIndexes,
       isHidden: layer.isHidden,
       isLocked: layer.isLocked,
     };
   });
 
-  if (layers.length === 0) {
-    layers.push({
-      id: "layer-base",
-      name: "图层 1",
-      cellIndexes: [],
-      isHidden: false,
-      isLocked: false,
-    });
-  }
-
   for (const cellIndex of filledCellIndexes) {
     if (!claimedIndexes.has(cellIndex)) {
-      layers[0].cellIndexes.push(cellIndex);
+      throw new Error(`Filled cell is not assigned to a layer: ${cellIndex}`);
     }
   }
 
@@ -161,9 +162,11 @@ function normalizeLayers(document: CanvasDocumentState) {
 }
 
 function getActiveLayerId(layers: BeadLayer[], activeLayerId: string) {
-  return layers.some((layer) => layer.id === activeLayerId)
-    ? activeLayerId
-    : layers[0].id;
+  if (!layers.some((layer) => layer.id === activeLayerId)) {
+    throw new Error(`Snapshot active layer does not exist: ${activeLayerId}`);
+  }
+
+  return activeLayerId;
 }
 
 function getCellLayerIndexMap(layers: BeadLayer[]) {
@@ -181,15 +184,12 @@ function getCellLayerIndexMap(layers: BeadLayer[]) {
 function getFillByCode(code: string): BeadFill {
   const color = mardColors.find((item) => item.code === code);
 
-  if (color) {
-    return {
-      code: color.code,
-      hex: color.hex,
-    };
+  if (!color) {
+    throw new Error(`Unknown bead color code: ${code}`);
   }
 
   return {
-    code,
-    hex: "#000000",
+    code: color.code,
+    hex: color.hex,
   };
 }

@@ -1,7 +1,4 @@
-"use client";
-
 import { Download, LoaderCircle, RefreshCcw, Share2 } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -108,13 +105,10 @@ export function ExportImageSheet({
         <div className="px-4">
           <div className="relative grid aspect-[4/3] max-h-[42vh] place-items-center overflow-hidden rounded-lg border bg-muted/30">
             {previewUrl ? (
-              <Image
+              <img
                 alt="导出的豆图预览"
-                className="object-contain"
-                fill
-                sizes="100vw"
+                className="h-full w-full object-contain"
                 src={previewUrl}
-                unoptimized
               />
             ) : isCreating ? (
               <div className="flex items-center gap-2 text-muted-foreground">

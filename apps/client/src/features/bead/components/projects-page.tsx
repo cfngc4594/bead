@@ -1,17 +1,6 @@
-"use client";
-
-import { useLiveQuery } from "@tanstack/react-db";
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
+import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
+import { Link } from "@tanstack/react-router";
 import { Grid2x2, Plus, Search, X } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,74 +31,68 @@ type ProjectListItem = Pick<
   | "updatedAt"
 >;
 
-const columns: ColumnDef<ProjectListItem>[] = [
-  {
-    accessorKey: "title",
-  },
-  {
-    accessorKey: "sizeId",
-    enableGlobalFilter: false,
-    filterFn: (row, columnId, filterValue) => {
-      const selected = Array.isArray(filterValue) ? filterValue : [];
-
-      return selected.length === 0 || selected.includes(row.getValue(columnId));
-    },
-  },
-  {
-    accessorKey: "updatedAt",
-    enableGlobalFilter: false,
-  },
-];
-
-const sorting: SortingState = [{ id: "updatedAt", desc: true }];
-const sizeColumnId = "sizeId";
-
 export function ProjectsPage() {
   const [titleFilter, setTitleFilter] = useState("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const { data: projects = [] } = useLiveQuery((query) =>
-    query.from({ project: projectsCollection }).select(({ project }) => ({
-      id: project.id,
-      sizeId: project.sizeId,
-      rows: project.rows,
-      cols: project.cols,
-      title: project.title,
-      snapshots: project.snapshots,
-      currentIndex: project.currentIndex,
-      updatedAt: project.updatedAt,
-    })),
-  );
-  const sizeOptions = useMemo(
-    () =>
-      canvasSizes.map((size) => ({
-        label: size.title,
-        value: size.id,
-        count: projects.filter((project) => project.sizeId === size.id).length,
-      })),
-    [projects],
-  );
-  const columnFilters = useMemo<ColumnFiltersState>(
-    () =>
-      selectedSizes.length > 0
-        ? [{ id: sizeColumnId, value: selectedSizes }]
-        : [],
-    [selectedSizes],
-  );
-  const table = useReactTable({
-    data: projects,
-    columns,
-    state: {
-      columnFilters,
-      globalFilter: titleFilter,
-      sorting,
+  const normalizedTitleFilter = titleFilter.trim();
+  const { data: projects = [] } = useLiveQuery(
+    (query) => {
+      let projectQuery = query.from({ project: projectsCollection });
+
+      if (normalizedTitleFilter.length > 0) {
+        projectQuery = projectQuery.where(({ project }) =>
+          ilike(project.title, `%${normalizedTitleFilter}%`),
+        );
+      }
+
+      if (selectedSizes.length > 0) {
+        projectQuery = projectQuery.where(({ project }) =>
+          inArray(project.sizeId, selectedSizes),
+        );
+      }
+
+      return projectQuery
+        .orderBy(({ project }) => project.updatedAt, "desc")
+        .select(({ project }) => ({
+          id: project.id,
+          sizeId: project.sizeId,
+          rows: project.rows,
+          cols: project.cols,
+          title: project.title,
+          snapshots: project.snapshots,
+          currentIndex: project.currentIndex,
+          updatedAt: project.updatedAt,
+        }));
     },
-    onGlobalFilterChange: setTitleFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-  const rows = table.getRowModel().rows;
-  const hasProjects = projects.length > 0;
+    [normalizedTitleFilter, selectedSizes],
+  );
+  const { data: sizeCounts = [] } = useLiveQuery(
+    (query) =>
+      query
+        .from({ project: projectsCollection })
+        .groupBy(({ project }) => project.sizeId)
+        .select(({ project }) => ({
+          sizeId: project.sizeId,
+          count: count(project.id),
+        })),
+    [],
+  );
+  const totalProjectCount = sizeCounts.reduce(
+    (total, size) => total + size.count,
+    0,
+  );
+  const sizeOptions = useMemo(() => {
+    const countsBySize = new Map(
+      sizeCounts.map((size) => [size.sizeId, size.count]),
+    );
+
+    return canvasSizes.map((size) => ({
+      label: size.title,
+      value: size.id,
+      count: countsBySize.get(size.id) ?? 0,
+    }));
+  }, [sizeCounts]);
+  const hasProjects = totalProjectCount > 0;
 
   return (
     <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
@@ -125,17 +108,16 @@ export function ProjectsPage() {
                 onTitleFilterChange={setTitleFilter}
               />
               <Button asChild className="ml-auto">
-                <Link href="/projects/new">
+                <Link to="/projects/new">
                   <Plus aria-hidden="true" />
                   新建
                 </Link>
               </Button>
             </header>
 
-            {rows.length > 0 ? (
+            {projects.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {rows.map((row) => {
-                  const project = row.original;
+                {projects.map((project: ProjectListItem) => {
                   const size = getCanvasSize(project.sizeId);
 
                   return (
@@ -146,7 +128,8 @@ export function ProjectsPage() {
                       <Link
                         aria-label={`打开 ${project.title}`}
                         className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-                        href={`/projects?projectId=${project.id}`}
+                        params={{ projectId: project.id }}
+                        to="/projects/$projectId"
                       >
                         <div className="aspect-4/3">
                           <ProjectPreview project={project} />
@@ -156,7 +139,8 @@ export function ProjectsPage() {
                       <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
                         <Link
                           className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                          href={`/projects?projectId=${project.id}`}
+                          params={{ projectId: project.id }}
+                          to="/projects/$projectId"
                         >
                           <p className="truncate font-medium text-sm leading-4">
                             {project.title}
@@ -216,7 +200,7 @@ export function ProjectsPage() {
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
-                <Link href="/projects/new">
+                <Link to="/projects/new">
                   <Plus aria-hidden="true" />
                   开始拼豆
                 </Link>

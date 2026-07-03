@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Bath,
   ChevronDown,
@@ -12,8 +10,7 @@ import {
   TowelRack,
   Waves,
 } from "lucide-react";
-import dynamic from "next/dynamic";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,18 +29,15 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import type { BeadModelSceneProps } from "@/features/bead/components/bead-model-scene";
 import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
 import type { BeadFill } from "@/features/bead/types";
 import { cn } from "@/lib/utils";
 
-const BeadModelScene = dynamic<BeadModelSceneProps>(
-  () => preloadBeadModelScene().then((module) => module.BeadModelScene),
-  {
-    loading: () => null,
-    ssr: false,
-  },
+const BeadModelScene = lazy(() =>
+  preloadBeadModelScene().then((module) => ({
+    default: module.BeadModelScene,
+  })),
 );
 
 type BeadModelPreviewProps = {
@@ -129,15 +123,17 @@ export function BeadModelPreview({
         onSelectPreviewMode={setPreviewMode}
       />
       {hasBeads ? (
-        <BeadModelScene
-          beads={beads}
-          cols={cols}
-          previewMode={previewMode}
-          resetViewSignal={resetViewSignal}
-          rows={rows}
-        />
+        <Suspense fallback={null}>
+          <BeadModelScene
+            beads={beads}
+            cols={cols}
+            previewMode={previewMode}
+            resetViewSignal={resetViewSignal}
+            rows={rows}
+          />
+        </Suspense>
       ) : (
-        <Empty className="h-full rounded-none border-0">
+        <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Cuboid />

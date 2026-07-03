@@ -3,50 +3,39 @@ import {
   createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import type { CanvasSize, CanvasSizeId } from "@/config/canvas-sizes";
+import type { CanvasSize } from "@/config/canvas-sizes";
 import {
   type CanvasDocumentState,
-  type CanvasState,
-  createDocumentFromBeads,
   createEmptyDocument,
   isSameDocument,
 } from "@/features/bead/lib/canvas-document";
+import type { Project } from "@/features/bead/storage/project-schema";
+import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
-  PROJECTS_STORAGE_KEYS,
-  projectMigrations,
-  runProjectMigrations,
-} from "@/features/bead/storage/migrations";
-import {
-  type CanvasSnapshot,
   compactDocument,
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
 
 export type ProjectId = string;
-
-export type Project = {
-  id: ProjectId;
-  title: string;
-  sizeId: CanvasSizeId;
-  rows: number;
-  cols: number;
-  snapshots: CanvasSnapshot[];
-  currentIndex: number;
-  updatedAt: number;
-};
+export type { Project };
 
 export const DEFAULT_PROJECT_TITLE = "未命名作品";
-
-runProjectMigrations(projectMigrations);
+const PROJECTS_STORAGE_KEY = "bead:projects";
 
 export const projectsCollection = createCollection(
-  localStorageCollectionOptions<Project, ProjectId>({
+  localStorageCollectionOptions({
     id: "projects",
-    storageKey: PROJECTS_STORAGE_KEYS.v2,
+    schema: projectIntegritySchema,
+    storageKey: PROJECTS_STORAGE_KEY,
     getKey: (project) => project.id,
   }),
 );
+
+export async function preloadProjectsCollection() {
+  await projectsCollection.preload();
+  return null;
+}
 
 export function getCurrentCanvas({
   cellCount,
@@ -79,22 +68,6 @@ export function canRedo(project: Project) {
   return project.currentIndex < project.snapshots.length - 1;
 }
 
-export function saveCanvasSnapshot({
-  baseIndex,
-  beads,
-  projectId,
-}: {
-  baseIndex?: number;
-  beads: CanvasState;
-  projectId: ProjectId;
-}) {
-  return saveCanvasDocumentSnapshot({
-    baseIndex,
-    document: createDocumentFromBeads(beads),
-    projectId,
-  });
-}
-
 export function saveCanvasDocumentSnapshot({
   baseIndex,
   document,
@@ -105,7 +78,8 @@ export function saveCanvasDocumentSnapshot({
   projectId: ProjectId;
 }) {
   const project = getRequiredProject(projectId);
-  const projectIndex = baseIndex ?? project.currentIndex;
+  const projectIndex =
+    baseIndex === undefined ? project.currentIndex : baseIndex;
   const currentDocument = expandSnapshot({
     cellCount: document.beads.length,
     snapshot: project.snapshots[projectIndex],
@@ -172,7 +146,9 @@ export function renameProject({
   title: string;
 }) {
   const project = getRequiredProject(projectId);
-  const nextTitle = normalizeProjectTitle(title) || DEFAULT_PROJECT_TITLE;
+  const normalizedTitle = normalizeProjectTitle(title);
+  const nextTitle =
+    normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle;
 
   if (project.title === nextTitle) {
     return Promise.resolve();
