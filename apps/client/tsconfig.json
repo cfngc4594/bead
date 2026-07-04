@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@bead/api": ["../api/src/index.ts"]
     },
     "types": ["vite/client", "bun"]
   },
