@@ -11,6 +11,8 @@ export const env = createEnv({
         .filter(Boolean),
     ),
   },
+  clientPrefix: "",
+  client: {},
   runtimeEnv: Bun.env,
   emptyStringAsUndefined: true,
   isServer: true,
