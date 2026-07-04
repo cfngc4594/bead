@@ -6,16 +6,16 @@
   "targets": {
     "dev": {
       "cache": false,
-      "command": "vite --config apps/client/vite.config.ts"
+      "command": "bun run --cwd apps/client dev"
     },
     "build": {
       "cache": true,
-      "command": "vite build --config apps/client/vite.config.ts",
+      "command": "bun run --cwd apps/client build",
       "outputs": ["{projectRoot}/out"]
     },
     "typecheck": {
       "cache": true,
-      "command": "tsc -p apps/client/tsconfig.json --noEmit"
+      "command": "bun run --cwd apps/client typecheck"
     }
   }
 }
