@@ -13,7 +13,7 @@ export const env = createEnv({
   },
   clientPrefix: "",
   client: {},
-  runtimeEnv: Bun.env,
+  runtimeEnv: process.env,
   emptyStringAsUndefined: true,
   isServer: true,
 });
