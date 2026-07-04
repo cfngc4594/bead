@@ -6,12 +6,7 @@
   "targets": {
     "dev": {
       "cache": false,
-      "command": "bun --hot apps/api/src/index.ts"
-    },
-    "build": {
-      "cache": true,
-      "command": "bun build apps/api/src/index.ts --target bun --outdir apps/api/out",
-      "outputs": ["{projectRoot}/out"]
+      "command": "bun --hot apps/api/src/dev.ts"
     },
     "typecheck": {
       "cache": true,
