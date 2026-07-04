@@ -1,14 +1,9 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-export const env = createEnv({
+export const devEnv = createEnv({
   server: {
-    CORS_ORIGINS: z.string().transform((value) =>
-      value
-        .split(",")
-        .map((origin) => origin.trim())
-        .filter(Boolean),
-    ),
+    PORT: z.coerce.number().int().positive(),
   },
   clientPrefix: "",
   client: {},

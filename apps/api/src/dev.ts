@@ -1,7 +1,7 @@
-import { env } from "./env";
+import { devEnv } from "./dev-env";
 import { app } from "./index";
 
 export default {
-  port: env.PORT,
+  port: devEnv.PORT,
   fetch: app.fetch,
 };

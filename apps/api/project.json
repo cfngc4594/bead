@@ -8,6 +8,10 @@
       "cache": false,
       "command": "bun run --cwd apps/api dev"
     },
+    "build": {
+      "cache": true,
+      "command": "bun run --cwd apps/api build"
+    },
     "typecheck": {
       "cache": true,
       "command": "bun run --cwd apps/api typecheck"

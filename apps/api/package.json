@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --hot src/dev.ts",
+    "build": "bun run typecheck",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
