@@ -1,6 +1,7 @@
 {
   "name": "@bead/api",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "bun --hot src/dev.ts",
     "build": "bun run typecheck",
