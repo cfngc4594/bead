@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { env } from "./env";
+import { env } from "./env.js";
 
 export const app = new Hono()
   .use(
