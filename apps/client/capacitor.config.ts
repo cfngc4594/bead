@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Bead",
   webDir: "out",
   server: {
-    androidScheme: "bead",
+    androidScheme: "https",
     hostname: "localhost",
   },
 };
