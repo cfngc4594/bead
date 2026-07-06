@@ -6,13 +6,13 @@ import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
-import type { CanvasDocumentState } from "@/features/bead/lib/canvas-document";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
 } from "@/features/bead/lib/canvas-geometry";
+import type { CanvasState } from "@/features/bead/lib/canvas-state";
 import {
   type BeadSelection,
   getSelectionBoxRect,
@@ -33,7 +33,6 @@ export type CanvasBoardProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
-  document: CanvasDocumentState;
   tool: CanvasTool;
   showBeadCodes: boolean;
   showGuideLines: boolean;
@@ -41,7 +40,7 @@ export type CanvasBoardProps = {
   onEditCell: (cell: GridCell) => void;
   onEditEnd: () => void;
   onPickCell: (cell: GridCell) => void;
-  onMoveSelection: (document: CanvasDocumentState) => void;
+  onMoveSelection: (beads: CanvasState) => void;
   selectionResetSignal: number;
   resetViewSignal: number;
   resetViewAfterResizeSignal: number;
@@ -52,7 +51,6 @@ export function CanvasBoard({
   rows,
   cols,
   beads,
-  document,
   tool,
   showBeadCodes,
   showGuideLines,
@@ -122,17 +120,10 @@ export function CanvasBoard({
   } = useSelectionGesture({
     beads,
     cols,
-    document,
     onMoveSelection,
     resetSignal: selectionResetSignal,
     rows,
   });
-  const activeLayer = document.layers.find(
-    (layer) => layer.id === document.activeLayerId,
-  );
-  const activeLayerCellIndexes = activeLayer
-    ? new Set(activeLayer.cellIndexes)
-    : undefined;
   const gridOrigin = getGridOrigin();
   const canvasCursor = getCanvasCursor({
     hoveredCell,
@@ -295,7 +286,6 @@ export function CanvasBoard({
             listening={false}
             sceneFunc={(context, shape) => {
               drawBoard(context, rows, cols, displayedBeads, {
-                activeLayerCellIndexes,
                 showBeadCodes,
                 showGuideLines,
               });

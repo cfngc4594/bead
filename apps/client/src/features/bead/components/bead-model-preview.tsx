@@ -4,7 +4,6 @@ import {
   CircleDot,
   Cuboid,
   Grid3x3,
-  Layers3,
   type LucideIcon,
   Sparkles,
   TowelRack,
@@ -66,7 +65,7 @@ const previewOptions: PreviewOption[] = [
     mode: "standard",
     label: "常规烫",
     description: "单面无孔，平整哑光",
-    icon: Layers3,
+    icon: Cuboid,
   },
   {
     mode: "towel",
@@ -185,7 +184,7 @@ function PreviewOptionsPanel({
           className="w-80 max-w-[calc(100vw-1.5rem)] bg-background/95 p-1.5 backdrop-blur"
         >
           <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground">
-            <Layers3 className="size-4 shrink-0" />
+            <Cuboid className="size-4 shrink-0" />
             <span className="truncate">预览选项</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

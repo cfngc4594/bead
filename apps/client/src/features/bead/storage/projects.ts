@@ -5,14 +5,14 @@ import {
 } from "@tanstack/react-db";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
-  type CanvasDocumentState,
-  createEmptyDocument,
-  isSameDocument,
-} from "@/features/bead/lib/canvas-document";
+  type CanvasState,
+  createEmptyCanvas,
+  isSameCanvas,
+} from "@/features/bead/lib/canvas-state";
 import type { Project } from "@/features/bead/storage/project-schema";
 import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
-  compactDocument,
+  compactCanvas,
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
@@ -44,16 +44,6 @@ export function getCurrentCanvas({
   cellCount: number;
   project: Project;
 }) {
-  return getCurrentDocument({ cellCount, project }).beads;
-}
-
-export function getCurrentDocument({
-  cellCount,
-  project,
-}: {
-  cellCount: number;
-  project: Project;
-}) {
   return expandSnapshot({
     cellCount,
     snapshot: project.snapshots[project.currentIndex],
@@ -68,33 +58,31 @@ export function canRedo(project: Project) {
   return project.currentIndex < project.snapshots.length - 1;
 }
 
-export function saveCanvasDocumentSnapshot({
+export function saveCanvasSnapshot({
+  beads,
   baseIndex,
-  document,
   projectId,
 }: {
-  baseIndex?: number;
-  document: CanvasDocumentState;
+  beads: CanvasState;
+  baseIndex: number;
   projectId: ProjectId;
 }) {
   const project = getRequiredProject(projectId);
-  const projectIndex =
-    baseIndex === undefined ? project.currentIndex : baseIndex;
-  const currentDocument = expandSnapshot({
-    cellCount: document.beads.length,
-    snapshot: project.snapshots[projectIndex],
+  const currentCanvas = expandSnapshot({
+    cellCount: beads.length,
+    snapshot: project.snapshots[baseIndex],
   });
 
-  if (isSameDocument(document, currentDocument)) {
+  if (isSameCanvas(beads, currentCanvas)) {
     return Promise.resolve();
   }
 
   return commitProjectMutation(() => {
     projectsCollection.update(projectId, (draft) => {
-      const branchIndex = Math.min(projectIndex, draft.snapshots.length - 1);
+      const branchIndex = Math.min(baseIndex, draft.snapshots.length - 1);
       const snapshots = draft.snapshots.slice(0, branchIndex + 1);
 
-      snapshots.push(compactDocument(document));
+      snapshots.push(compactCanvas(beads));
       draft.snapshots = snapshots;
       draft.currentIndex = snapshots.length - 1;
       draft.updatedAt = Date.now();
@@ -118,7 +106,6 @@ export async function duplicateProject(projectId: ProjectId) {
     snapshots: project.snapshots.map((snapshot) => ({
       ...snapshot,
       cells: snapshot.cells.map((cell) => [...cell] as typeof cell),
-      layers: snapshot.layers.map((layer) => ({ ...layer })),
     })),
     updatedAt: Date.now(),
   };
@@ -169,7 +156,7 @@ export async function createProject(size: CanvasSize) {
     sizeId: size.id,
     rows: size.rows,
     cols: size.cols,
-    snapshots: [compactDocument(createEmptyDocument(size.rows * size.cols))],
+    snapshots: [compactCanvas(createEmptyCanvas(size.rows * size.cols))],
     currentIndex: 0,
     updatedAt: Date.now(),
   };

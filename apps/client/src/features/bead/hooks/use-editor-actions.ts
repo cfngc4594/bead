@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
-import type { CanvasState } from "@/features/bead/lib/canvas-document";
+import type { CanvasState } from "@/features/bead/lib/canvas-state";
 import {
   createBeadImageBlob,
   exportBeadImage,

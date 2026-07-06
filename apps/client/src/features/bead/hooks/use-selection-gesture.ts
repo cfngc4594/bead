@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  type CanvasDocumentState,
-  getCellLayerIds,
-} from "@/features/bead/lib/canvas-document";
-import {
   type BeadSelection,
   type BeadSelectionBox,
   getMovedSelectionOrigin,
@@ -12,22 +8,20 @@ import {
   isCellInSelection,
   isSameCell,
   isSelectionInBounds,
-  moveSelectedDocument,
+  moveSelectedBeads,
 } from "@/features/bead/lib/selection";
 import type { BeadFill, GridCell } from "@/features/bead/types";
 
 export function useSelectionGesture({
   beads,
   cols,
-  document,
   onMoveSelection,
   resetSignal,
   rows,
 }: {
   beads: readonly (BeadFill | null)[];
   cols: number;
-  document: CanvasDocumentState;
-  onMoveSelection: (document: CanvasDocumentState) => void;
+  onMoveSelection: (beads: (BeadFill | null)[]) => void;
   resetSignal: number;
   rows: number;
 }) {
@@ -105,8 +99,6 @@ export function useSelectionGesture({
         beads,
         rows,
         cols,
-        document.layers,
-        getCellLayerIds(document.layers, rows * cols),
       );
 
       setSelection(nextSelection);
@@ -120,7 +112,7 @@ export function useSelectionGesture({
         !isSameCell(selection.origin, moveTargetOrigin)
       ) {
         onMoveSelection(
-          moveSelectedDocument(document, selection, moveTargetOrigin, cols),
+          moveSelectedBeads(beads, selection, moveTargetOrigin, cols),
         );
         setSelection({
           ...selection,

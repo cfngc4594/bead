@@ -1,7 +1,3 @@
-import type {
-  BeadLayer,
-  CanvasDocumentState,
-} from "@/features/bead/lib/canvas-document";
 import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
 import type { BeadFill, GridCell } from "@/features/bead/types";
 
@@ -16,7 +12,6 @@ export type BeadSelectionItem = {
   rowOffset: number;
   columnOffset: number;
   fill: BeadFill;
-  layerId?: string;
 };
 
 export type BeadSelectionBox = {
@@ -29,8 +24,6 @@ export function getSelectionFromBox(
   beads: readonly (BeadFill | null)[],
   rows: number,
   cols: number,
-  layers: readonly BeadLayer[] = [],
-  cellLayerIds: readonly (string | null)[] = [],
 ) {
   const bounds = normalizeSelectionBox(box);
   const items: BeadSelectionItem[] = [];
@@ -45,15 +38,12 @@ export function getSelectionFromBox(
       }
 
       const fill = beads[row * cols + column];
-      const layerId = cellLayerIds[row * cols + column] ?? undefined;
-      const layer = layers.find((item) => item.id === layerId);
 
-      if (fill && layer && !layer.isHidden && !layer.isLocked) {
+      if (fill) {
         items.push({
           rowOffset,
           columnOffset,
           fill,
-          layerId,
         });
       }
     }
@@ -146,64 +136,6 @@ export function moveSelectedBeads(
   return next;
 }
 
-export function moveSelectedDocument(
-  document: CanvasDocumentState,
-  selection: BeadSelection,
-  targetOrigin: GridCell,
-  cols: number,
-) {
-  if (doesSelectionTouchLockedLayer(document, selection, targetOrigin, cols)) {
-    return document;
-  }
-
-  const beads = moveSelectedBeads(
-    document.beads,
-    selection,
-    targetOrigin,
-    cols,
-  );
-  const movedCellsByLayer = new Map<string, number[]>();
-  const sourceIndexes = new Set<number>();
-  const targetIndexes = new Set<number>();
-
-  for (const item of selection.items) {
-    const sourceRow = selection.origin.row + item.rowOffset;
-    const sourceColumn = selection.origin.column + item.columnOffset;
-    const targetRow = targetOrigin.row + item.rowOffset;
-    const targetColumn = targetOrigin.column + item.columnOffset;
-    const sourceIndex = sourceRow * cols + sourceColumn;
-    const targetIndex = targetRow * cols + targetColumn;
-
-    sourceIndexes.add(sourceIndex);
-    targetIndexes.add(targetIndex);
-
-    if (item.layerId) {
-      const layerCells = movedCellsByLayer.get(item.layerId) ?? [];
-      layerCells.push(targetIndex);
-      movedCellsByLayer.set(item.layerId, layerCells);
-    }
-  }
-
-  const layers = document.layers.map((layer) => {
-    const movedCells = movedCellsByLayer.get(layer.id) ?? [];
-    const cellIndexes = layer.cellIndexes.filter(
-      (cellIndex) =>
-        !sourceIndexes.has(cellIndex) && !targetIndexes.has(cellIndex),
-    );
-
-    return {
-      ...layer,
-      cellIndexes: [...cellIndexes, ...movedCells].sort((a, b) => a - b),
-    };
-  });
-
-  return {
-    ...document,
-    beads,
-    layers,
-  };
-}
-
 export function hideSelectedBeads(
   beads: readonly (BeadFill | null)[],
   selection: BeadSelection,
@@ -236,38 +168,4 @@ function normalizeSelectionBox({ start, end }: BeadSelectionBox) {
     rows: lastRow - row + 1,
     cols: lastColumn - column + 1,
   };
-}
-
-function doesSelectionTouchLockedLayer(
-  document: CanvasDocumentState,
-  selection: BeadSelection,
-  targetOrigin: GridCell,
-  cols: number,
-) {
-  const lockedLayerIds = new Set(
-    document.layers.filter((layer) => layer.isLocked).map((layer) => layer.id),
-  );
-  const cellLayerIds = new Map<number, string>();
-
-  for (const layer of document.layers) {
-    for (const cellIndex of layer.cellIndexes) {
-      cellLayerIds.set(cellIndex, layer.id);
-    }
-  }
-
-  for (const item of selection.items) {
-    if (item.layerId && lockedLayerIds.has(item.layerId)) {
-      return true;
-    }
-
-    const targetRow = targetOrigin.row + item.rowOffset;
-    const targetColumn = targetOrigin.column + item.columnOffset;
-    const targetLayerId = cellLayerIds.get(targetRow * cols + targetColumn);
-
-    if (targetLayerId && lockedLayerIds.has(targetLayerId)) {
-      return true;
-    }
-  }
-
-  return false;
 }

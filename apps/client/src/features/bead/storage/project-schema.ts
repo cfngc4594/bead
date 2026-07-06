@@ -8,23 +8,11 @@ const positiveIntSchema = z.number().int().positive();
 export const canvasSnapshotCellSchema = z.tuple([
   nonnegativeIntSchema,
   nonEmptyStringSchema,
-  nonnegativeIntSchema,
 ]);
-
-export const canvasSnapshotLayerSchema = z
-  .object({
-    id: nonEmptyStringSchema,
-    name: nonEmptyStringSchema,
-    isHidden: z.literal(true).optional(),
-    isLocked: z.literal(true).optional(),
-  })
-  .strict();
 
 export const canvasSnapshotSchema = z
   .object({
     cells: z.array(canvasSnapshotCellSchema),
-    layers: z.array(canvasSnapshotLayerSchema).min(1),
-    activeLayerId: nonEmptyStringSchema,
   })
   .strict();
 
@@ -68,28 +56,9 @@ export function validateProjectIntegrity(
   }
 
   project.snapshots.forEach((snapshot, snapshotIndex) => {
-    const layerIds = new Set<string>();
     const cellIndexes = new Set<number>();
 
-    snapshot.layers.forEach((layer, layerIndex) => {
-      if (layerIds.has(layer.id)) {
-        addIssue({
-          message: "layer ids must be unique within a snapshot",
-          path: ["snapshots", snapshotIndex, "layers", layerIndex, "id"],
-        });
-      }
-
-      layerIds.add(layer.id);
-    });
-
-    if (!layerIds.has(snapshot.activeLayerId)) {
-      addIssue({
-        message: "activeLayerId must point to an existing layer",
-        path: ["snapshots", snapshotIndex, "activeLayerId"],
-      });
-    }
-
-    snapshot.cells.forEach(([beadIndex, , layerIndex], cellIndex) => {
+    snapshot.cells.forEach(([beadIndex], cellIndex) => {
       if (beadIndex >= cellCount) {
         addIssue({
           message: "cell index must be within the project canvas",
@@ -105,18 +74,10 @@ export function validateProjectIntegrity(
       }
 
       cellIndexes.add(beadIndex);
-
-      if (layerIndex >= snapshot.layers.length) {
-        addIssue({
-          message: "cell layer index must point to an existing layer",
-          path: ["snapshots", snapshotIndex, "cells", cellIndex, 2],
-        });
-      }
     });
   });
 }
 
 export type CanvasSnapshotCell = z.infer<typeof canvasSnapshotCellSchema>;
-export type CanvasSnapshotLayer = z.infer<typeof canvasSnapshotLayerSchema>;
 export type CanvasSnapshot = z.infer<typeof canvasSnapshotSchema>;
 export type Project = z.infer<typeof projectSchema>;
