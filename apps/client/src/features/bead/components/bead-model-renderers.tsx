@@ -7,6 +7,8 @@ import {
 } from "@/features/bead/lib/bead-model-preview-modes";
 import {
   createSurfaceTexture,
+  createTowelCleanColorTexture,
+  createTowelFiberHighlightTexture,
   getSurfaceBumpScale,
 } from "@/features/bead/lib/bead-model-surface-textures";
 
@@ -184,13 +186,29 @@ export function MeltedSheet({
     () => createSurfaceTexture(profile.texture),
     [profile.texture],
   );
+  const fiberHighlightMap = useMemo(
+    () =>
+      profile.texture === "towel" ? createTowelFiberHighlightTexture() : null,
+    [profile.texture],
+  );
+  const cleanColorMap = useMemo(
+    () => (profile.texture === "towel" ? createTowelCleanColorTexture() : null),
+    [profile.texture],
+  );
 
   useLayoutEffect(() => () => geometry.dispose(), [geometry]);
   useLayoutEffect(() => () => bumpMap.dispose(), [bumpMap]);
+  useLayoutEffect(
+    () => () => fiberHighlightMap?.dispose(),
+    [fiberHighlightMap],
+  );
+  useLayoutEffect(() => () => cleanColorMap?.dispose(), [cleanColorMap]);
 
   return groups.map((group) => (
     <MeltedTileInstances
       bumpMap={bumpMap}
+      cleanColorMap={cleanColorMap}
+      fiberHighlightMap={fiberHighlightMap}
       geometry={geometry}
       group={group}
       key={`${previewMode}-${group.hex}`}
@@ -201,11 +219,15 @@ export function MeltedSheet({
 
 function MeltedTileInstances({
   bumpMap,
+  cleanColorMap,
+  fiberHighlightMap,
   geometry,
   group,
   profile,
 }: {
   bumpMap: THREE.Texture;
+  cleanColorMap: THREE.Texture | null;
+  fiberHighlightMap: THREE.Texture | null;
   geometry: THREE.BufferGeometry;
   group: BeadColorGroup;
   profile: MeltProfile;
@@ -213,6 +235,9 @@ function MeltedTileInstances({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const transform = useMemo(() => new THREE.Object3D(), []);
   const instanceCount = group.positions.length / 3;
+  const towelFiberGlow =
+    profile.texture === "towel" ? getTowelFiberGlow(group.hex) : 0;
+  const colorMap = profile.texture === "towel" ? cleanColorMap : bumpMap;
 
   useLayoutEffect(() => {
     const mesh = meshRef.current;
@@ -241,13 +266,31 @@ function MeltedTileInstances({
         clearcoat={profile.clearcoat}
         clearcoatRoughness={profile.clearcoatRoughness}
         color={group.hex}
-        map={bumpMap}
+        emissive="#ffffff"
+        emissiveIntensity={towelFiberGlow}
+        emissiveMap={fiberHighlightMap}
+        map={colorMap}
         metalness={profile.metalness}
         roughness={profile.roughness}
         side={THREE.DoubleSide}
       />
     </instancedMesh>
   );
+}
+
+function getTowelFiberGlow(hex: string) {
+  const color = new THREE.Color(hex);
+  const luminance = color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722;
+
+  if (luminance < 0.08) {
+    return 0.12;
+  }
+
+  if (luminance < 0.45) {
+    return 0.065;
+  }
+
+  return 0.035;
 }
 
 function writeGroupMatrices({

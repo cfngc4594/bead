@@ -46,10 +46,10 @@ export const meltProfiles: Record<MeltedBeadPreviewMode, MeltProfile> = {
     height: 0.075,
     cornerRadius: 0,
     bevelSize: 0.006,
-    roughness: 0.82,
+    roughness: 0.86,
     metalness: 0,
-    clearcoat: 0.02,
-    clearcoatRoughness: 0.9,
+    clearcoat: 0.1,
+    clearcoatRoughness: 0.72,
     texture: "towel",
   },
   loofah: {
