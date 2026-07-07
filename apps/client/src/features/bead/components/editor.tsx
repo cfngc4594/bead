@@ -1,5 +1,12 @@
 import { Capacitor } from "@capacitor/core";
-import { type ComponentType, lazy, Suspense, useMemo, useState } from "react";
+import {
+  type ComponentType,
+  lazy,
+  Suspense,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
@@ -19,6 +26,7 @@ import {
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
+import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 const CanvasBoard = lazy(
   () =>
@@ -53,7 +61,7 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 }
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
-  const modelPreview = useModelPreview();
+  const hasTrackedCanvasEditRef = useRef(false);
   const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
   const {
@@ -68,6 +76,11 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     canUndo,
     canRedo,
   } = useProjectCanvas({ projectId, size });
+  const modelPreview = useModelPreview({
+    onClose: () => trackEvent("model_preview_closed", getCanvasProperties()),
+    onError: () => trackEvent("model_preview_failed", getCanvasProperties()),
+    onOpen: () => trackEvent("model_preview_opened", getCanvasProperties()),
+  });
   const {
     actions,
     handleImageFileChange,
@@ -140,6 +153,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   function finishCellEdit() {
     mixedBeadBrush.endStroke();
     commitEdit();
+    trackCanvasEditedOnce();
   }
 
   function pickCell({ row, column }: GridCell) {
@@ -161,6 +175,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
 
   function moveSelection(nextBeads: typeof beads) {
     commitBeads(nextBeads);
+    trackCanvasEditedOnce();
   }
 
   function handleRenameProject(nextTitle: string) {
@@ -186,7 +201,47 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
 
     setExportImageBlob(null);
     setIsExportSheetOpen(true);
+    trackEvent("android_export_sheet_opened", getCanvasProperties());
     createExportImage();
+  }
+
+  function toggleBeadCodes() {
+    trackEvent("display_option_toggled", {
+      ...getCanvasProperties(),
+      enabled: !showBeadCodes,
+      option: "bead_codes",
+    });
+    setShowBeadCodes((value) => !value);
+  }
+
+  function toggleGuideLines() {
+    trackEvent("display_option_toggled", {
+      ...getCanvasProperties(),
+      enabled: !showGuideLines,
+      option: "guide_lines",
+    });
+    setShowGuideLines((value) => !value);
+  }
+
+  function getCanvasProperties() {
+    return {
+      cols: size.cols,
+      filledCells: getFilledCellCount(beads),
+      rows: size.rows,
+      sizeId: size.id,
+    };
+  }
+
+  function trackCanvasEditedOnce() {
+    if (hasTrackedCanvasEditRef.current) {
+      return;
+    }
+
+    hasTrackedCanvasEditRef.current = true;
+    trackEvent("canvas_edited", {
+      ...getCanvasProperties(),
+      tool,
+    });
   }
 
   return (
@@ -212,8 +267,8 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onBack={onBack}
           onRenameProject={handleRenameProject}
           onSelectTool={actions.selectTool}
-          onToggleBeadCodes={() => setShowBeadCodes((value) => !value)}
-          onToggleGuideLines={() => setShowGuideLines((value) => !value)}
+          onToggleBeadCodes={toggleBeadCodes}
+          onToggleGuideLines={toggleGuideLines}
           onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}

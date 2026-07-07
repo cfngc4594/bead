@@ -1,7 +1,7 @@
 import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import { Grid2x2, Plus, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -18,6 +18,7 @@ import {
   type Project,
   projectsCollection,
 } from "@/features/bead/storage/projects";
+import { trackEvent } from "@/lib/analytics";
 
 type ProjectListItem = Pick<
   Project,
@@ -34,6 +35,7 @@ type ProjectListItem = Pick<
 export function ProjectsPage() {
   const [titleFilter, setTitleFilter] = useState("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const hasTrackedTitleFilterRef = useRef(false);
   const normalizedTitleFilter = titleFilter.trim();
   const { data: projects = [] } = useLiveQuery(
     (query) => {
@@ -94,6 +96,47 @@ export function ProjectsPage() {
   }, [sizeCounts]);
   const hasProjects = totalProjectCount > 0;
 
+  function handleTitleFilterChange(nextTitleFilter: string) {
+    if (
+      nextTitleFilter.trim().length > 0 &&
+      !hasTrackedTitleFilterRef.current
+    ) {
+      trackEvent("project_filter_used", {
+        filterType: "title",
+      });
+      hasTrackedTitleFilterRef.current = true;
+    }
+
+    if (nextTitleFilter.trim().length === 0) {
+      hasTrackedTitleFilterRef.current = false;
+    }
+
+    setTitleFilter(nextTitleFilter);
+  }
+
+  function handleSizeFilterChange(nextSizeFilter: string[]) {
+    trackEvent(
+      nextSizeFilter.length > 0
+        ? "project_filter_used"
+        : "project_filter_reset",
+      {
+        filterType: "size",
+        sizeFilterCount: nextSizeFilter.length,
+      },
+    );
+    setSelectedSizes(nextSizeFilter);
+  }
+
+  function resetFilters() {
+    trackEvent("project_filter_reset", {
+      hadTitleFilter: normalizedTitleFilter.length > 0,
+      sizeFilterCount: selectedSizes.length,
+    });
+    setTitleFilter("");
+    setSelectedSizes([]);
+    hasTrackedTitleFilterRef.current = false;
+  }
+
   return (
     <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
@@ -101,14 +144,17 @@ export function ProjectsPage() {
           <div className="flex flex-1 flex-col gap-4">
             <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
               <ProjectsToolbar
-                onSizeFilterChange={setSelectedSizes}
+                onSizeFilterChange={handleSizeFilterChange}
                 sizeFilter={selectedSizes}
                 sizeOptions={sizeOptions}
                 titleFilter={titleFilter}
-                onTitleFilterChange={setTitleFilter}
+                onTitleFilterChange={handleTitleFilterChange}
               />
               <Button asChild className="ml-auto">
-                <Link to="/projects/new">
+                <Link
+                  onClick={() => trackEvent("project_new_clicked")}
+                  to="/projects/new"
+                >
                   <Plus aria-hidden="true" />
                   新建
                 </Link>
@@ -128,6 +174,12 @@ export function ProjectsPage() {
                       <Link
                         aria-label={`打开 ${project.title}`}
                         className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+                        onClick={() =>
+                          trackEvent("project_opened", {
+                            sizeId: project.sizeId,
+                            source: "preview",
+                          })
+                        }
                         params={{ projectId: project.id }}
                         to="/projects/$projectId"
                       >
@@ -139,6 +191,12 @@ export function ProjectsPage() {
                       <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
                         <Link
                           className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                          onClick={() =>
+                            trackEvent("project_opened", {
+                              sizeId: project.sizeId,
+                              source: "title",
+                            })
+                          }
                           params={{ projectId: project.id }}
                           to="/projects/$projectId"
                         >
@@ -176,10 +234,7 @@ export function ProjectsPage() {
                 </EmptyHeader>
                 <EmptyContent>
                   <Button
-                    onClick={() => {
-                      setTitleFilter("");
-                      setSelectedSizes([]);
-                    }}
+                    onClick={resetFilters}
                     type="button"
                     variant="outline"
                   >
@@ -200,7 +255,12 @@ export function ProjectsPage() {
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
-                <Link to="/projects/new">
+                <Link
+                  onClick={() =>
+                    trackEvent("project_new_clicked", { source: "empty" })
+                  }
+                  to="/projects/new"
+                >
                   <Plus aria-hidden="true" />
                   开始拼豆
                 </Link>

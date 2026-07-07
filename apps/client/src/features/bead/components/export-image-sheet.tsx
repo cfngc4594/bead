@@ -14,6 +14,7 @@ import {
   saveImageBlob,
   shareImageBlob,
 } from "@/features/bead/lib/download-file";
+import { trackEvent } from "@/lib/analytics";
 
 type ExportImageSheetProps = {
   blob: Blob | null;
@@ -57,6 +58,7 @@ export function ExportImageSheet({
 
     try {
       await saveImageBlob(blob, filename);
+      trackEvent("export_image_saved", { destination: "photo_library" });
       toast.success("图片已保存");
       onOpenChange(false);
     } catch (error) {
@@ -78,6 +80,7 @@ export function ExportImageSheet({
       const didShare = await shareImageBlob(blob, filename);
 
       if (didShare) {
+        trackEvent("export_image_shared", { destination: "share_sheet" });
         toast.success("图片已分享");
         onOpenChange(false);
       }
@@ -116,7 +119,16 @@ export function ExportImageSheet({
                 <span>正在生成图片</span>
               </div>
             ) : (
-              <Button onClick={onCreateImage} type="button" variant="outline">
+              <Button
+                onClick={() => {
+                  trackEvent("export_image_regenerated", {
+                    destination: "android_sheet",
+                  });
+                  onCreateImage();
+                }}
+                type="button"
+                variant="outline"
+              >
                 <RefreshCcw />
                 重新生成
               </Button>

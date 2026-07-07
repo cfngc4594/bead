@@ -34,6 +34,7 @@ import {
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import { trackEvent } from "@/lib/analytics";
 
 export function ProjectActions({ project }: { project: Project }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
@@ -42,6 +43,7 @@ export function ProjectActions({ project }: { project: Project }) {
   async function handleDuplicateProject() {
     try {
       await duplicateStoredProject(project.id);
+      trackEvent("project_duplicated", { sizeId: project.sizeId });
       toast.success("作品已复制");
     } catch (error) {
       console.error("Unable to duplicate bead project", error);
@@ -53,6 +55,7 @@ export function ProjectActions({ project }: { project: Project }) {
     try {
       await deleteStoredProject(project.id);
       setIsDeleteOpen(false);
+      trackEvent("project_deleted", { sizeId: project.sizeId });
       toast.success("作品已删除");
     } catch (error) {
       console.error("Unable to delete bead project", error);
@@ -133,6 +136,7 @@ function RenameProjectDialog({
 
     try {
       await renameStoredProject({ projectId: project.id, title });
+      trackEvent("project_renamed", { sizeId: project.sizeId });
       toast.success("作品已重命名");
       onOpenChange(false);
     } catch (error) {

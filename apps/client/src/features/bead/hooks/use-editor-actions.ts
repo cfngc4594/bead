@@ -14,6 +14,7 @@ import {
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
 import type { CanvasTool } from "@/features/bead/types";
+import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 type UseEditorActionsProps = {
   beads: CanvasState;
@@ -52,6 +53,10 @@ export function useEditorActions({
 
   function selectTool(nextTool: CanvasTool) {
     if (nextTool !== tool) {
+      trackEvent("tool_selected", {
+        sizeId: size.id,
+        tool: nextTool,
+      });
       resetSelection();
     }
 
@@ -66,16 +71,19 @@ export function useEditorActions({
   function clearDraft() {
     resetSelection();
     onClear();
+    trackEvent("canvas_cleared", getCanvasProperties());
   }
 
   function undoEdit() {
     resetSelection();
     onUndo();
+    trackEvent("undo_used", getCanvasProperties());
   }
 
   function redoEdit() {
     resetSelection();
     onRedo();
+    trackEvent("redo_used", getCanvasProperties());
   }
 
   async function exportImage() {
@@ -85,6 +93,7 @@ export function useEditorActions({
 
     const loadingToastId = toast.loading("正在生成图片...");
     setIsExportingImage(true);
+    trackEvent("image_export_started", getImageExportProperties());
 
     try {
       await waitForNextFrame();
@@ -96,9 +105,11 @@ export function useEditorActions({
         showBeadCodes,
         showGuideLines,
       });
+      trackEvent("image_export_succeeded", getImageExportProperties());
       toast.dismiss(loadingToastId);
     } catch (error) {
       console.error("Unable to export image", error);
+      trackEvent("image_export_failed", getImageExportProperties());
       toast.error("导出图片失败", { id: loadingToastId });
     } finally {
       setIsExportingImage(false);
@@ -111,18 +122,32 @@ export function useEditorActions({
     }
 
     setIsExportingImage(true);
+    trackEvent("image_export_started", {
+      ...getImageExportProperties(),
+      destination: "android_sheet",
+    });
 
     try {
       await waitForNextFrame();
-      return await createBeadImageBlob({
+      const blob = await createBeadImageBlob({
         rows: size.rows,
         cols: size.cols,
         beads,
         showBeadCodes,
         showGuideLines,
       });
+
+      trackEvent("image_export_succeeded", {
+        ...getImageExportProperties(),
+        destination: "android_sheet",
+      });
+      return blob;
     } catch (error) {
       console.error("Unable to create export image", error);
+      trackEvent("image_export_failed", {
+        ...getImageExportProperties(),
+        destination: "android_sheet",
+      });
       toast.error("图片生成失败");
       return null;
     } finally {
@@ -131,14 +156,20 @@ export function useEditorActions({
   }
 
   function exportTemplate() {
+    trackEvent("template_export_started", getCanvasProperties());
     exportBeadTemplate({
       size,
       beads,
       filename: `bead-${size.id}.bead.json`,
-    }).catch((error) => {
-      console.error("Unable to export template", error);
-      toast.error("导出模板失败");
-    });
+    })
+      .then(() => {
+        trackEvent("template_export_succeeded", getCanvasProperties());
+      })
+      .catch((error) => {
+        console.error("Unable to export template", error);
+        trackEvent("template_export_failed", getCanvasProperties());
+        toast.error("导出模板失败");
+      });
   }
 
   function importTemplate() {
@@ -154,6 +185,8 @@ export function useEditorActions({
   }
 
   async function importTemplateFile(file: File) {
+    trackEvent("template_import_started", getCanvasSizeProperties());
+
     try {
       const importedBeads = parseBeadTemplateFile({
         text: await file.text(),
@@ -162,8 +195,10 @@ export function useEditorActions({
 
       resetSelection();
       commitBeads(importedBeads);
+      trackEvent("template_import_succeeded", getCanvasSizeProperties());
       toast.success("模板已导入");
     } catch (error) {
+      trackEvent("template_import_failed", getCanvasSizeProperties());
       toast.error(
         error instanceof BeadTemplateImportError
           ? error.message
@@ -174,6 +209,7 @@ export function useEditorActions({
 
   async function importImageFile(file: File) {
     setIsGeneratingFromImage(true);
+    trackEvent("image_import_started", getCanvasSizeProperties());
 
     try {
       const generatedBeads = await generateBeadsFromImageFile({
@@ -185,9 +221,11 @@ export function useEditorActions({
 
       resetSelection();
       commitBeads(generatedBeads);
+      trackEvent("image_import_succeeded", getCanvasSizeProperties());
       toast.success("图片已生成豆图");
     } catch (error) {
       console.error("Unable to generate bead image", error);
+      trackEvent("image_import_failed", getCanvasSizeProperties());
       toast.error("图片生成失败");
     } finally {
       setIsGeneratingFromImage(false);
@@ -214,6 +252,25 @@ export function useEditorActions({
     }
 
     void importImageFile(file);
+  }
+
+  function getCanvasSizeProperties() {
+    return getCanvasSizePropertiesFor(size);
+  }
+
+  function getCanvasProperties() {
+    return {
+      ...getCanvasSizeProperties(),
+      filledCells: getFilledCellCount(beads),
+    };
+  }
+
+  function getImageExportProperties() {
+    return {
+      ...getCanvasProperties(),
+      showBeadCodes,
+      showGuideLines,
+    };
   }
 
   return {
@@ -250,6 +307,14 @@ export function useEditorActions({
       selectTool,
       undoEdit,
     },
+  };
+}
+
+function getCanvasSizePropertiesFor(size: CanvasSize) {
+  return {
+    cols: size.cols,
+    rows: size.rows,
+    sizeId: size.id,
   };
 }
 

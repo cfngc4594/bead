@@ -10,6 +10,7 @@ import {
   createProject as createStoredProject,
   type Project,
 } from "@/features/bead/storage/projects";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type SizePickerProps = {
@@ -31,11 +32,17 @@ export function SizePicker({
       return;
     }
 
+    const size = getCanvasSize(selected);
     setIsCreating(true);
 
     try {
-      const project = await createStoredProject(getCanvasSize(selected));
+      const project = await createStoredProject(size);
 
+      trackEvent("project_created", {
+        cols: size.cols,
+        rows: size.rows,
+        sizeId: size.id,
+      });
       onProjectCreated(project);
     } finally {
       setIsCreating(false);
@@ -53,7 +60,16 @@ export function SizePicker({
               aria-pressed={isSelected}
               className="min-w-0 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               key={sizeItem.id}
-              onClick={() => setSelected(sizeItem.id)}
+              onClick={() => {
+                if (selected !== sizeItem.id) {
+                  trackEvent("project_size_selected", {
+                    cols: sizeItem.cols,
+                    rows: sizeItem.rows,
+                    sizeId: sizeItem.id,
+                  });
+                }
+                setSelected(sizeItem.id);
+              }}
               type="button"
             >
               <Card
@@ -91,7 +107,10 @@ export function SizePicker({
         </Button>
         <Button
           className="min-w-48 rounded-full"
-          onClick={onCancel}
+          onClick={() => {
+            trackEvent("project_create_cancelled", { sizeId: selected });
+            onCancel();
+          }}
           type="button"
           variant="outline"
         >
