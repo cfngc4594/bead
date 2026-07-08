@@ -45,8 +45,14 @@ jobs:
       - name: Build unsigned iOS app
         working-directory: apps/client/ios/App
         run: |
+          if [ -d App.xcworkspace ]; then
+            project_args=(-workspace App.xcworkspace)
+          else
+            project_args=(-project App.xcodeproj)
+          fi
+
           xcodebuild build \
-            -workspace App.xcworkspace \
+            "${project_args[@]}" \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
