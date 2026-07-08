@@ -1,3 +1,9 @@
+import { Button } from "@bead/ui/components/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@bead/ui/components/tooltip";
 import {
   Blend,
   Eraser,
@@ -7,12 +13,6 @@ import {
   PenLine,
   Pipette,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { CanvasTool } from "@/features/bead/types";
 import { cn } from "@/lib/utils";
 

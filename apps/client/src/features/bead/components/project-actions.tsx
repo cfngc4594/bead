@@ -1,6 +1,3 @@
-import { Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,23 +7,26 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@bead/ui/components/alert-dialog";
+import { Button } from "@bead/ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@bead/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@bead/ui/components/dropdown-menu";
+import { Input } from "@bead/ui/components/input";
+import { Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
+import { type FormEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   DEFAULT_PROJECT_TITLE,
   deleteProject as deleteStoredProject,

@@ -1,3 +1,21 @@
+import { Button } from "@bead/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@bead/ui/components/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@bead/ui/components/empty";
 import {
   ChevronDown,
   CircleDot,
@@ -7,24 +25,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
 import type { BeadFill } from "@/features/bead/types";

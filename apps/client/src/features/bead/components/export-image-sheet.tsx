@@ -1,7 +1,4 @@
-import { Download, LoaderCircle, RefreshCcw, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@bead/ui/components/button";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +6,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@bead/ui/components/sheet";
+import { Download, LoaderCircle, RefreshCcw, Share2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   saveImageBlob,
   shareImageBlob,

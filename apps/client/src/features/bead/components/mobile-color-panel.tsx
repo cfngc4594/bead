@@ -1,7 +1,7 @@
+import { Button } from "@bead/ui/components/button";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BeadColor } from "@/data/colors";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";

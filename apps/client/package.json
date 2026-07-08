@@ -17,6 +17,7 @@
     "@capacitor/share": "^8.0.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@bead/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "@tanstack/react-db": "^0.1.87",
     "@tanstack/react-router": "^1.170.16",

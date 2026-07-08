@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "apps/client/src/app/globals.css",
+    "css": "apps/client/src/styles/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "@bead/ui/components",
+    "utils": "@bead/ui/lib/utils",
+    "ui": "@bead/ui/components",
+    "lib": "@bead/ui/lib",
+    "hooks": "@bead/ui/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

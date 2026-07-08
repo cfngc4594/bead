@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
+import { Skeleton } from "@bead/ui/components/skeleton";
 import { mardColors } from "@/data/colors";
 
 const modeToolSkeletons = ["pan", "paint", "mix", "erase", "picker", "select"];

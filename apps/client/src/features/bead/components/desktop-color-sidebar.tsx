@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import type { BeadColor } from "@/data/colors";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";

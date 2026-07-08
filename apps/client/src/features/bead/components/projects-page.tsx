@@ -1,15 +1,15 @@
-import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
-import { Link } from "@tanstack/react-router";
-import { Grid2x2, Plus, Search, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@bead/ui/components/button";
 import {
   Empty,
   EmptyContent,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
+} from "@bead/ui/components/empty";
+import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
+import { Link } from "@tanstack/react-router";
+import { Grid2x2, Plus, Search, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { canvasSizes, getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectActions } from "@/features/bead/components/project-actions";
 import { ProjectPreview } from "@/features/bead/components/project-preview";

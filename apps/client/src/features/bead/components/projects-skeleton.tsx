@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@bead/ui/components/skeleton";
 
 const projectSkeletons = ["project-1", "project-2", "project-3"];
 

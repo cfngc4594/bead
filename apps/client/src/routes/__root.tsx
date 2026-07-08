@@ -1,7 +1,7 @@
+import { Toaster } from "@bead/ui/components/sonner";
+import { TooltipProvider } from "@bead/ui/components/tooltip";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { NativeBackHandler } from "@/features/native/native-back-handler";
 import { initAnalytics } from "@/lib/analytics";
 import "@/styles/globals.css";

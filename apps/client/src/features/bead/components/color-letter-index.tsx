@@ -1,6 +1,6 @@
+import { Button } from "@bead/ui/components/button";
+import { ScrollArea, ScrollBar } from "@bead/ui/components/scroll-area";
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui";
-import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 type ColorLetterIndexProps = {

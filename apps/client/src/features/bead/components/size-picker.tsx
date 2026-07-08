@@ -1,6 +1,6 @@
+import { Button } from "@bead/ui/components/button";
+import { Card, CardContent } from "@bead/ui/components/card";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   type CanvasSizeId,
   canvasSizes,

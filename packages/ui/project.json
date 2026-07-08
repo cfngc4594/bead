@@ -1,0 +1,12 @@
+{
+  "name": "ui",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui/src",
+  "projectType": "library",
+  "targets": {
+    "typecheck": {
+      "cache": true,
+      "command": "bun run --cwd packages/ui typecheck"
+    }
+  }
+}

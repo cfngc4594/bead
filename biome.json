@@ -13,7 +13,9 @@
       "!build",
       "!apps/api/out",
       "!apps/client/out",
-      "!apps/client/src/routeTree.gen.ts"
+      "!apps/client/src/routeTree.gen.ts",
+      "!apps/site/out",
+      "!apps/site/src/routeTree.gen.ts"
     ]
   },
   "formatter": {
@@ -42,7 +44,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/client/src/components/ui/**"],
+      "includes": ["packages/ui/src/components/**"],
       "linter": {
         "rules": {
           "a11y": {

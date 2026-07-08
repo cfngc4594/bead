@@ -4,6 +4,8 @@
 /node_modules
 /apps/api/node_modules/
 /apps/client/node_modules/
+/apps/site/node_modules/
+/packages/ui/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -19,6 +21,8 @@
 /.tanstack/
 /apps/api/out/
 /apps/client/out/
+/apps/site/out/
+/packages/ui/out/
 
 # production
 /build

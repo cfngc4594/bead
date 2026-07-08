@@ -1,6 +1,5 @@
-import { Check, PlusCircle, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@bead/ui/components/badge";
+import { Button } from "@bead/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -10,13 +9,14 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
+} from "@bead/ui/components/command";
+import { Input } from "@bead/ui/components/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@bead/ui/components/popover";
+import { Check, PlusCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ProjectSizeFilterOption = {

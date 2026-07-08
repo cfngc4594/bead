@@ -1,3 +1,16 @@
+import { Button } from "@bead/ui/components/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@bead/ui/components/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@bead/ui/components/tooltip";
 import {
   ArrowLeft,
   Download,
@@ -18,19 +31,6 @@ import {
   Undo2,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
 import type { CanvasTool } from "@/features/bead/types";
