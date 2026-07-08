@@ -1,21 +1,8 @@
-export type BeadPreviewMode =
-  | "beads"
-  | "standard"
-  | "towel"
-  | "loofah"
-  | "glossy"
-  | "mesh"
-  | "crumpled";
+export type BeadPreviewMode = "beads" | "standard" | "glossy" | "mesh";
 
 export type MeltedBeadPreviewMode = Exclude<BeadPreviewMode, "beads">;
 
-export type MeltSurfaceTexture =
-  | "paper"
-  | "towel"
-  | "loofah"
-  | "glossy"
-  | "mesh"
-  | "crumpled";
+export type MeltSurfaceTexture = "paper" | "glossy" | "mesh";
 
 export type MeltProfile = {
   tileSize: number;
@@ -41,28 +28,6 @@ export const meltProfiles: Record<MeltedBeadPreviewMode, MeltProfile> = {
     clearcoatRoughness: 0.5,
     texture: "paper",
   },
-  towel: {
-    tileSize: 1,
-    height: 0.075,
-    cornerRadius: 0,
-    bevelSize: 0.006,
-    roughness: 0.86,
-    metalness: 0,
-    clearcoat: 0.1,
-    clearcoatRoughness: 0.72,
-    texture: "towel",
-  },
-  loofah: {
-    tileSize: 1,
-    height: 0.064,
-    cornerRadius: 0,
-    bevelSize: 0.008,
-    roughness: 0.66,
-    metalness: 0,
-    clearcoat: 0.08,
-    clearcoatRoughness: 0.68,
-    texture: "loofah",
-  },
   glossy: {
     tileSize: 1,
     height: 0.052,
@@ -84,16 +49,5 @@ export const meltProfiles: Record<MeltedBeadPreviewMode, MeltProfile> = {
     clearcoat: 0.1,
     clearcoatRoughness: 0.58,
     texture: "mesh",
-  },
-  crumpled: {
-    tileSize: 1,
-    height: 0.062,
-    cornerRadius: 0,
-    bevelSize: 0.006,
-    roughness: 0.54,
-    metalness: 0,
-    clearcoat: 0.16,
-    clearcoatRoughness: 0.48,
-    texture: "crumpled",
   },
 };

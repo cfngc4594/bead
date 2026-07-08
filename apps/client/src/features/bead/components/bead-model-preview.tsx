@@ -1,13 +1,10 @@
 import {
-  Bath,
   ChevronDown,
   CircleDot,
   Cuboid,
   Grid3x3,
   type LucideIcon,
   Sparkles,
-  TowelRack,
-  Waves,
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -68,18 +65,6 @@ const previewOptions: PreviewOption[] = [
     icon: Cuboid,
   },
   {
-    mode: "towel",
-    label: "毛巾烫",
-    description: "粗糙毛绒压纹",
-    icon: TowelRack,
-  },
-  {
-    mode: "loofah",
-    label: "澡巾烫",
-    description: "柔和哑光细纹",
-    icon: Bath,
-  },
-  {
     mode: "glossy",
     label: "亮面烫",
     description: "更亮的平滑反光",
@@ -90,12 +75,6 @@ const previewOptions: PreviewOption[] = [
     label: "网格烫",
     description: "规则网格压纹",
     icon: Grid3x3,
-  },
-  {
-    mode: "crumpled",
-    label: "褶皱烫",
-    description: "不规则褶皱压痕",
-    icon: Waves,
   },
 ];
 
