@@ -1,0 +1,81 @@
+name: iOS
+
+on:
+  push:
+    branches:
+      - feature
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-unsigned-ipa:
+    name: Build unsigned IPA
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL repository variable is required for iOS builds." >&2
+            exit 1
+          fi
+
+      - name: Add iOS platform
+        run: bun run cap:add:ios
+
+      - name: Sync iOS platform
+        run: bun run cap:sync:ios
+
+      - name: Build unsigned iOS app
+        working-directory: apps/client/ios/App
+        run: |
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package unsigned IPA
+        run: |
+          products_dir="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos"
+          app_path="$(find "$products_dir" -maxdepth 1 -name '*.app' -type d | head -n 1)"
+
+          if [ -z "$app_path" ]; then
+            echo "No .app bundle found in $products_dir." >&2
+            exit 1
+          fi
+
+          mkdir -p "$RUNNER_TEMP/unsigned-ipa/Payload"
+          cp -R "$app_path" "$RUNNER_TEMP/unsigned-ipa/Payload/"
+
+          cd "$RUNNER_TEMP/unsigned-ipa"
+          zip -qry "$RUNNER_TEMP/Bead-unsigned.ipa" Payload
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v5
+        with:
+          name: bead-ios-unsigned-ipa
+          path: ${{ runner.temp }}/Bead-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14

@@ -45,6 +45,7 @@ yarn-error.log*
 
 # capacitor
 /apps/client/android/
+/apps/client/ios/
 
 # nx
 /.nx/
