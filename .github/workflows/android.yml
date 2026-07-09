@@ -1,13 +1,17 @@
 name: Android
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: read
 
 jobs:
   build-debug-apk:
@@ -67,3 +71,47 @@ jobs:
           path: apps/client/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Generate version tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: version
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "build_number=$(date +'%s')" >> $GITHUB_OUTPUT
+
+      - name: Upload to latest Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: apps/client/android/app/build/outputs/apk/debug/*.apk
+          tag_name: latest
+          name: Latest Mobile Builds
+          body: |
+            Latest iOS and Android builds.
+
+            Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to versioned Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: apps/client/android/app/build/outputs/apk/debug/*.apk
+          tag_name: android-v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          name: Android APK v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          body: |
+            Android debug APK build - versioned release
+
+            Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
