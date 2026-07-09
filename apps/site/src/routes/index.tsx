@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <main className="relative isolate flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
+    <main className="relative isolate flex h-svh min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <DashedGridBackground />
       <SiteHeader />
 
