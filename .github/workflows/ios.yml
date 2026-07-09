@@ -1,9 +1,9 @@
 name: iOS
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature
+      - main
   workflow_dispatch:
 
 permissions:
