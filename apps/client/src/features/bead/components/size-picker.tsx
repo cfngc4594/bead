@@ -1,5 +1,6 @@
 import { Button } from "@bead/ui/components/button";
 import { Card, CardContent } from "@bead/ui/components/card";
+import { cn } from "@bead/ui/lib/utils";
 import { useState } from "react";
 import {
   type CanvasSizeId,
@@ -11,7 +12,6 @@ import {
   type Project,
 } from "@/features/bead/storage/projects";
 import { trackEvent } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
 
 type SizePickerProps = {
   initialSize: CanvasSizeId;

@@ -16,8 +16,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bead/ui/components/popover";
+import { cn } from "@bead/ui/lib/utils";
 import { Check, PlusCircle, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export type ProjectSizeFilterOption = {
   count: number;

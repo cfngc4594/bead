@@ -16,6 +16,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { cn } from "@bead/ui/lib/utils";
 import {
   ChevronDown,
   CircleDot,
@@ -28,7 +29,6 @@ import { lazy, Suspense, useState } from "react";
 import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
 import type { BeadFill } from "@/features/bead/types";
-import { cn } from "@/lib/utils";
 
 const BeadModelScene = lazy(() =>
   preloadBeadModelScene().then((module) => ({

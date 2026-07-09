@@ -1,5 +1,5 @@
+import { cn } from "@bead/ui/lib/utils";
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 
 type ProjectTitleEditorProps = {
   title: string;

@@ -1,5 +1,6 @@
 import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
+import { cn } from "@bead/ui/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import type { BeadColor } from "@/data/colors";
@@ -8,7 +9,6 @@ import { ColorLetterIndex } from "@/features/bead/components/color-letter-index"
 import { CurrentColor } from "@/features/bead/components/current-color";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import type { CanvasTool } from "@/features/bead/types";
-import { cn } from "@/lib/utils";
 
 type MobileColorPanelProps = {
   letters: readonly string[];

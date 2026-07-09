@@ -1,6 +1,6 @@
+import { cn } from "@bead/ui/lib/utils";
 import type { BeadColor } from "@/data/colors";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
-import { cn } from "@/lib/utils";
 
 type ColorGridProps = {
   colors: readonly BeadColor[];

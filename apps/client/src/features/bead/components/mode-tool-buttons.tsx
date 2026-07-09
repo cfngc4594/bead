@@ -4,6 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
+import { cn } from "@bead/ui/lib/utils";
 import {
   Blend,
   Eraser,
@@ -14,7 +15,6 @@ import {
   Pipette,
 } from "lucide-react";
 import type { CanvasTool } from "@/features/bead/types";
-import { cn } from "@/lib/utils";
 
 type ModeToolButtonsProps = {
   tool: CanvasTool;
