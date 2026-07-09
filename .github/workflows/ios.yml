@@ -1,13 +1,17 @@
 name: iOS
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: read
 
 jobs:
   build-unsigned-ipa:
@@ -85,3 +89,47 @@ jobs:
           path: ${{ runner.temp }}/Bead-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
+
+      - name: Generate version tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: version
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "build_number=$(date +'%s')" >> $GITHUB_OUTPUT
+
+      - name: Upload to latest Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ runner.temp }}/Bead-unsigned.ipa
+          tag_name: latest
+          name: Latest iOS IPA
+          body: |
+            Latest iOS unsigned IPA build
+            
+            Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to versioned Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ runner.temp }}/Bead-unsigned.ipa
+          tag_name: ios-v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          name: iOS IPA v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          body: |
+            iOS unsigned IPA build - versioned release
+            
+            Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
