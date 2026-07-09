@@ -54,19 +54,19 @@ const previewOptions: PreviewOption[] = [
   {
     mode: "beads",
     label: "摆豆",
-    description: "未熨烫，保留圆豆、中孔和间隔",
+    description: "保留豆孔间隔",
     icon: CircleDot,
   },
   {
     mode: "standard",
     label: "常规烫",
-    description: "单面无孔，平整哑光",
+    description: "平整哑光表面",
     icon: Cuboid,
   },
   {
     mode: "glossy",
     label: "亮面烫",
-    description: "更亮的平滑反光",
+    description: "平滑亮面反光",
     icon: Sparkles,
   },
 ];
@@ -135,7 +135,7 @@ function PreviewOptionsPanel({
   const ActiveIcon = activeOption.icon;
 
   return (
-    <div className="absolute right-3 top-3 z-10 w-[min(20rem,calc(100vw-1.5rem))] text-sm md:right-4 md:top-4">
+    <div className="absolute right-3 top-3 z-10 text-sm md:right-4 md:top-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -153,7 +153,7 @@ function PreviewOptionsPanel({
 
         <DropdownMenuContent
           align="end"
-          className="w-80 max-w-[calc(100vw-1.5rem)] bg-background/95 p-1.5 backdrop-blur"
+          className="bg-background/95 p-1.5 backdrop-blur"
         >
           <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground">
             <Cuboid className="size-4 shrink-0" />
