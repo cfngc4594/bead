@@ -1,0 +1,21 @@
+{
+  "name": "client",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/client/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "cache": false,
+      "command": "bun run --cwd apps/client dev"
+    },
+    "build": {
+      "cache": true,
+      "command": "bun run --cwd apps/client build",
+      "outputs": ["{projectRoot}/out"]
+    },
+    "typecheck": {
+      "cache": true,
+      "command": "bun run --cwd apps/client typecheck"
+    }
+  }
+}

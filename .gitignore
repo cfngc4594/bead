@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+/apps/api/node_modules/
+/apps/client/node_modules/
+/apps/site/node_modules/
+/packages/ui/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -13,9 +17,12 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# tanstack
+/.tanstack/
+/apps/api/out/
+/apps/client/out/
+/apps/site/out/
+/packages/ui/out/
 
 # production
 /build
@@ -32,13 +39,17 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # capacitor
-/android
+/apps/client/android/
+/apps/client/ios/
+
+# nx
+/.nx/

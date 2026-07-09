@@ -1,0 +1,21 @@
+{
+  "name": "site",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/site/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "cache": false,
+      "command": "bun run --cwd apps/site dev"
+    },
+    "build": {
+      "cache": true,
+      "command": "bun run --cwd apps/site build",
+      "outputs": ["{projectRoot}/out"]
+    },
+    "typecheck": {
+      "cache": true,
+      "command": "bun run --cwd apps/site typecheck"
+    }
+  }
+}

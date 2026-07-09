@@ -1,0 +1,20 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "cache": false,
+      "command": "bun run --cwd apps/api dev"
+    },
+    "build": {
+      "cache": true,
+      "command": "bun run --cwd apps/api build"
+    },
+    "typecheck": {
+      "cache": true,
+      "command": "bun run --cwd apps/api typecheck"
+    }
+  }
+}
