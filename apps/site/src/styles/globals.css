@@ -127,10 +127,5 @@
   }
   html {
     @apply font-sans;
-    overscroll-behavior: none;
-    touch-action: manipulation;
-  }
-  body {
-    overscroll-behavior: none;
   }
 }
