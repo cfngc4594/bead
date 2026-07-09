@@ -42,10 +42,6 @@ export function createSurfaceTexture(texture: MeltSurfaceTexture) {
 }
 
 export function getSurfaceBumpScale(texture: MeltSurfaceTexture) {
-  if (texture === "mesh") {
-    return 0.04;
-  }
-
   if (texture === "glossy") {
     return 0.0035;
   }
@@ -69,16 +65,6 @@ function getSurfaceTextureValue({
     const sheen = x + y > 44 && x + y < 68 ? 26 : 0;
 
     return clampTextureValue(222 + softBand + sheen + noise * 8);
-  }
-
-  if (texture === "mesh") {
-    const cellX = x % 12;
-    const cellY = y % 12;
-    const groove = cellX <= 2 || cellY <= 2 ? -44 : 0;
-    const pillow =
-      Math.sin((cellX / 12) * Math.PI) * Math.sin((cellY / 12) * Math.PI) * 58;
-
-    return clampTextureValue(196 + groove + pillow + noise * 10);
   }
 
   const paperWave = Math.sin((x + y) * 0.68) * 10;

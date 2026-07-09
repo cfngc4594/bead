@@ -21,7 +21,6 @@ import {
   ChevronDown,
   CircleDot,
   Cuboid,
-  Grid3x3,
   type LucideIcon,
   Sparkles,
 } from "lucide-react";
@@ -69,12 +68,6 @@ const previewOptions: PreviewOption[] = [
     label: "亮面烫",
     description: "更亮的平滑反光",
     icon: Sparkles,
-  },
-  {
-    mode: "mesh",
-    label: "网格烫",
-    description: "规则网格压纹",
-    icon: Grid3x3,
   },
 ];
 
