@@ -138,7 +138,7 @@ export function ProjectsPage() {
   }
 
   return (
-    <main className="flex min-h-screen bg-background px-4 py-6 md:px-8">
+    <main className="flex min-h-svh bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
         {hasProjects ? (
           <div className="flex flex-1 flex-col gap-4">
