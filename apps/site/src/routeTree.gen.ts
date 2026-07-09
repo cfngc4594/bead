@@ -9,14 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as IndexRouteImport } from './routes/index'
 
-const GetAppRoute = GetAppRouteImport.update({
-  id: '/get-app',
-  path: '/get-app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,39 +19,28 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/get-app': typeof GetAppRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/get-app': typeof GetAppRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/get-app': typeof GetAppRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/get-app'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/get-app'
-  id: '__root__' | '/' | '/get-app'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  GetAppRoute: typeof GetAppRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/get-app': {
-      id: '/get-app'
-      path: '/get-app'
-      fullPath: '/get-app'
-      preLoaderRoute: typeof GetAppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -70,7 +53,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  GetAppRoute: GetAppRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
