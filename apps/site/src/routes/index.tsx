@@ -18,7 +18,7 @@ function HomePage() {
           Bead
         </h1>
         <p className="mt-6 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-          把喜欢的图片做成拼豆图纸。
+          把喜欢的图片做成拼豆图纸
         </p>
 
         <nav
