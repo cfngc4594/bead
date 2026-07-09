@@ -103,10 +103,10 @@ jobs:
         with:
           files: ${{ runner.temp }}/Bead-unsigned.ipa
           tag_name: latest
-          name: Latest iOS IPA
+          name: Latest Mobile Builds
           body: |
-            Latest iOS unsigned IPA build
-            
+            Latest iOS and Android builds.
+
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
             Date: ${{ github.event.head_commit.timestamp }}
@@ -125,7 +125,7 @@ jobs:
           name: iOS IPA v${{ steps.version.outputs.date }}-${{ github.run_number }}
           body: |
             iOS unsigned IPA build - versioned release
-            
+
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
             Date: ${{ github.event.head_commit.timestamp }}
