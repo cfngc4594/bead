@@ -14,6 +14,7 @@ import {
   saveImageBlob,
   shareImageBlob,
 } from "@/features/bead/lib/download-file";
+import { useNativeBackDismiss } from "@/features/native/use-native-back";
 import { trackEvent } from "@/lib/analytics";
 
 type ExportImageSheetProps = {
@@ -36,6 +37,11 @@ export function ExportImageSheet({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  useNativeBackDismiss({
+    enabled: open,
+    onDismiss: () => onOpenChange(false),
+  });
 
   useEffect(() => {
     if (!blob) {
