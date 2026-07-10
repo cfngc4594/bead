@@ -181,13 +181,13 @@ function PreviewOptionItem({ option }: { option: PreviewOption }) {
 
   return (
     <DropdownMenuRadioItem
-      className="min-h-12 items-start gap-3 px-2.5 py-2 pr-8"
+      className="min-h-12 items-center gap-3 px-2.5 py-2 pr-8"
       value={option.mode}
     >
-      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
       <span className="grid min-w-0 gap-0.5">
-        <span className="break-words font-medium">{option.label}</span>
-        <span className="break-words text-xs text-muted-foreground">
+        <span className="truncate font-medium">{option.label}</span>
+        <span className="truncate text-xs text-muted-foreground">
           {option.description}
         </span>
       </span>
