@@ -1,6 +1,5 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  Sheet,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -14,7 +13,7 @@ import {
   saveImageBlob,
   shareImageBlob,
 } from "@/features/bead/lib/download-file";
-import { useNativeBackDismiss } from "@/features/native/use-native-back";
+import { NativeBackSheet } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
 type ExportImageSheetProps = {
@@ -37,11 +36,6 @@ export function ExportImageSheet({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-
-  useNativeBackDismiss({
-    enabled: open,
-    onDismiss: () => onOpenChange(false),
-  });
 
   useEffect(() => {
     if (!blob) {
@@ -101,7 +95,7 @@ export function ExportImageSheet({
   const isWorking = isCreating || isSaving || isSharing;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <NativeBackSheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         className="max-h-[88vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
         side="bottom"
@@ -166,6 +160,6 @@ export function ExportImageSheet({
           </Button>
         </SheetFooter>
       </SheetContent>
-    </Sheet>
+    </NativeBackSheet>
   );
 }

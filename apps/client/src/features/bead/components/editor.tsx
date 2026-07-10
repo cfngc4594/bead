@@ -117,6 +117,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     [selectedLetter],
   );
   const hasBeads = beads.some(Boolean);
+  const isExportImageSheetEnabled = Capacitor.getPlatform() === "android";
   const exportImageFilename = `bead-${size.id}.png`;
 
   function beginCellEdit() {
@@ -194,7 +195,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   }
 
   function handleExportImage() {
-    if (Capacitor.getPlatform() !== "android") {
+    if (!isExportImageSheetEnabled) {
       actions.exportImage();
       return;
     }
@@ -251,6 +252,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
+          isExportImageSheetEnabled={isExportImageSheetEnabled}
           isModelPreviewOpen={modelPreview.isOpen}
           isPreparingModelPreview={modelPreview.isPreparing}
           projectTitle={title}

@@ -27,6 +27,26 @@ test("consumeNativeBack checks the newest handler first", () => {
   expect(calls).toEqual(["second"]);
 });
 
+test("consumeNativeBack reveals the previous layer after unregistering", () => {
+  const calls: string[] = [];
+  registerHandler(() => {
+    calls.push("more-tools");
+    return true;
+  });
+  const unregisterExportSheet = registerHandler(() => {
+    calls.push("export-sheet");
+    return true;
+  });
+
+  expect(consumeNativeBack()).toBe(true);
+  expect(calls).toEqual(["export-sheet"]);
+
+  unregisterExportSheet();
+
+  expect(consumeNativeBack()).toBe(true);
+  expect(calls).toEqual(["export-sheet", "more-tools"]);
+});
+
 test("consumeNativeBack continues until a handler consumes the event", () => {
   const calls: string[] = [];
   const unregisterFirst = registerHandler(() => {

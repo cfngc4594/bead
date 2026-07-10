@@ -11,13 +11,10 @@ import {
   CommandShortcut,
 } from "@bead/ui/components/command";
 import { Input } from "@bead/ui/components/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@bead/ui/components/popover";
+import { PopoverContent, PopoverTrigger } from "@bead/ui/components/popover";
 import { cn } from "@bead/ui/lib/utils";
 import { Check, PlusCircle, X } from "lucide-react";
+import { NativeBackPopover } from "@/features/native/native-back-overlays";
 
 export type ProjectSizeFilterOption = {
   count: number;
@@ -89,7 +86,7 @@ function ProjectSizeFilter({
   const isFiltered = selectedValues.size > 0;
 
   return (
-    <Popover>
+    <NativeBackPopover>
       <PopoverTrigger asChild>
         <Button
           className="h-8 justify-start border-dashed"
@@ -169,6 +166,6 @@ function ProjectSizeFilter({
           </CommandList>
         </Command>
       </PopoverContent>
-    </Popover>
+    </NativeBackPopover>
   );
 }
