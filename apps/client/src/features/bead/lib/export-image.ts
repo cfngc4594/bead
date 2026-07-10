@@ -4,6 +4,7 @@ import {
   cellSize,
   getBoardSize,
 } from "@/features/bead/lib/canvas-geometry";
+import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import { downloadImageBlob } from "@/features/bead/lib/download-file";
 import type { BeadStat } from "@/features/bead/lib/stats";
 import { getBeadStats } from "@/features/bead/lib/stats";
@@ -40,9 +41,7 @@ type StatsLayout = {
   topGap: number;
   swatchHeight: number;
   swatchRadius: number;
-  labelWidth: number;
-  codeFontSize: number;
-  countFontSize: number;
+  fontSize: number;
 };
 
 export function createBeadImageBlob({
@@ -152,15 +151,10 @@ function createStatsLayout(
   const verticalPadding = 0;
   const topGap = 0;
   const gap = clamp(Math.round(shortSide * 0.004), 2, 7);
-  const innerGap = gap;
-  const codeFontSize = clamp(Math.round(shortSide * 0.009), 7, 14);
-  const countFontSize = clamp(Math.round(codeFontSize * 0.85), 6, 12);
+  const innerGap = 0;
+  const fontSize = clamp(Math.round(shortSide * 0.009), 7, 14);
   const swatchHeight = clamp(Math.round(totalHeight * 0.013), 10, 24);
-  const rowHeight = Math.max(
-    swatchHeight + 4,
-    codeFontSize + countFontSize + 5,
-  );
-  const labelWidth = clamp(Math.round(totalWidth * 0.032), 22, 42);
+  const rowHeight = Math.max(swatchHeight + 4, fontSize + 6);
   const swatchRadius = clamp(Math.round(shortSide * 0.0035), 2, 6);
   const minimumItemWidth = clamp(Math.round(totalWidth * 0.065), 48, 96);
   const availableWidth = Math.max(0, width - horizontalPadding * 2);
@@ -200,9 +194,7 @@ function createStatsLayout(
     topGap,
     swatchHeight,
     swatchRadius,
-    labelWidth,
-    codeFontSize,
-    countFontSize,
+    fontSize,
   };
 }
 
@@ -252,13 +244,9 @@ function drawStatItem(
   y: number,
   layout: StatsLayout,
 ) {
-  const labelWidth = Math.min(layout.labelWidth, layout.itemWidth * 0.45);
-  const swatchX = x + labelWidth + layout.innerGap;
+  const swatchX = x;
   const swatchY = y + (layout.rowHeight - layout.swatchHeight) / 2;
-  const swatchWidth = Math.max(
-    1,
-    layout.itemWidth - labelWidth - layout.innerGap,
-  );
+  const swatchWidth = Math.max(1, layout.itemWidth - layout.innerGap);
 
   roundedRectPath(
     context,
@@ -271,23 +259,15 @@ function drawStatItem(
   context.fillStyle = stat.hex;
   context.fill();
 
-  context.fillStyle = "#111827";
+  context.fillStyle = getReadableTextColor(stat.hex);
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.font = `600 ${layout.codeFontSize}px sans-serif`;
+  context.font = `600 ${layout.fontSize}px sans-serif`;
   context.fillText(
-    stat.code,
-    x + labelWidth / 2,
-    y + layout.rowHeight / 2 - layout.countFontSize * 0.45,
-    labelWidth,
-  );
-
-  context.font = `600 ${layout.countFontSize}px sans-serif`;
-  context.fillText(
-    String(stat.count),
-    x + labelWidth / 2,
-    y + layout.rowHeight / 2 + layout.codeFontSize * 0.55,
-    labelWidth,
+    `${stat.code} (${stat.count})`,
+    swatchX + swatchWidth / 2,
+    swatchY + layout.swatchHeight / 2,
+    Math.max(1, swatchWidth - layout.gap * 2),
   );
 }
 
