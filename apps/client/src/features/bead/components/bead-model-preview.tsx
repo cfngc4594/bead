@@ -153,7 +153,7 @@ function PreviewOptionsPanel({
 
         <DropdownMenuContent
           align="end"
-          className="bg-background/95 p-1.5 backdrop-blur"
+          className="w-80 max-w-[calc(100vw-1.5rem)] bg-background/95 p-1.5 backdrop-blur"
         >
           <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground">
             <Cuboid className="size-4 shrink-0" />
