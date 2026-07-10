@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
-  build-debug-apk:
-    name: Build debug APK
+  validate-android:
+    name: Validate Android release build
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -25,22 +25,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
         with:
           distribution: temurin
           java-version: 21
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: tools platform-tools platforms;android-36 build-tools;36.0.0
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -58,32 +60,123 @@ jobs:
       - name: Sync Android platform
         run: bun run cap:sync:android
 
-      - name: Build debug APK
+      - name: Validate release build
         working-directory: apps/client/android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v5
+  release-android:
+    name: Build and publish signed Android APK
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    environment: android-release
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Set up Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
         with:
-          name: bead-android-debug-apk
-          path: apps/client/android/app/build/outputs/apk/debug/*.apk
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: tools platform-tools platforms;android-36 build-tools;36.0.0
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL repository variable is required for Android builds." >&2
+            exit 1
+          fi
+
+      - name: Generate release metadata
+        id: version
+        run: |
+          echo "date=$(date -u +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+          echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Add Android platform
+        run: bun run cap:add:android
+
+      - name: Sync Android platform
+        run: bun run cap:sync:android
+
+      - name: Set Android app version
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        run: |
+          build_gradle="apps/client/android/app/build.gradle"
+          sed -i -E \
+            "s/versionCode [0-9]+/versionCode $VERSION_CODE/" \
+            "$build_gradle"
+          sed -i -E \
+            "s/versionName \"[^\"]+\"/versionName \"$VERSION_NAME\"/" \
+            "$build_gradle"
+
+          grep -q "versionCode $VERSION_CODE" "$build_gradle"
+          grep -q "versionName \"$VERSION_NAME\"" "$build_gradle"
+
+      - name: Build unsigned release APK
+        working-directory: apps/client/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign release APK
+        id: sign_apk
+        uses: r0adkll/sign-android-release@d5f8436b702872ad5cdb1e6e4d5c8b983d25a997 # Node 24
+        with:
+          releaseDirectory: apps/client/android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "36.0.0"
+
+      - name: Remove decoded signing key
+        if: always()
+        run: rm -f apps/client/android/app/build/outputs/apk/release/signingKey.jks
+
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: bead-android-release-apk
+          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
           if-no-files-found: error
           retention-days: 14
 
-      - name: Generate version tag
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: version
-        run: |
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
-          echo "build_number=$(date +'%s')" >> $GITHUB_OUTPUT
-
       - name: Upload to latest Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          files: apps/client/android/app/build/outputs/apk/debug/*.apk
+          files: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          fail_on_unmatched_files: true
           tag_name: latest
           name: Latest Mobile Builds
           body: |
@@ -91,27 +184,22 @@ jobs:
 
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
-            Date: ${{ github.event.head_commit.timestamp }}
+            Date: ${{ steps.version.outputs.timestamp }}
           draft: false
           prerelease: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to versioned Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          files: apps/client/android/app/build/outputs/apk/debug/*.apk
+          files: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          fail_on_unmatched_files: true
           tag_name: android-v${{ steps.version.outputs.date }}-${{ github.run_number }}
           name: Android APK v${{ steps.version.outputs.date }}-${{ github.run_number }}
           body: |
-            Android debug APK build - versioned release
+            Android signed release APK build
 
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
-            Date: ${{ github.event.head_commit.timestamp }}
+            Date: ${{ steps.version.outputs.timestamp }}
           draft: false
           prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
