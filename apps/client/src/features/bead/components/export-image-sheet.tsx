@@ -1,12 +1,12 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@bead/ui/components/drawer";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@bead/ui/components/sheet";
 import { Download, LoaderCircle, RefreshCcw, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import {
 } from "@/features/bead/lib/download-file";
 import { trackEvent } from "@/lib/analytics";
 
-type ExportImageDrawerProps = {
+type ExportImageSheetProps = {
   blob: Blob | null;
   filename: string;
   isCreating: boolean;
@@ -25,14 +25,14 @@ type ExportImageDrawerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function ExportImageDrawer({
+export function ExportImageSheet({
   blob,
   filename,
   isCreating,
   open,
   onCreateImage,
   onOpenChange,
-}: ExportImageDrawerProps) {
+}: ExportImageSheetProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -94,42 +94,30 @@ export function ExportImageDrawer({
 
   const isWorking = isCreating || isSaving || isSharing;
 
-  function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && (isSaving || isSharing)) {
-      return;
-    }
-
-    onOpenChange(nextOpen);
-  }
-
   return (
-    <Drawer
-      direction="bottom"
-      dismissible={!isSaving && !isSharing}
-      open={open}
-      onOpenChange={handleOpenChange}
-    >
-      <DrawerContent className="overflow-hidden">
-        <DrawerHeader className="shrink-0 pb-0">
-          <DrawerTitle>导出图片</DrawerTitle>
-          <DrawerDescription className="truncate">
-            预览并保存 {filename}
-          </DrawerDescription>
-        </DrawerHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        className="max-h-[88vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
+        side="bottom"
+      >
+        <SheetHeader className="pb-0">
+          <SheetTitle>导出图片</SheetTitle>
+          <SheetDescription>{filename}</SheetDescription>
+        </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4">
-          <div className="relative grid min-h-48 place-items-center rounded-lg border bg-muted/30 p-2">
+        <div className="px-4">
+          <div className="relative grid aspect-[4/3] max-h-[42vh] place-items-center overflow-hidden rounded-lg border bg-muted/30">
             {previewUrl ? (
               <img
                 alt="导出的豆图预览"
-                className="block max-h-[42svh] max-w-full object-contain"
+                className="h-full w-full object-contain"
                 src={previewUrl}
               />
             ) : isCreating ? (
-              <output className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <LoaderCircle className="animate-spin" />
                 <span>正在生成图片</span>
-              </output>
+              </div>
             ) : (
               <Button
                 onClick={() => {
@@ -148,7 +136,7 @@ export function ExportImageDrawer({
           </div>
         </div>
 
-        <DrawerFooter className="shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:justify-end">
+        <SheetFooter>
           <Button
             disabled={!blob || isWorking}
             onClick={saveImage}
@@ -170,8 +158,8 @@ export function ExportImageDrawer({
             {isSharing ? <LoaderCircle className="animate-spin" /> : <Share2 />}
             分享图片
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

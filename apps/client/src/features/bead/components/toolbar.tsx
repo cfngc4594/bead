@@ -1,12 +1,11 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@bead/ui/components/drawer";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@bead/ui/components/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -76,7 +75,7 @@ type ToolbarIconButtonProps = {
 type ToolbarAction = {
   label: string;
   icon: LucideIcon;
-  closeDrawerOnClick?: boolean;
+  closeSheetOnClick?: boolean;
   disabled?: boolean;
   loading?: boolean;
   isActive?: boolean;
@@ -117,7 +116,7 @@ export function EditorToolbar({
     onClick: onResetView,
   };
   const previewModelAction: ToolbarAction = {
-    closeDrawerOnClick: true,
+    closeSheetOnClick: true,
     disabled: isPreparingModelPreview,
     icon: isModelPreviewOpen ? PanelTop : Rotate3D,
     isActive: isModelPreviewOpen,
@@ -166,14 +165,14 @@ export function EditorToolbar({
   ];
   const fileActions: ToolbarAction[] = [
     {
-      closeDrawerOnClick: true,
+      closeSheetOnClick: true,
       disabled: isImportingImage,
       icon: ImageUp,
       label: isImportingImage ? "导入中" : "导入图片",
       onClick: onImportImage,
     },
     {
-      closeDrawerOnClick: true,
+      closeSheetOnClick: true,
       disabled: isExportingImage,
       icon: Download,
       label: isExportingImage ? "导出中" : "导出图片",
@@ -181,20 +180,20 @@ export function EditorToolbar({
       onClick: onExportImage,
     },
     {
-      closeDrawerOnClick: true,
+      closeSheetOnClick: true,
       icon: FileUp,
       label: "导入模板",
       onClick: onImportTemplate,
     },
     {
-      closeDrawerOnClick: true,
+      closeSheetOnClick: true,
       icon: FileDown,
       label: "导出模板",
       onClick: onExportTemplate,
     },
   ];
   const mobileTopViewActions = [resetViewAction, previewModelAction];
-  const mobileDrawerActions = [...displayActions, ...fileActions];
+  const mobileSheetActions = [...displayActions, ...fileActions];
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
@@ -225,7 +224,7 @@ export function EditorToolbar({
         {historyActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
-        <MobileMoreTools actions={mobileDrawerActions} />
+        <MobileMoreTools actions={mobileSheetActions} />
       </div>
     </header>
   );
@@ -256,31 +255,31 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Drawer direction="bottom" open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <DrawerTrigger asChild>
+          <SheetTrigger asChild>
             <Button aria-label="更多工具" size="icon-sm" variant="outline">
               <MoreHorizontal />
             </Button>
-          </DrawerTrigger>
+          </SheetTrigger>
         </TooltipTrigger>
         <TooltipContent className="hidden md:block">更多工具</TooltipContent>
       </Tooltip>
-      <DrawerContent className="overflow-hidden">
-        <DrawerHeader className="shrink-0 pb-0">
-          <DrawerTitle>更多工具</DrawerTitle>
-          <DrawerDescription className="sr-only">
-            编辑画布的显示和文件工具
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <SheetContent
+        className="max-h-[80vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
+        side="bottom"
+      >
+        <SheetHeader className="pb-0">
+          <SheetTitle>更多工具</SheetTitle>
+        </SheetHeader>
+        <div className="grid grid-cols-2 gap-2 px-4 pb-4">
           {actions.map((action) => (
-            <DrawerActionButton
+            <SheetActionButton
               key={action.label}
               {...action}
               onClick={() => {
-                if (action.closeDrawerOnClick) {
+                if (action.closeSheetOnClick) {
                   setOpen(false);
                 }
                 action.onClick();
@@ -288,12 +287,12 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
             />
           ))}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }
 
-function DrawerActionButton({
+function SheetActionButton({
   label,
   icon: Icon,
   disabled = false,

@@ -1,5 +1,6 @@
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -11,7 +12,6 @@ import { Button } from "@bead/ui/components/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,15 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@bead/ui/components/dropdown-menu";
 import { Input } from "@bead/ui/components/input";
-import { Label } from "@bead/ui/components/label";
-import {
-  Copy,
-  Edit3,
-  LoaderCircle,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
-import { type SubmitEvent, useEffect, useId, useState } from "react";
+import { Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
+import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   DEFAULT_PROJECT_TITLE,
@@ -46,7 +39,6 @@ import { trackEvent } from "@/lib/analytics";
 export function ProjectActions({ project }: { project: Project }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDuplicateProject() {
     try {
@@ -60,12 +52,6 @@ export function ProjectActions({ project }: { project: Project }) {
   }
 
   async function handleDeleteProject() {
-    if (isDeleting) {
-      return;
-    }
-
-    setIsDeleting(true);
-
     try {
       await deleteStoredProject(project.id);
       setIsDeleteOpen(false);
@@ -74,17 +60,7 @@ export function ProjectActions({ project }: { project: Project }) {
     } catch (error) {
       console.error("Unable to delete bead project", error);
       toast.error("删除作品失败");
-    } finally {
-      setIsDeleting(false);
     }
-  }
-
-  function handleDeleteOpenChange(nextOpen: boolean) {
-    if (!nextOpen && isDeleting) {
-      return;
-    }
-
-    setIsDeleteOpen(nextOpen);
   }
 
   return (
@@ -119,18 +95,21 @@ export function ProjectActions({ project }: { project: Project }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <RenameProjectDialog
-        project={project}
-        onOpenChange={setIsRenameOpen}
-        open={isRenameOpen}
-      />
-      <DeleteProjectDialog
-        isDeleting={isDeleting}
-        project={project}
-        onConfirm={handleDeleteProject}
-        onOpenChange={handleDeleteOpenChange}
-        open={isDeleteOpen}
-      />
+      {isRenameOpen ? (
+        <RenameProjectDialog
+          project={project}
+          onOpenChange={setIsRenameOpen}
+          open={isRenameOpen}
+        />
+      ) : null}
+      {isDeleteOpen ? (
+        <DeleteProjectDialog
+          project={project}
+          onConfirm={handleDeleteProject}
+          onOpenChange={setIsDeleteOpen}
+          open={isDeleteOpen}
+        />
+      ) : null}
     </>
   );
 }
@@ -144,7 +123,6 @@ function RenameProjectDialog({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
-  const inputId = useId();
   const [title, setTitle] = useState(project.title);
 
   useEffect(() => {
@@ -153,7 +131,7 @@ function RenameProjectDialog({
     }
   }, [project.title, open]);
 
-  async function handleRenameProject(event: SubmitEvent<HTMLFormElement>) {
+  async function handleRenameProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
@@ -173,19 +151,14 @@ function RenameProjectDialog({
         <form className="grid gap-4" onSubmit={handleRenameProject}>
           <DialogHeader>
             <DialogTitle>重命名作品</DialogTitle>
-            <DialogDescription>输入新的作品名称。</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2">
-            <Label htmlFor={inputId}>作品名称</Label>
-            <Input
-              autoFocus
-              id={inputId}
-              maxLength={80}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder={DEFAULT_PROJECT_TITLE}
-              value={title}
-            />
-          </div>
+          <Input
+            autoFocus
+            maxLength={80}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={DEFAULT_PROJECT_TITLE}
+            value={title}
+          />
           <DialogFooter>
             <Button
               onClick={() => onOpenChange(false)}
@@ -203,15 +176,13 @@ function RenameProjectDialog({
 }
 
 function DeleteProjectDialog({
-  isDeleting,
   project,
   onConfirm,
   onOpenChange,
   open,
 }: {
-  isDeleting: boolean;
   project: Project;
-  onConfirm: () => Promise<void>;
+  onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -225,20 +196,10 @@ function DeleteProjectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
-          <Button
-            disabled={isDeleting}
-            onClick={() => void onConfirm()}
-            type="button"
-            variant="destructive"
-          >
-            {isDeleting ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <Trash2 />
-            )}
-            {isDeleting ? "正在删除" : "删除"}
-          </Button>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} variant="destructive">
+            删除
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
