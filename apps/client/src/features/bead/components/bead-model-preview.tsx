@@ -135,11 +135,11 @@ function PreviewOptionsPanel({
   const ActiveIcon = activeOption.icon;
 
   return (
-    <div className="absolute right-3 top-3 z-10 w-[min(20rem,calc(100vw-1.5rem))] text-sm md:right-4 md:top-4">
+    <div className="absolute right-3 top-3 z-10 text-sm md:right-4 md:top-4">
       <NativeBackDropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="ml-auto flex w-full max-w-full justify-between gap-2 border bg-background/95 shadow-sm backdrop-blur data-[state=open]:[&_.preview-chevron]:rotate-180"
+            className="ml-auto flex max-w-full justify-between gap-2 border bg-background/95 shadow-sm backdrop-blur data-[state=open]:[&_.preview-chevron]:rotate-180"
             type="button"
             variant="outline"
           >
@@ -153,7 +153,7 @@ function PreviewOptionsPanel({
 
         <DropdownMenuContent
           align="end"
-          className="w-[var(--radix-dropdown-menu-trigger-width)] max-w-[calc(100vw-1.5rem)] bg-background/95 p-1.5 backdrop-blur"
+          className="bg-background/95 p-1.5 backdrop-blur"
         >
           <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground">
             <Cuboid className="size-4 shrink-0" />
