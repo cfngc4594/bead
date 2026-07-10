@@ -164,42 +164,38 @@ jobs:
         if: always()
         run: rm -f apps/client/android/app/build/outputs/apk/release/signingKey.jks
 
+      - name: Prepare release APK
+        id: release_apk
+        env:
+          SIGNED_APK: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+        run: |
+          test -f "$SIGNED_APK"
+          cp "$SIGNED_APK" "$RUNNER_TEMP/Bead.apk"
+          echo "path=$RUNNER_TEMP/Bead.apk" >> "$GITHUB_OUTPUT"
+
       - name: Upload signed release APK
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: bead-android-release-apk
-          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          name: bead-android-${{ steps.version.outputs.version_name }}
+          path: ${{ steps.release_apk.outputs.path }}
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload to latest Release
+      - name: Publish Android Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          files: ${{ steps.sign_apk.outputs.signedReleaseFile }}
-          fail_on_unmatched_files: true
-          tag_name: latest
-          name: Latest Mobile Builds
-          body: |
-            Latest iOS and Android builds.
-
-            Build #${{ github.run_number }}
-            Commit: ${{ github.sha }}
-            Date: ${{ steps.version.outputs.timestamp }}
-          draft: false
-          prerelease: true
-
-      - name: Upload to versioned Release
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        with:
-          files: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          files: ${{ steps.release_apk.outputs.path }}
           fail_on_unmatched_files: true
           tag_name: android-v${{ steps.version.outputs.date }}-${{ github.run_number }}
-          name: Android APK v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Bead Android v${{ steps.version.outputs.version_name }}
           body: |
             Android signed release APK build
 
+            Version: ${{ steps.version.outputs.version_name }}
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
             Date: ${{ steps.version.outputs.timestamp }}
           draft: false
-          prerelease: true
+          prerelease: false
+          make_latest: true

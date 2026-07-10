@@ -10,12 +10,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
-  build-unsigned-ipa:
-    name: Build unsigned IPA
+  validate-ios:
+    name: Validate iOS release build
+    if: github.event_name == 'pull_request'
     runs-on: macos-latest
     timeout-minutes: 45
     env:
@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -46,7 +46,7 @@ jobs:
       - name: Sync iOS platform
         run: bun run cap:sync:ios
 
-      - name: Build unsigned iOS app
+      - name: Validate unsigned release build
         working-directory: apps/client/ios/App
         run: |
           if [ -d App.xcworkspace ]; then
@@ -62,6 +62,76 @@ jobs:
             -sdk iphoneos \
             -destination generic/platform=iOS \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+  release-ios:
+    name: Build and publish unsigned iOS IPA
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL repository variable is required for iOS builds." >&2
+            exit 1
+          fi
+
+      - name: Generate release metadata
+        id: version
+        run: |
+          echo "date=$(date -u +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+          echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Add iOS platform
+        run: bun run cap:add:ios
+
+      - name: Sync iOS platform
+        run: bun run cap:sync:ios
+
+      - name: Build unsigned iOS app
+        working-directory: apps/client/ios/App
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        run: |
+          if [ -d App.xcworkspace ]; then
+            project_args=(-workspace App.xcworkspace)
+          else
+            project_args=(-project App.xcodeproj)
+          fi
+
+          xcodebuild build \
+            "${project_args[@]}" \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$VERSION_CODE" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
@@ -83,53 +153,27 @@ jobs:
           zip -qry "$RUNNER_TEMP/Bead-unsigned.ipa" Payload
 
       - name: Upload unsigned IPA
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: bead-ios-unsigned-ipa
+          name: bead-ios-${{ steps.version.outputs.version_name }}-unsigned
           path: ${{ runner.temp }}/Bead-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
 
-      - name: Generate version tag
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: version
-        run: |
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
-          echo "build_number=$(date +'%s')" >> $GITHUB_OUTPUT
-
-      - name: Upload to latest Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+      - name: Publish iOS prerelease
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           files: ${{ runner.temp }}/Bead-unsigned.ipa
-          tag_name: latest
-          name: Latest Mobile Builds
-          body: |
-            Latest iOS and Android builds.
-
-            Build #${{ github.run_number }}
-            Commit: ${{ github.sha }}
-            Date: ${{ github.event.head_commit.timestamp }}
-          draft: false
-          prerelease: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload to versioned Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ runner.temp }}/Bead-unsigned.ipa
+          fail_on_unmatched_files: true
           tag_name: ios-v${{ steps.version.outputs.date }}-${{ github.run_number }}
-          name: iOS IPA v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Bead iOS v${{ steps.version.outputs.version_name }} (unsigned)
           body: |
-            iOS unsigned IPA build - versioned release
+            iOS unsigned IPA build
 
+            Version: ${{ steps.version.outputs.version_name }}
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
-            Date: ${{ github.event.head_commit.timestamp }}
+            Date: ${{ steps.version.outputs.timestamp }}
           draft: false
           prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
