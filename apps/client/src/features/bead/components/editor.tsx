@@ -14,7 +14,7 @@ import { BeadModelPreview } from "@/features/bead/components/bead-model-preview"
 import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
-import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
+import { ExportImageDrawer } from "@/features/bead/components/export-image-drawer";
 import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
@@ -62,7 +62,7 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
+  const [isExportDrawerOpen, setIsExportDrawerOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
   const {
     beads,
@@ -200,7 +200,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     }
 
     setExportImageBlob(null);
-    setIsExportSheetOpen(true);
+    setIsExportDrawerOpen(true);
     trackEvent("android_export_sheet_opened", getCanvasProperties());
     createExportImage();
   }
@@ -274,13 +274,13 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           isImportingImage={isGeneratingFromImage}
           tool={tool}
         />
-        <ExportImageSheet
+        <ExportImageDrawer
           blob={exportImageBlob}
           filename={exportImageFilename}
           isCreating={isExportingImage}
-          open={isExportSheetOpen}
+          open={isExportDrawerOpen}
           onCreateImage={createExportImage}
-          onOpenChange={setIsExportSheetOpen}
+          onOpenChange={setIsExportDrawerOpen}
         />
         <input
           accept=".bead.json,application/json"
