@@ -1,6 +1,5 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -28,6 +27,7 @@ import { lazy, Suspense, useState } from "react";
 import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
 import type { BeadFill } from "@/features/bead/types";
+import { NativeBackDropdownMenu } from "@/features/native/native-back-overlays";
 
 const BeadModelScene = lazy(() =>
   preloadBeadModelScene().then((module) => ({
@@ -136,7 +136,7 @@ function PreviewOptionsPanel({
 
   return (
     <div className="absolute right-3 top-3 z-10 text-sm md:right-4 md:top-4">
-      <DropdownMenu>
+      <NativeBackDropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             className="ml-auto flex max-w-full justify-between gap-2 border bg-background/95 shadow-sm backdrop-blur data-[state=open]:[&_.preview-chevron]:rotate-180"
@@ -171,7 +171,7 @@ function PreviewOptionsPanel({
             ))}
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </NativeBackDropdownMenu>
     </div>
   );
 }

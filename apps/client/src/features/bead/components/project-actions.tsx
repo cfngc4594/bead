@@ -1,5 +1,4 @@
 import {
-  AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,7 +8,6 @@ import {
 } from "@bead/ui/components/alert-dialog";
 import { Button } from "@bead/ui/components/button";
 import {
-  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -17,7 +15,6 @@ import {
   DialogTitle,
 } from "@bead/ui/components/dialog";
 import {
-  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -40,6 +37,11 @@ import {
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import {
+  NativeBackAlertDialog,
+  NativeBackDialog,
+  NativeBackDropdownMenu,
+} from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
 export function ProjectActions({ project }: { project: Project }) {
@@ -88,7 +90,7 @@ export function ProjectActions({ project }: { project: Project }) {
 
   return (
     <>
-      <DropdownMenu>
+      <NativeBackDropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={`${project.title} 操作`}
@@ -116,7 +118,7 @@ export function ProjectActions({ project }: { project: Project }) {
             删除
           </DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+      </NativeBackDropdownMenu>
 
       {isRenameOpen ? (
         <RenameProjectDialog
@@ -170,7 +172,7 @@ function RenameProjectDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <NativeBackDialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <form className="grid gap-4" onSubmit={handleRenameProject}>
           <DialogHeader>
@@ -199,7 +201,7 @@ function RenameProjectDialog({
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+    </NativeBackDialog>
   );
 }
 
@@ -217,7 +219,7 @@ function DeleteProjectDialog({
   open: boolean;
 }) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <NativeBackAlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>删除作品？</AlertDialogTitle>
@@ -238,6 +240,6 @@ function DeleteProjectDialog({
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
+    </NativeBackAlertDialog>
   );
 }

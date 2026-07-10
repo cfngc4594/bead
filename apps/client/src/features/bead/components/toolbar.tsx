@@ -1,6 +1,5 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -34,6 +33,7 @@ import { useState } from "react";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
 import type { CanvasTool } from "@/features/bead/types";
+import { NativeBackSheet } from "@/features/native/native-back-overlays";
 
 type EditorToolbarProps = {
   tool: CanvasTool;
@@ -44,6 +44,7 @@ type EditorToolbarProps = {
   showBeadCodes: boolean;
   showGuideLines: boolean;
   isModelPreviewOpen: boolean;
+  isExportImageSheetEnabled: boolean;
   onToggleBeadCodes: () => void;
   onToggleGuideLines: () => void;
   onBack: () => void;
@@ -91,6 +92,7 @@ export function EditorToolbar({
   showBeadCodes,
   showGuideLines,
   isModelPreviewOpen,
+  isExportImageSheetEnabled,
   onToggleBeadCodes,
   onToggleGuideLines,
   onBack,
@@ -172,7 +174,7 @@ export function EditorToolbar({
       onClick: onImportImage,
     },
     {
-      closeSheetOnClick: true,
+      closeSheetOnClick: !isExportImageSheetEnabled,
       disabled: isExportingImage,
       icon: Download,
       label: isExportingImage ? "导出中" : "导出图片",
@@ -255,7 +257,7 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <NativeBackSheet open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
@@ -288,7 +290,7 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
           ))}
         </div>
       </SheetContent>
-    </Sheet>
+    </NativeBackSheet>
   );
 }
 
