@@ -42,6 +42,7 @@ type StatsLayout = {
   swatchHeight: number;
   swatchRadius: number;
   fontSize: number;
+  textPadding: number;
 };
 
 export function createBeadImageBlob({
@@ -153,6 +154,7 @@ function createStatsLayout(
   const gap = clamp(Math.round(shortSide * 0.004), 2, 7);
   const innerGap = 0;
   const fontSize = clamp(Math.round(shortSide * 0.009), 7, 14);
+  const textPadding = clamp(Math.round(shortSide * 0.006), 4, 10);
   const swatchHeight = clamp(Math.round(totalHeight * 0.013), 10, 24);
   const rowHeight = Math.max(swatchHeight + 4, fontSize + 6);
   const swatchRadius = clamp(Math.round(shortSide * 0.0035), 2, 6);
@@ -195,6 +197,7 @@ function createStatsLayout(
     swatchHeight,
     swatchRadius,
     fontSize,
+    textPadding,
   };
 }
 
@@ -260,14 +263,14 @@ function drawStatItem(
   context.fill();
 
   context.fillStyle = getReadableTextColor(stat.hex);
-  context.textAlign = "center";
+  context.textAlign = "left";
   context.textBaseline = "middle";
   context.font = `600 ${layout.fontSize}px sans-serif`;
   context.fillText(
     `${stat.code} (${stat.count})`,
-    swatchX + swatchWidth / 2,
+    swatchX + layout.textPadding,
     swatchY + layout.swatchHeight / 2,
-    Math.max(1, swatchWidth - layout.gap * 2),
+    Math.max(1, swatchWidth - layout.textPadding * 2),
   );
 }
 
