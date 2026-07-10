@@ -1,6 +1,5 @@
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -12,6 +11,7 @@ import { Button } from "@bead/ui/components/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,8 +24,14 @@ import {
   DropdownMenuTrigger,
 } from "@bead/ui/components/dropdown-menu";
 import { Input } from "@bead/ui/components/input";
-import { Copy, Edit3, MoreHorizontal, Trash2 } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import {
+  Copy,
+  Edit3,
+  LoaderCircle,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
+import { type SubmitEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   DEFAULT_PROJECT_TITLE,
@@ -39,6 +45,7 @@ import { trackEvent } from "@/lib/analytics";
 export function ProjectActions({ project }: { project: Project }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDuplicateProject() {
     try {
@@ -52,6 +59,12 @@ export function ProjectActions({ project }: { project: Project }) {
   }
 
   async function handleDeleteProject() {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleting(true);
+
     try {
       await deleteStoredProject(project.id);
       setIsDeleteOpen(false);
@@ -60,7 +73,17 @@ export function ProjectActions({ project }: { project: Project }) {
     } catch (error) {
       console.error("Unable to delete bead project", error);
       toast.error("删除作品失败");
+    } finally {
+      setIsDeleting(false);
     }
+  }
+
+  function handleDeleteOpenChange(nextOpen: boolean) {
+    if (!nextOpen && isDeleting) {
+      return;
+    }
+
+    setIsDeleteOpen(nextOpen);
   }
 
   return (
@@ -104,9 +127,10 @@ export function ProjectActions({ project }: { project: Project }) {
       ) : null}
       {isDeleteOpen ? (
         <DeleteProjectDialog
+          isDeleting={isDeleting}
           project={project}
           onConfirm={handleDeleteProject}
-          onOpenChange={setIsDeleteOpen}
+          onOpenChange={handleDeleteOpenChange}
           open={isDeleteOpen}
         />
       ) : null}
@@ -131,7 +155,7 @@ function RenameProjectDialog({
     }
   }, [project.title, open]);
 
-  async function handleRenameProject(event: FormEvent<HTMLFormElement>) {
+  async function handleRenameProject(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
@@ -151,8 +175,12 @@ function RenameProjectDialog({
         <form className="grid gap-4" onSubmit={handleRenameProject}>
           <DialogHeader>
             <DialogTitle>重命名作品</DialogTitle>
+            <DialogDescription className="sr-only">
+              输入新的作品名称
+            </DialogDescription>
           </DialogHeader>
           <Input
+            aria-label="作品名称"
             autoFocus
             maxLength={80}
             onChange={(event) => setTitle(event.target.value)}
@@ -176,13 +204,15 @@ function RenameProjectDialog({
 }
 
 function DeleteProjectDialog({
+  isDeleting,
   project,
   onConfirm,
   onOpenChange,
   open,
 }: {
+  isDeleting: boolean;
   project: Project;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -196,10 +226,16 @@ function DeleteProjectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} variant="destructive">
-            删除
-          </AlertDialogAction>
+          <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
+          <Button
+            disabled={isDeleting}
+            onClick={() => void onConfirm()}
+            type="button"
+            variant="destructive"
+          >
+            {isDeleting ? <LoaderCircle className="animate-spin" /> : null}
+            {isDeleting ? "正在删除" : "删除"}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -106,7 +106,7 @@ export function ExportImageSheet({
         </SheetHeader>
 
         <div className="px-4">
-          <div className="relative grid aspect-[4/3] max-h-[42vh] place-items-center overflow-hidden rounded-lg border bg-muted/30">
+          <div className="relative grid aspect-4/3 max-h-[42vh] place-items-center overflow-hidden rounded-lg border bg-muted/30">
             {previewUrl ? (
               <img
                 alt="导出的豆图预览"
@@ -114,10 +114,10 @@ export function ExportImageSheet({
                 src={previewUrl}
               />
             ) : isCreating ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <output className="flex items-center gap-2 text-muted-foreground">
                 <LoaderCircle className="animate-spin" />
                 <span>正在生成图片</span>
-              </div>
+              </output>
             ) : (
               <Button
                 onClick={() => {
