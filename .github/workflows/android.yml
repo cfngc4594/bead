@@ -66,6 +66,72 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon
 
+  test-android:
+    name: Build Android test APK
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+      CAPACITOR_APP_ID: com.massbug.bead.test
+      CAPACITOR_APP_NAME: Bead Test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Set up Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          packages: tools platform-tools platforms;android-36 build-tools;36.0.0
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL repository variable is required for Android builds." >&2
+            exit 1
+          fi
+
+      - name: Add Android platform
+        run: bun run cap:add:android
+
+      - name: Sync Android platform
+        run: bun run cap:sync:android
+
+      - name: Build test APK
+        working-directory: apps/client/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Prepare test APK
+        run: cp apps/client/android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/Bead-Test.apk"
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: bead-android-test-${{ github.run_number }}
+          path: ${{ runner.temp }}/Bead-Test.apk
+          if-no-files-found: error
+          retention-days: 14
+
   release-android:
     name: Build and publish signed Android APK
     if: >-
