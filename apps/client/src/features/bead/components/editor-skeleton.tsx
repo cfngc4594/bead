@@ -115,7 +115,7 @@ function DesktopColorSidebarSkeleton() {
       <CurrentColorSkeleton className="h-16 border-b px-4" />
 
       <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
-        <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
+        <ScrollArea className="h-full min-h-0 border-r [&_[data-slot=scroll-area-scrollbar]]:hidden">
           <div className="flex flex-col gap-1 p-2">
             {letterSkeletons.map((letter) => (
               <Skeleton className="size-8 rounded-lg" key={letter} />
@@ -150,7 +150,7 @@ function MobileColorPanelSkeleton() {
         </div>
       </div>
 
-      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain [&_[data-slot=scroll-area-scrollbar]]:hidden">
         <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
           {mobileColorSkeletons.map((item) => (
             <Skeleton className="size-10 rounded-md" key={item} />

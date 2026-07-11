@@ -53,7 +53,7 @@ export function ColorLetterIndex({
     <ScrollArea
       className={cn(
         "h-full min-h-0 border-r",
-        "**:data-[slot=scroll-area-scrollbar]:hidden",
+        "[&_[data-slot=scroll-area-scrollbar]]:hidden",
       )}
     >
       <div className="flex flex-col gap-1 p-2">

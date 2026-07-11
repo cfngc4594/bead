@@ -83,7 +83,7 @@ export function MobileColorPanel({
             />
           </div>
 
-          <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+          <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain [&_[data-slot=scroll-area-scrollbar]]:hidden">
             <ColorGrid
               colors={colors}
               layout="mobile"
