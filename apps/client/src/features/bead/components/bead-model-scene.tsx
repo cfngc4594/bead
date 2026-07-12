@@ -3,11 +3,19 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo } from "react";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { BeadInstancedMesh } from "@/features/bead/components/bead-instanced-mesh";
+import {
+  type NormalTextureStatus,
+  PressedSurfaceMesh,
+} from "@/features/bead/components/pressed-surface-mesh";
 import { useModelSceneNavigation } from "@/features/bead/hooks/use-model-scene-navigation";
 import {
   createBeadModelInstances,
   getModelCameraDistance,
 } from "@/features/bead/lib/bead-model-layout";
+import {
+  getPressedModelPreviewConfig,
+  type ModelPreviewMode,
+} from "@/features/bead/lib/model-preview-modes";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadModelSceneProps = {
@@ -15,6 +23,8 @@ export type BeadModelSceneProps = {
   cols: number;
   resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
+  mode: ModelPreviewMode;
+  onTextureStatusChange?: (status: NormalTextureStatus) => void;
 };
 
 const cameraFov = 32;
@@ -25,6 +35,8 @@ export function BeadModelScene({
   cols,
   resetViewSignal,
   beads,
+  mode,
+  onTextureStatusChange,
 }: BeadModelSceneProps) {
   const navigation = useModelSceneNavigation();
   const instances = useMemo(
@@ -38,6 +50,8 @@ export function BeadModelScene({
     viewportWidth: 1,
     verticalFovDegrees: cameraFov,
   });
+  const pressedConfig =
+    mode === "beads" ? null : getPressedModelPreviewConfig(mode);
 
   return (
     <div className="h-full w-full touch-none" ref={navigation.containerRef}>
@@ -60,7 +74,18 @@ export function BeadModelScene({
         />
         <directionalLight intensity={1.6} position={[8, 10, 14]} />
         <directionalLight intensity={0.35} position={[-10, -6, 8]} />
-        <BeadInstancedMesh instances={instances} />
+        {pressedConfig ? (
+          <PressedSurfaceMesh
+            instances={instances}
+            normalMapUrl={pressedConfig.normalMapUrl}
+            normalScale={pressedConfig.normalScale}
+            onTextureStatusChange={onTextureStatusChange}
+            patternSize={pressedConfig.patternSize}
+            roughness={pressedConfig.roughness}
+          />
+        ) : (
+          <BeadInstancedMesh instances={instances} />
+        )}
         <ModelCameraControls
           cols={cols}
           controlsRef={navigation.controlsRef}

@@ -21,6 +21,7 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-modes";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
@@ -224,6 +225,14 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setShowGuideLines((value) => !value);
   }
 
+  function changeModelPreviewMode(mode: ModelPreviewMode) {
+    modelPreview.setMode(mode);
+    trackEvent("model_preview_mode_changed", {
+      ...getCanvasProperties(),
+      mode,
+    });
+  }
+
   function getCanvasProperties() {
     return {
       cols: size.cols,
@@ -304,6 +313,8 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
             <BeadModelPreview
               beads={beads}
               cols={size.cols}
+              mode={modelPreview.mode}
+              onModeChange={changeModelPreviewMode}
               resetViewSignal={resetViewSignal}
               rows={size.rows}
             />

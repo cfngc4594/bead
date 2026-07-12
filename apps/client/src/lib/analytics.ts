@@ -17,6 +17,7 @@ type AnalyticsEventName =
   | "image_import_succeeded"
   | "model_preview_closed"
   | "model_preview_failed"
+  | "model_preview_mode_changed"
   | "model_preview_opened"
   | "project_create_cancelled"
   | "project_created"

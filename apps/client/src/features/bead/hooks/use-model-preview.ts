@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
+import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-modes";
 
 type UseModelPreviewProps = {
   onClose?: () => void;
@@ -15,6 +16,7 @@ export function useModelPreview({
 }: UseModelPreviewProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "ready">("idle");
+  const [mode, setMode] = useState<ModelPreviewMode>("beads");
   const isPreparing = status === "loading";
 
   function close() {
@@ -57,6 +59,8 @@ export function useModelPreview({
   return {
     isOpen,
     isPreparing,
+    mode,
+    setMode,
     toggle,
   };
 }
