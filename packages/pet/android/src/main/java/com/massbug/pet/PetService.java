@@ -326,10 +326,10 @@ public class PetService extends Service {
                 );
 
             return new Rect(
-                bounds.left + insets.left,
-                bounds.top + insets.top,
-                bounds.right - insets.right,
-                bounds.bottom - insets.bottom
+                0,
+                0,
+                bounds.width() - insets.left - insets.right,
+                bounds.height() - insets.top - insets.bottom
             );
         }
 
