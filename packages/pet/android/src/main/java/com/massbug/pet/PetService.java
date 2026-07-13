@@ -10,7 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -18,7 +20,9 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -26,6 +30,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class PetService extends Service {
@@ -37,6 +42,7 @@ public class PetService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "pet";
     private static final int NOTIFICATION_ID = 4102;
     private static final int PET_SIZE_DP = 176;
+    private static final double PET_CAMERA_PADDING = 1.22;
 
     private static volatile boolean running = false;
 
@@ -132,8 +138,6 @@ public class PetService extends Service {
 
     private void showOverlay() {
         int size = dpToPx(PET_SIZE_DP);
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
 
         overlayParams = new WindowManager.LayoutParams(
             size,
@@ -145,16 +149,13 @@ public class PetService extends Service {
             PixelFormat.TRANSLUCENT
         );
         overlayParams.gravity = Gravity.TOP | Gravity.START;
-        overlayParams.x = clamp(
-            store.getPositionX(screenWidth - size - dpToPx(12)),
-            0,
-            Math.max(0, screenWidth - size)
+        Rect displayBounds = getSafeDisplayBounds();
+        Rect contentBounds = getPetContentBounds(size);
+        overlayParams.x = store.getPositionX(
+            displayBounds.right - contentBounds.right - dpToPx(12)
         );
-        overlayParams.y = clamp(
-            store.getPositionY(screenHeight / 3),
-            0,
-            Math.max(0, screenHeight - size)
-        );
+        overlayParams.y = store.getPositionY(displayBounds.height() / 3);
+        constrainOverlayPosition(displayBounds, contentBounds);
 
         overlayView = new FrameLayout(this);
         overlayView.setBackgroundColor(Color.TRANSPARENT);
@@ -254,11 +255,90 @@ public class PetService extends Service {
             return;
         }
 
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        overlayParams.x = clamp(x, 0, Math.max(0, screenWidth - overlayParams.width));
-        overlayParams.y = clamp(y, 0, Math.max(0, screenHeight - overlayParams.height));
+        overlayParams.x = x;
+        overlayParams.y = y;
+        constrainOverlayPosition(
+            getSafeDisplayBounds(),
+            getPetContentBounds(overlayParams.width)
+        );
         windowManager.updateViewLayout(overlayView, overlayParams);
+    }
+
+    private void constrainOverlayPosition(Rect displayBounds, Rect contentBounds) {
+        overlayParams.x = clamp(
+            overlayParams.x,
+            displayBounds.left - contentBounds.left,
+            displayBounds.right - contentBounds.right
+        );
+        overlayParams.y = clamp(
+            overlayParams.y,
+            displayBounds.top - contentBounds.top,
+            displayBounds.bottom - contentBounds.bottom
+        );
+    }
+
+    private Rect getPetContentBounds(int canvasSize) {
+        try {
+            JSONArray instances = new JSONObject(store.getConfig()).getJSONArray("instances");
+
+            if (instances.length() == 0) {
+                return new Rect(0, 0, canvasSize, canvasSize);
+            }
+
+            double minX = Double.POSITIVE_INFINITY;
+            double maxX = Double.NEGATIVE_INFINITY;
+            double minY = Double.POSITIVE_INFINITY;
+            double maxY = Double.NEGATIVE_INFINITY;
+
+            for (int index = 0; index < instances.length(); index++) {
+                JSONObject instance = instances.getJSONObject(index);
+                double x = instance.getDouble("x");
+                double y = instance.getDouble("y");
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+            }
+
+            double modelWidth = Math.max(1, maxX - minX + 1);
+            double modelHeight = Math.max(1, maxY - minY + 1);
+            double scale = canvasSize /
+                (Math.max(modelWidth, modelHeight) * PET_CAMERA_PADDING);
+            int contentWidth = Math.min(canvasSize, (int) Math.ceil(modelWidth * scale));
+            int contentHeight = Math.min(canvasSize, (int) Math.ceil(modelHeight * scale));
+            int left = (canvasSize - contentWidth) / 2;
+            int top = (canvasSize - contentHeight) / 2;
+
+            return new Rect(left, top, left + contentWidth, top + contentHeight);
+        } catch (Exception ignored) {
+            return new Rect(0, 0, canvasSize, canvasSize);
+        }
+    }
+
+    private Rect getSafeDisplayBounds() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics metrics = windowManager.getCurrentWindowMetrics();
+            Rect bounds = metrics.getBounds();
+            Insets insets = metrics
+                .getWindowInsets()
+                .getInsetsIgnoringVisibility(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+                );
+
+            return new Rect(
+                bounds.left + insets.left,
+                bounds.top + insets.top,
+                bounds.right - insets.right,
+                bounds.bottom - insets.bottom
+            );
+        }
+
+        return new Rect(
+            0,
+            0,
+            getResources().getDisplayMetrics().widthPixels,
+            getResources().getDisplayMetrics().heightPixels
+        );
     }
 
     private void dispatchTap() {
@@ -286,6 +366,7 @@ public class PetService extends Service {
             JSONObject.quote(serializedConfig) +
             ")}))";
         webView.evaluateJavascript(script, null);
+        updateOverlayPosition(overlayParams.x, overlayParams.y);
     }
 
     private void removeOverlay() {
