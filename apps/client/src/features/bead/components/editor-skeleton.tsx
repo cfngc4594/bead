@@ -40,8 +40,8 @@ export function EditorSkeleton() {
         </div>
       </section>
 
-      <DesktopColorSidebarSkeleton />
-      <MobileColorPanelSkeleton />
+      <DesktopEditorSidebarSkeleton />
+      <MobileEditorPanelSkeleton />
     </main>
   );
 }
@@ -109,7 +109,7 @@ function ToolbarSeparatorSkeleton() {
   return <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />;
 }
 
-function DesktopColorSidebarSkeleton() {
+function DesktopEditorSidebarSkeleton() {
   return (
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
       <CurrentColorSkeleton className="h-16 border-b px-4" />
@@ -135,7 +135,7 @@ function DesktopColorSidebarSkeleton() {
   );
 }
 
-function MobileColorPanelSkeleton() {
+function MobileEditorPanelSkeleton() {
   return (
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
       <CurrentColorSkeleton className="h-14 border-b px-4" showAction />

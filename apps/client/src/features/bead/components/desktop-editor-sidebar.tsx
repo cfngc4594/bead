@@ -6,20 +6,20 @@ import { ColorLetterIndex } from "@/features/bead/components/color-letter-index"
 import { CurrentColor } from "@/features/bead/components/current-color";
 import {
   ModelPreviewControls,
-  type ModelPreviewControlsState,
+  type ModelPreviewControlsBinding,
 } from "@/features/bead/components/model-preview-controls";
 
-type DesktopColorSidebarProps = {
+type DesktopEditorSidebarProps = {
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   selectedLetter: string;
-  modelPreviewControls: ModelPreviewControlsState | null;
+  modelPreviewControls: ModelPreviewControlsBinding | null;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
 };
 
-export function DesktopColorSidebar({
+export function DesktopEditorSidebar({
   letters,
   colors,
   selectedColor,
@@ -27,7 +27,7 @@ export function DesktopColorSidebar({
   modelPreviewControls,
   onSelectColor,
   onSelectLetter,
-}: DesktopColorSidebarProps) {
+}: DesktopEditorSidebarProps) {
   return (
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
       {modelPreviewControls ? (

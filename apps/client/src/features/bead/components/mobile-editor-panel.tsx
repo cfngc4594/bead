@@ -10,24 +10,24 @@ import { CurrentColor } from "@/features/bead/components/current-color";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import {
   ModelPreviewControls,
-  type ModelPreviewControlsState,
+  type ModelPreviewControlsBinding,
 } from "@/features/bead/components/model-preview-controls";
 import type { CanvasTool } from "@/features/bead/types";
 
-type MobileColorPanelProps = {
+type MobileEditorPanelProps = {
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   selectedLetter: string;
   tool: CanvasTool;
-  modelPreviewControls: ModelPreviewControlsState | null;
+  modelPreviewControls: ModelPreviewControlsBinding | null;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
   onSelectTool: (tool: CanvasTool) => void;
   onResetViewAfterResize: () => void;
 };
 
-export function MobileColorPanel({
+export function MobileEditorPanel({
   letters,
   colors,
   selectedColor,
@@ -38,7 +38,7 @@ export function MobileColorPanel({
   onSelectLetter,
   onSelectTool,
   onResetViewAfterResize,
-}: MobileColorPanelProps) {
+}: MobileEditorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const isModelPreviewOpen = modelPreviewControls !== null;
 

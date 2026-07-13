@@ -5,6 +5,7 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/towel-press-normal.jpg",
     normalScale: 1.55,
     patternSize: 18,
+    previewUrl: "/textures/towel-press-preview.webp",
   },
   {
     id: "bath-towel",
@@ -12,6 +13,7 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/bath-towel-press-normal.jpg",
     normalScale: 1.35,
     patternSize: 18,
+    previewUrl: "/textures/bath-towel-press-preview.webp",
   },
   {
     id: "steam-cloth",
@@ -19,6 +21,7 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/steam-cloth-press-normal.jpg",
     normalScale: 1.2,
     patternSize: 18,
+    previewUrl: "/textures/steam-cloth-press-preview.webp",
   },
   {
     id: "waffle",
@@ -26,6 +29,7 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/waffle-press-normal.jpg",
     normalScale: 1.4,
     patternSize: 18,
+    previewUrl: "/textures/waffle-press-preview.webp",
   },
 ] as const;
 

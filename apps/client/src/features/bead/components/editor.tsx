@@ -12,10 +12,10 @@ import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import type { CanvasBoardProps } from "@/features/bead/components/canvas";
-import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
+import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
-import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
+import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
@@ -350,7 +350,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         </div>
       </section>
 
-      <DesktopColorSidebar
+      <DesktopEditorSidebar
         colors={filteredColors}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}
@@ -359,7 +359,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
       />
-      <MobileColorPanel
+      <MobileEditorPanel
         colors={filteredColors}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}

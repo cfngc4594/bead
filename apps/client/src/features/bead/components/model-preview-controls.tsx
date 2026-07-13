@@ -6,14 +6,14 @@ import {
   modelPreviewModes,
 } from "@/features/bead/lib/model-preview-config";
 
-export type ModelPreviewControlsState = {
+export type ModelPreviewControlsBinding = {
   mode: ModelPreviewMode;
   settings: ModelPreviewSettings;
   onModeChange: (mode: ModelPreviewMode) => void;
   onSettingsChange: (settings: ModelPreviewSettings) => void;
 };
 
-type ModelPreviewControlsProps = ModelPreviewControlsState & {
+type ModelPreviewControlsProps = ModelPreviewControlsBinding & {
   className?: string;
   layout: "desktop" | "mobile";
 };
@@ -87,11 +87,15 @@ export function ModelPreviewControls({
                     isSelected && "border-primary ring-2 ring-primary/20",
                   )}
                 >
-                  {"normalMapUrl" in item ? (
+                  {"previewUrl" in item ? (
                     <img
                       alt=""
                       className="size-full object-cover grayscale brightness-110 contrast-75 transition-transform group-hover:scale-105"
-                      src={item.normalMapUrl}
+                      decoding="async"
+                      height={128}
+                      loading="lazy"
+                      src={item.previewUrl}
+                      width={128}
                     />
                   ) : (
                     <BeadMaterialPreview />
