@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -27,6 +28,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -42,6 +44,9 @@ public class PetService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "pet";
     private static final int NOTIFICATION_ID = 4102;
     private static final int PET_SIZE_DP = 176;
+    private static final int EDGE_HANDLE_WIDTH_DP = 32;
+    private static final int EDGE_HANDLE_HEIGHT_DP = 56;
+    private static final int EDGE_SNAP_THRESHOLD_DP = 12;
     private static final double PET_CAMERA_PADDING = 1.22;
 
     private static volatile boolean running = false;
@@ -66,6 +71,8 @@ public class PetService extends Service {
     private FrameLayout overlayView;
     private WindowManager.LayoutParams overlayParams;
     private WebView webView;
+    private TextView edgeHandle;
+    private int collapsedSide;
 
     public static boolean isRunning() {
         return running;
@@ -76,6 +83,7 @@ public class PetService extends Service {
         super.onCreate();
         running = true;
         store = new PetStore(this);
+        collapsedSide = store.getCollapsedSide();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         createNotificationChannel();
 
@@ -167,9 +175,30 @@ public class PetService extends Service {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
         );
+        edgeHandle = createEdgeHandle();
+        overlayView.addView(edgeHandle);
         installDragGesture(webView);
         windowManager.addView(overlayView, overlayParams);
         webView.loadUrl("file:///android_asset/public/pet.html");
+
+        if (collapsedSide != 0) {
+            collapseToEdge(collapsedSide);
+        }
+    }
+
+    private TextView createEdgeHandle() {
+        TextView handle = new TextView(this);
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.argb(220, 39, 39, 42));
+        background.setCornerRadius(dpToPx(12));
+        handle.setBackground(background);
+        handle.setContentDescription("展开桌面宠物");
+        handle.setGravity(Gravity.CENTER);
+        handle.setTextColor(Color.WHITE);
+        handle.setTextSize(28);
+        handle.setVisibility(View.GONE);
+        handle.setOnClickListener(ignored -> expandFromEdge());
+        return handle;
     }
 
     @SuppressWarnings("deprecation")
@@ -236,6 +265,11 @@ public class PetService extends Service {
                         case MotionEvent.ACTION_UP:
                             if (dragging) {
                                 store.savePosition(overlayParams.x, overlayParams.y);
+                                int edge = getDockEdge();
+
+                                if (edge != 0) {
+                                    collapseToEdge(edge);
+                                }
                             } else {
                                 dispatchTap();
                             }
@@ -262,6 +296,80 @@ public class PetService extends Service {
             getPetContentBounds(overlayParams.width)
         );
         windowManager.updateViewLayout(overlayView, overlayParams);
+    }
+
+    private int getDockEdge() {
+        Rect displayBounds = getSafeDisplayBounds();
+        Rect contentBounds = getPetContentBounds(overlayParams.width);
+        int threshold = dpToPx(EDGE_SNAP_THRESHOLD_DP);
+        int minX = displayBounds.left - contentBounds.left;
+        int maxX = displayBounds.right - contentBounds.right;
+
+        if (overlayParams.x <= minX + threshold) {
+            return -1;
+        }
+
+        if (overlayParams.x >= maxX - threshold) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private void collapseToEdge(int side) {
+        if (overlayView == null || webView == null || edgeHandle == null) {
+            return;
+        }
+
+        int petSize = dpToPx(PET_SIZE_DP);
+        int handleWidth = dpToPx(EDGE_HANDLE_WIDTH_DP);
+        int handleHeight = dpToPx(EDGE_HANDLE_HEIGHT_DP);
+        Rect displayBounds = getSafeDisplayBounds();
+        int handleY = overlayParams.y + (petSize - handleHeight) / 2;
+
+        collapsedSide = side < 0 ? -1 : 1;
+        store.saveCollapsedSide(collapsedSide);
+        webView.setVisibility(View.GONE);
+        edgeHandle.setText(collapsedSide < 0 ? "›" : "‹");
+        edgeHandle.setVisibility(View.VISIBLE);
+        overlayParams.width = handleWidth;
+        overlayParams.height = handleHeight;
+        overlayParams.x = collapsedSide < 0
+            ? displayBounds.left
+            : displayBounds.right - handleWidth;
+        overlayParams.y = clamp(
+            handleY,
+            displayBounds.top,
+            displayBounds.bottom - handleHeight
+        );
+        windowManager.updateViewLayout(overlayView, overlayParams);
+    }
+
+    private void expandFromEdge() {
+        if (collapsedSide == 0 || overlayView == null || webView == null || edgeHandle == null) {
+            return;
+        }
+
+        int side = collapsedSide;
+        int petSize = dpToPx(PET_SIZE_DP);
+        int handleHeight = dpToPx(EDGE_HANDLE_HEIGHT_DP);
+        int expandedY = overlayParams.y - (petSize - handleHeight) / 2;
+        Rect displayBounds = getSafeDisplayBounds();
+        Rect contentBounds = getPetContentBounds(petSize);
+
+        collapsedSide = 0;
+        store.saveCollapsedSide(0);
+        edgeHandle.setVisibility(View.GONE);
+        webView.setVisibility(View.VISIBLE);
+        overlayParams.width = petSize;
+        overlayParams.height = petSize;
+        overlayParams.x = side < 0
+            ? displayBounds.left - contentBounds.left
+            : displayBounds.right - contentBounds.right;
+        overlayParams.y = expandedY;
+        constrainOverlayPosition(displayBounds, contentBounds);
+        windowManager.updateViewLayout(overlayView, overlayParams);
+        store.savePosition(overlayParams.x, overlayParams.y);
     }
 
     private void constrainOverlayPosition(Rect displayBounds, Rect contentBounds) {
@@ -366,7 +474,10 @@ public class PetService extends Service {
             JSONObject.quote(serializedConfig) +
             ")}))";
         webView.evaluateJavascript(script, null);
-        updateOverlayPosition(overlayParams.x, overlayParams.y);
+
+        if (collapsedSide == 0) {
+            updateOverlayPosition(overlayParams.x, overlayParams.y);
+        }
     }
 
     private void removeOverlay() {

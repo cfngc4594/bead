@@ -9,6 +9,7 @@ final class PetStore {
     private static final String CONFIG_KEY = "config";
     private static final String POSITION_X_KEY = "position_x";
     private static final String POSITION_Y_KEY = "position_y";
+    private static final String COLLAPSED_SIDE_KEY = "collapsed_side";
 
     private final SharedPreferences preferences;
 
@@ -34,5 +35,13 @@ final class PetStore {
 
     void savePosition(int x, int y) {
         preferences.edit().putInt(POSITION_X_KEY, x).putInt(POSITION_Y_KEY, y).apply();
+    }
+
+    int getCollapsedSide() {
+        return preferences.getInt(COLLAPSED_SIDE_KEY, 0);
+    }
+
+    void saveCollapsedSide(int side) {
+        preferences.edit().putInt(COLLAPSED_SIDE_KEY, side).apply();
     }
 }
