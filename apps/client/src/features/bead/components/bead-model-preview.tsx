@@ -7,16 +7,15 @@ import {
   EmptyTitle,
 } from "@bead/ui/components/empty";
 import { Spinner } from "@bead/ui/components/spinner";
-import { ToggleGroup, ToggleGroupItem } from "@bead/ui/components/toggle-group";
 import { cn } from "@bead/ui/lib/utils";
 import { CircleAlert, CircleDot } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import type { NormalTextureStatus } from "@/features/bead/components/pressed-surface-mesh";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
-import {
-  type ModelPreviewMode,
-  modelPreviewModes,
-} from "@/features/bead/lib/model-preview-modes";
+import type {
+  ModelPreviewMode,
+  ModelPreviewSettings,
+} from "@/features/bead/lib/model-preview-config";
 import type { BeadFill } from "@/features/bead/types";
 
 const BeadModelScene = lazy(() =>
@@ -32,7 +31,7 @@ type BeadModelPreviewProps = {
   resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
   mode: ModelPreviewMode;
-  onModeChange: (mode: ModelPreviewMode) => void;
+  settings: ModelPreviewSettings;
 };
 
 export function BeadModelPreview({
@@ -42,7 +41,7 @@ export function BeadModelPreview({
   resetViewSignal,
   beads,
   mode,
-  onModeChange,
+  settings,
 }: BeadModelPreviewProps) {
   const hasBeads = beads.some(Boolean);
   const [textureStatus, setTextureStatus] =
@@ -56,14 +55,6 @@ export function BeadModelPreview({
     setTextureStatus(mode === "beads" ? "ready" : "loading");
   }, [mode]);
 
-  function handleModeChange(value: string) {
-    const nextMode = modelPreviewModes.find((item) => item.id === value)?.id;
-
-    if (nextMode) {
-      onModeChange(nextMode);
-    }
-  }
-
   return (
     <section
       aria-label="3D 预览"
@@ -72,28 +63,6 @@ export function BeadModelPreview({
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-2">
-        <ToggleGroup
-          aria-label="3D 预览效果"
-          className="pointer-events-auto max-w-full gap-0.5 overflow-hidden border bg-background/90 p-1 shadow-sm backdrop-blur-sm"
-          onValueChange={handleModeChange}
-          type="single"
-          value={mode}
-          variant="default"
-        >
-          {modelPreviewModes.map((item) => (
-            <ToggleGroupItem
-              aria-label={item.label}
-              className="h-7 rounded-md px-2 text-xs data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
-              key={item.id}
-              value={item.id}
-            >
-              {item.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-
       {hasBeads ? (
         <Suspense fallback={<ModelPreviewStatus label="正在准备 3D 预览" />}>
           <BeadModelScene
@@ -103,10 +72,11 @@ export function BeadModelPreview({
             onTextureStatusChange={handleTextureStatusChange}
             resetViewSignal={resetViewSignal}
             rows={rows}
+            settings={settings}
           />
         </Suspense>
       ) : (
-        <Empty className="h-full pt-12">
+        <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <CircleDot />

@@ -10,8 +10,10 @@ const beadSegments = 24;
 
 export function BeadInstancedMesh({
   instances,
+  roughness,
 }: {
   instances: readonly BeadModelInstance[];
+  roughness: number;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -21,7 +23,6 @@ export function BeadInstancedMesh({
       new THREE.MeshStandardMaterial({
         color: "#ffffff",
         metalness: 0,
-        roughness: 0.45,
       }),
     [],
   );
@@ -35,6 +36,11 @@ export function BeadInstancedMesh({
     },
     [geometry, material],
   );
+
+  useLayoutEffect(() => {
+    material.roughness = roughness;
+    invalidate();
+  }, [invalidate, material, roughness]);
 
   useLayoutEffect(() => {
     const mesh = meshRef.current;

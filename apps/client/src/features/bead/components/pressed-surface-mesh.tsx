@@ -14,6 +14,7 @@ export function PressedSurfaceMesh({
   normalScale,
   patternSize,
   roughness,
+  textureScale,
   onTextureStatusChange,
 }: {
   instances: readonly BeadModelInstance[];
@@ -21,6 +22,7 @@ export function PressedSurfaceMesh({
   normalScale: number;
   patternSize: number;
   roughness: number;
+  textureScale: number;
   onTextureStatusChange?: (status: NormalTextureStatus) => void;
 }) {
   const edgeMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -42,9 +44,8 @@ export function PressedSurfaceMesh({
       new THREE.MeshStandardMaterial({
         color: "#ffffff",
         metalness: 0,
-        roughness: Math.min(1, roughness + 0.08),
       }),
-    [roughness],
+    [],
   );
   const normalScaleVector = useMemo(
     () => new THREE.Vector2(normalScale, normalScale),
@@ -109,6 +110,21 @@ export function PressedSurfaceMesh({
     },
     [edgeMaterial],
   );
+
+  useLayoutEffect(() => {
+    edgeMaterial.roughness = Math.min(1, roughness + 0.08);
+    invalidate();
+  }, [edgeMaterial, invalidate, roughness]);
+
+  useLayoutEffect(() => {
+    if (!normalMap) {
+      return;
+    }
+
+    const repeat = 1 / textureScale;
+    normalMap.repeat.set(repeat, repeat);
+    invalidate();
+  }, [invalidate, normalMap, textureScale]);
 
   useLayoutEffect(() => {
     const mesh = edgeMeshRef.current;

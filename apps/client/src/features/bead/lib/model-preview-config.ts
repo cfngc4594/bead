@@ -5,7 +5,6 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/towel-press-normal.jpg",
     normalScale: 1.55,
     patternSize: 18,
-    roughness: 0.62,
   },
   {
     id: "bath-towel",
@@ -13,7 +12,6 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/bath-towel-press-normal.jpg",
     normalScale: 1.35,
     patternSize: 18,
-    roughness: 0.6,
   },
   {
     id: "steam-cloth",
@@ -21,7 +19,6 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/steam-cloth-press-normal.jpg",
     normalScale: 1.2,
     patternSize: 18,
-    roughness: 0.62,
   },
   {
     id: "waffle",
@@ -29,7 +26,6 @@ export const pressedModelPreviewModes = [
     normalMapUrl: "/textures/waffle-press-normal.jpg",
     normalScale: 1.4,
     patternSize: 18,
-    roughness: 0.58,
   },
 ] as const;
 
@@ -40,6 +36,20 @@ export const modelPreviewModes = [
 
 export type ModelPreviewMode = (typeof modelPreviewModes)[number]["id"];
 export type PressedModelPreviewMode = Exclude<ModelPreviewMode, "beads">;
+
+export type ModelPreviewSettings = {
+  lightIntensity: number;
+  roughness: number;
+  textureScale: number;
+  textureStrength: number;
+};
+
+export const defaultModelPreviewSettings: ModelPreviewSettings = {
+  lightIntensity: 1,
+  roughness: 0.58,
+  textureScale: 1,
+  textureStrength: 1,
+};
 
 export function getPressedModelPreviewConfig(mode: PressedModelPreviewMode) {
   return pressedModelPreviewModes.find((item) => item.id === mode);

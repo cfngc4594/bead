@@ -15,7 +15,8 @@ import {
 import {
   getPressedModelPreviewConfig,
   type ModelPreviewMode,
-} from "@/features/bead/lib/model-preview-modes";
+  type ModelPreviewSettings,
+} from "@/features/bead/lib/model-preview-config";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadModelSceneProps = {
@@ -24,6 +25,7 @@ export type BeadModelSceneProps = {
   resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
   mode: ModelPreviewMode;
+  settings: ModelPreviewSettings;
   onTextureStatusChange?: (status: NormalTextureStatus) => void;
 };
 
@@ -36,6 +38,7 @@ export function BeadModelScene({
   resetViewSignal,
   beads,
   mode,
+  settings,
   onTextureStatusChange,
 }: BeadModelSceneProps) {
   const navigation = useModelSceneNavigation();
@@ -70,21 +73,31 @@ export function BeadModelScene({
         <hemisphereLight
           color="#ffffff"
           groundColor="#d4d4d8"
-          intensity={0.8}
+          intensity={0.8 * settings.lightIntensity}
         />
-        <directionalLight intensity={1.6} position={[8, 10, 14]} />
-        <directionalLight intensity={0.35} position={[-10, -6, 8]} />
+        <directionalLight
+          intensity={1.6 * settings.lightIntensity}
+          position={[8, 10, 14]}
+        />
+        <directionalLight
+          intensity={0.35 * settings.lightIntensity}
+          position={[-10, -6, 8]}
+        />
         {pressedConfig ? (
           <PressedSurfaceMesh
             instances={instances}
             normalMapUrl={pressedConfig.normalMapUrl}
-            normalScale={pressedConfig.normalScale}
+            normalScale={pressedConfig.normalScale * settings.textureStrength}
             onTextureStatusChange={onTextureStatusChange}
             patternSize={pressedConfig.patternSize}
-            roughness={pressedConfig.roughness}
+            roughness={settings.roughness}
+            textureScale={settings.textureScale}
           />
         ) : (
-          <BeadInstancedMesh instances={instances} />
+          <BeadInstancedMesh
+            instances={instances}
+            roughness={settings.roughness}
+          />
         )}
         <ModelCameraControls
           cols={cols}

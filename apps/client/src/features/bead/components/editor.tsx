@@ -21,7 +21,7 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
-import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-modes";
+import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
@@ -254,6 +254,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     });
   }
 
+  const modelPreviewControls = modelPreview.isOpen
+    ? {
+        mode: modelPreview.mode,
+        onModeChange: changeModelPreviewMode,
+        onSettingsChange: modelPreview.setSettings,
+        settings: modelPreview.settings,
+      }
+    : null;
+
   return (
     <main className="grid h-svh min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
@@ -314,9 +323,9 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               beads={beads}
               cols={size.cols}
               mode={modelPreview.mode}
-              onModeChange={changeModelPreviewMode}
               resetViewSignal={resetViewSignal}
               rows={size.rows}
+              settings={modelPreview.settings}
             />
           ) : (
             <Suspense fallback={<CanvasBoardSkeleton />}>
@@ -344,6 +353,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       <DesktopColorSidebar
         colors={filteredColors}
         letters={colorLetters}
+        modelPreviewControls={modelPreviewControls}
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}
@@ -352,6 +362,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       <MobileColorPanel
         colors={filteredColors}
         letters={colorLetters}
+        modelPreviewControls={modelPreviewControls}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }
