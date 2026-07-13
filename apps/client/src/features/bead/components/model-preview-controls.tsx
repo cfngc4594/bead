@@ -61,7 +61,7 @@ export function ModelPreviewControls({
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("max-w-full space-y-6", className)}>
       <section aria-labelledby={`${layout}-press-method-heading`}>
         <h2
           className="mb-3 text-sm font-medium"
@@ -71,10 +71,8 @@ export function ModelPreviewControls({
         </h2>
         <div
           className={cn(
-            "gap-2",
-            layout === "desktop"
-              ? "grid grid-cols-3"
-              : "grid grid-cols-2 min-[360px]:grid-cols-3",
+            "min-w-0 gap-2 overflow-hidden",
+            layout === "desktop" ? "grid grid-cols-3" : "grid grid-cols-2",
           )}
         >
           {modelPreviewModes.map((item) => {
@@ -181,9 +179,18 @@ export function ModelPreviewControls({
               将当前 3D 效果显示为可拖动的 Android 悬浮宠物。
             </p>
           </div>
-          <div className="flex gap-2">
+          <div
+            className={cn(
+              "gap-2",
+              layout === "mobile" ? "grid grid-cols-2" : "flex",
+            )}
+          >
             <Button
-              className="min-w-0 flex-1"
+              className={cn(
+                "min-w-0",
+                layout === "desktop" && "flex-1",
+                layout === "mobile" && !pet.isRunning && "col-span-2",
+              )}
               disabled={!pet.canStart || pet.isBusy}
               onClick={pet.onStart}
               size="sm"
@@ -198,14 +205,15 @@ export function ModelPreviewControls({
             </Button>
             {pet.isRunning ? (
               <Button
-                aria-label="停止桌面宠物"
+                className="min-w-0"
                 disabled={pet.isBusy}
                 onClick={pet.onStop}
-                size="icon-sm"
+                size="sm"
                 type="button"
                 variant="outline"
               >
                 <Square aria-hidden="true" />
+                取消桌宠
               </Button>
             ) : null}
           </div>

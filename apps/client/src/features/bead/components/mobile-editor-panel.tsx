@@ -46,7 +46,7 @@ export function MobileEditorPanel({
     <section
       className={cn(
         "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden",
-        isExpanded ? "h-[min(16rem,50svh)]" : "h-14",
+        isExpanded ? "h-auto max-h-[50vh]" : "h-14",
       )}
     >
       <div
@@ -105,10 +105,10 @@ export function MobileEditorPanel({
 
       {isExpanded ? (
         isModelPreviewOpen ? (
-          <ScrollArea className="min-h-0 min-w-0 flex-1 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden **:data-[slot=scroll-area-viewport]:min-w-0">
+          <ScrollArea className="h-[calc(48px+40px*3+8px*2+8px*2)] min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
             <ModelPreviewControls
               {...modelPreviewControls}
-              className="w-full min-w-0 overflow-hidden p-4"
+              className="box-border w-screen max-w-[100vw] min-w-0 overflow-hidden p-4"
               layout="mobile"
             />
           </ScrollArea>
@@ -123,7 +123,7 @@ export function MobileEditorPanel({
               />
             </div>
 
-            <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden **:data-[slot=scroll-area-viewport]:min-w-0">
+            <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
               <ColorGrid
                 colors={colors}
                 layout="mobile"

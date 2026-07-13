@@ -137,7 +137,7 @@ function DesktopEditorSidebarSkeleton() {
 
 function MobileEditorPanelSkeleton() {
   return (
-    <section className="flex h-[min(16rem,50svh)] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
+    <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
       <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
 
       <div className="min-w-0 shrink-0 border-b">
@@ -150,7 +150,7 @@ function MobileEditorPanelSkeleton() {
         </div>
       </div>
 
-      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden **:data-[slot=scroll-area-viewport]:min-w-0">
+      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
         <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
           {mobileColorSkeletons.map((item) => (
             <Skeleton className="size-10 rounded-md" key={item} />
