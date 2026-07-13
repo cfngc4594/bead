@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "bead",
@@ -26,6 +25,7 @@
     "apps/client": {
       "name": "@bead/client",
       "dependencies": {
+        "@bead/pet": "workspace:*",
         "@bead/ui": "workspace:*",
         "@capacitor-community/media": "^9.1.0",
         "@capacitor/android": "^8.4.0",
@@ -94,6 +94,13 @@
         "tailwindcss": "^4",
         "typescript": "^5",
         "vite": "^7.3.0",
+      },
+    },
+    "packages/pet": {
+      "name": "@bead/pet",
+      "version": "0.1.0",
+      "peerDependencies": {
+        "@capacitor/core": ">=8.0.0",
       },
     },
     "packages/ui": {
@@ -197,6 +204,8 @@
     "@bead/api": ["@bead/api@workspace:apps/api"],
 
     "@bead/client": ["@bead/client@workspace:apps/client"],
+
+    "@bead/pet": ["@bead/pet@workspace:packages/pet"],
 
     "@bead/site": ["@bead/site@workspace:apps/site"],
 

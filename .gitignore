@@ -5,6 +5,12 @@
 /apps/api/node_modules/
 /apps/client/node_modules/
 /apps/site/node_modules/
+/packages/pet/node_modules/
+/packages/pet/android/.cxx/
+/packages/pet/android/.gradle/
+/packages/pet/android/.idea/
+/packages/pet/android/build/
+/packages/pet/android/local.properties
 /packages/ui/node_modules/
 /.pnp
 .pnp.*

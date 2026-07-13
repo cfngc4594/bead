@@ -21,12 +21,14 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import { createBeadModelInstances } from "@/features/bead/lib/bead-model-layout";
 import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
+import { usePet } from "@/features/pet/use-pet";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 const CanvasBoard = lazy(
@@ -112,6 +114,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     onUndo: undo,
   });
   const mixedBeadBrush = useMixedBeadBrush({ beads, size });
+  const pet = usePet();
 
   const filteredColors = useMemo(
     () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
@@ -256,6 +259,24 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
 
   const modelPreviewControls = modelPreview.isOpen
     ? {
+        pet: pet.supported
+          ? {
+              canStart: hasBeads,
+              isBusy: pet.isBusy,
+              isRunning: pet.isRunning,
+              onStart: () =>
+                pet.start({
+                  instances: createBeadModelInstances({
+                    beads,
+                    cols: size.cols,
+                    rows: size.rows,
+                  }),
+                  mode: modelPreview.mode,
+                  settings: modelPreview.settings,
+                }),
+              onStop: pet.stop,
+            }
+          : undefined,
         mode: modelPreview.mode,
         onModeChange: changeModelPreviewMode,
         onSettingsChange: modelPreview.setSettings,

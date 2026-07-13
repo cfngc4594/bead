@@ -1,5 +1,7 @@
+import { Button } from "@bead/ui/components/button";
 import { Slider } from "@bead/ui/components/slider";
 import { cn } from "@bead/ui/lib/utils";
+import { LoaderCircle, PawPrint, Square } from "lucide-react";
 import {
   type ModelPreviewMode,
   type ModelPreviewSettings,
@@ -7,6 +9,13 @@ import {
 } from "@/features/bead/lib/model-preview-config";
 
 export type ModelPreviewControlsBinding = {
+  pet?: {
+    canStart: boolean;
+    isBusy: boolean;
+    isRunning: boolean;
+    onStart: () => void;
+    onStop: () => void;
+  };
   mode: ModelPreviewMode;
   settings: ModelPreviewSettings;
   onModeChange: (mode: ModelPreviewMode) => void;
@@ -35,6 +44,7 @@ const beadPreviewColors = [
 
 export function ModelPreviewControls({
   className,
+  pet,
   layout,
   mode,
   settings,
@@ -64,7 +74,7 @@ export function ModelPreviewControls({
             "gap-2",
             layout === "desktop"
               ? "grid grid-cols-3"
-              : "-mx-4 flex snap-x snap-mandatory overflow-x-auto px-4 pb-1",
+              : "grid grid-cols-2 min-[360px]:grid-cols-3",
           )}
         >
           {modelPreviewModes.map((item) => {
@@ -73,10 +83,7 @@ export function ModelPreviewControls({
             return (
               <button
                 aria-pressed={isSelected}
-                className={cn(
-                  "group flex min-w-0 flex-col gap-1.5 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                  layout === "mobile" && "w-20 shrink-0 snap-start",
-                )}
+                className="group flex min-w-0 flex-col gap-1.5 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 key={item.id}
                 onClick={() => onModeChange(item.id)}
                 type="button"
@@ -160,6 +167,55 @@ export function ModelPreviewControls({
           </>
         ) : null}
       </section>
+
+      {pet ? (
+        <section
+          aria-labelledby={`${layout}-pet-heading`}
+          className="space-y-3 border-t pt-5"
+        >
+          <div className="space-y-1">
+            <h2 className="text-sm font-medium" id={`${layout}-pet-heading`}>
+              桌面宠物
+            </h2>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              将当前 3D 效果显示为可拖动的 Android 悬浮宠物。
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              className="min-w-0 flex-1"
+              disabled={!pet.canStart || pet.isBusy}
+              onClick={pet.onStart}
+              size="sm"
+              type="button"
+            >
+              {pet.isBusy ? (
+                <LoaderCircle aria-hidden="true" className="animate-spin" />
+              ) : (
+                <PawPrint aria-hidden="true" />
+              )}
+              {pet.isRunning ? "更新桌宠" : "设为桌宠"}
+            </Button>
+            {pet.isRunning ? (
+              <Button
+                aria-label="停止桌面宠物"
+                disabled={pet.isBusy}
+                onClick={pet.onStop}
+                size="icon-sm"
+                type="button"
+                variant="outline"
+              >
+                <Square aria-hidden="true" />
+              </Button>
+            ) : null}
+          </div>
+          {!pet.canStart ? (
+            <p className="text-xs text-muted-foreground">
+              画布中至少需要一颗豆子。
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
