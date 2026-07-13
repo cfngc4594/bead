@@ -1,5 +1,8 @@
 package com.massbug.pet;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,7 +16,6 @@ import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -24,11 +26,11 @@ import android.view.ViewConfiguration;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+import android.view.animation.DecelerateInterpolator;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -44,9 +46,11 @@ public class PetService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "pet";
     private static final int NOTIFICATION_ID = 4102;
     private static final int PET_SIZE_DP = 176;
-    private static final int EDGE_HANDLE_WIDTH_DP = 32;
-    private static final int EDGE_HANDLE_HEIGHT_DP = 56;
+    private static final int EDGE_HANDLE_WIDTH_DP = 30;
+    private static final int EDGE_HANDLE_HEIGHT_DP = 48;
     private static final int EDGE_SNAP_THRESHOLD_DP = 12;
+    private static final long EDGE_ANIMATION_DURATION_MS = 240;
+    private static final long EDGE_FADE_DURATION_MS = 160;
     private static final double PET_CAMERA_PADDING = 1.22;
 
     private static volatile boolean running = false;
@@ -71,8 +75,10 @@ public class PetService extends Service {
     private FrameLayout overlayView;
     private WindowManager.LayoutParams overlayParams;
     private WebView webView;
-    private TextView edgeHandle;
+    private PetEdgeHandleView edgeHandle;
     private int collapsedSide;
+    private boolean isEdgeAnimating;
+    private ValueAnimator edgeAnimator;
 
     public static boolean isRunning() {
         return running;
@@ -83,7 +89,7 @@ public class PetService extends Service {
         super.onCreate();
         running = true;
         store = new PetStore(this);
-        collapsedSide = store.getCollapsedSide();
+        collapsedSide = 0;
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         createNotificationChannel();
 
@@ -181,23 +187,13 @@ public class PetService extends Service {
         windowManager.addView(overlayView, overlayParams);
         webView.loadUrl("file:///android_asset/public/pet.html");
 
-        if (collapsedSide != 0) {
-            collapseToEdge(collapsedSide);
-        }
     }
 
-    private TextView createEdgeHandle() {
-        TextView handle = new TextView(this);
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.argb(220, 39, 39, 42));
-        background.setCornerRadius(dpToPx(12));
-        handle.setBackground(background);
+    private PetEdgeHandleView createEdgeHandle() {
+        PetEdgeHandleView handle = new PetEdgeHandleView(this);
         handle.setContentDescription("展开桌面宠物");
-        handle.setGravity(Gravity.CENTER);
-        handle.setTextColor(Color.WHITE);
-        handle.setTextSize(28);
         handle.setVisibility(View.GONE);
-        handle.setOnClickListener(ignored -> expandFromEdge());
+        installEdgeHandleGesture(handle);
         return handle;
     }
 
@@ -268,7 +264,7 @@ public class PetService extends Service {
                                 int edge = getDockEdge();
 
                                 if (edge != 0) {
-                                    collapseToEdge(edge);
+                                    collapseToEdge(edge, true);
                                 }
                             } else {
                                 dispatchTap();
@@ -316,37 +312,98 @@ public class PetService extends Service {
         return 0;
     }
 
-    private void collapseToEdge(int side) {
-        if (overlayView == null || webView == null || edgeHandle == null) {
+    private void collapseToEdge(int side, boolean animate) {
+        if (
+            isEdgeAnimating ||
+            overlayView == null ||
+            webView == null ||
+            edgeHandle == null
+        ) {
             return;
         }
 
+        int targetSide = side < 0 ? -1 : 1;
         int petSize = dpToPx(PET_SIZE_DP);
+        int handleHeight = dpToPx(EDGE_HANDLE_HEIGHT_DP);
+        int handleY = overlayParams.y + (petSize - handleHeight) / 2;
+        Rect displayBounds = getSafeDisplayBounds();
+
+        collapsedSide = targetSide;
+
+        if (!animate) {
+            showCollapsedHandle(targetSide, handleY, false);
+            return;
+        }
+
+        int startX = overlayParams.x;
+        int hiddenX = targetSide < 0
+            ? displayBounds.left - petSize
+            : displayBounds.right;
+        isEdgeAnimating = true;
+        edgeAnimator = ValueAnimator.ofFloat(0, 1);
+        edgeAnimator.setDuration(EDGE_ANIMATION_DURATION_MS);
+        edgeAnimator.setInterpolator(new DecelerateInterpolator());
+        edgeAnimator.addUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            overlayParams.x = lerp(startX, hiddenX, progress);
+            overlayParams.alpha = 1 - progress;
+            windowManager.updateViewLayout(overlayView, overlayParams);
+        });
+        edgeAnimator.addListener(
+            new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    overlayParams.alpha = 1;
+                    showCollapsedHandle(targetSide, handleY, true);
+                }
+            }
+        );
+        edgeAnimator.start();
+    }
+
+    private void showCollapsedHandle(int side, int y, boolean fadeIn) {
         int handleWidth = dpToPx(EDGE_HANDLE_WIDTH_DP);
         int handleHeight = dpToPx(EDGE_HANDLE_HEIGHT_DP);
         Rect displayBounds = getSafeDisplayBounds();
-        int handleY = overlayParams.y + (petSize - handleHeight) / 2;
 
-        collapsedSide = side < 0 ? -1 : 1;
-        store.saveCollapsedSide(collapsedSide);
-        webView.setVisibility(View.GONE);
-        edgeHandle.setText(collapsedSide < 0 ? "›" : "‹");
-        edgeHandle.setVisibility(View.VISIBLE);
+        webView.setVisibility(View.INVISIBLE);
+        edgeHandle.setVisibility(View.INVISIBLE);
+        updateHandleAppearance(side);
         overlayParams.width = handleWidth;
         overlayParams.height = handleHeight;
-        overlayParams.x = collapsedSide < 0
+        overlayParams.alpha = 1;
+        overlayParams.x = side < 0
             ? displayBounds.left
             : displayBounds.right - handleWidth;
         overlayParams.y = clamp(
-            handleY,
+            y,
             displayBounds.top,
             displayBounds.bottom - handleHeight
         );
         windowManager.updateViewLayout(overlayView, overlayParams);
+        edgeHandle.setAlpha(fadeIn ? 0 : 1);
+        edgeHandle.setVisibility(View.VISIBLE);
+
+        if (!fadeIn) {
+            isEdgeAnimating = false;
+            return;
+        }
+
+        edgeHandle.animate()
+            .alpha(1)
+            .setDuration(EDGE_FADE_DURATION_MS)
+            .withEndAction(() -> isEdgeAnimating = false)
+            .start();
     }
 
     private void expandFromEdge() {
-        if (collapsedSide == 0 || overlayView == null || webView == null || edgeHandle == null) {
+        if (
+            isEdgeAnimating ||
+            collapsedSide == 0 ||
+            overlayView == null ||
+            webView == null ||
+            edgeHandle == null
+        ) {
             return;
         }
 
@@ -356,20 +413,172 @@ public class PetService extends Service {
         int expandedY = overlayParams.y - (petSize - handleHeight) / 2;
         Rect displayBounds = getSafeDisplayBounds();
         Rect contentBounds = getPetContentBounds(petSize);
-
-        collapsedSide = 0;
-        store.saveCollapsedSide(0);
-        edgeHandle.setVisibility(View.GONE);
-        webView.setVisibility(View.VISIBLE);
-        overlayParams.width = petSize;
-        overlayParams.height = petSize;
-        overlayParams.x = side < 0
+        int hiddenX = side < 0 ? displayBounds.left - petSize : displayBounds.right;
+        int visibleX = side < 0
             ? displayBounds.left - contentBounds.left
             : displayBounds.right - contentBounds.right;
-        overlayParams.y = expandedY;
-        constrainOverlayPosition(displayBounds, contentBounds);
+        int hiddenTranslationX = hiddenX - visibleX;
+
+        isEdgeAnimating = true;
+        edgeHandle.animate()
+            .alpha(0)
+            .setDuration(EDGE_FADE_DURATION_MS)
+            .withEndAction(() -> {
+                edgeHandle.setVisibility(View.INVISIBLE);
+                edgeHandle.setAlpha(1);
+                overlayParams.width = petSize;
+                overlayParams.height = petSize;
+                overlayParams.x = visibleX;
+                overlayParams.y = expandedY;
+                constrainOverlayPosition(displayBounds, contentBounds);
+                overlayParams.alpha = 0;
+                webView.setTranslationX(hiddenTranslationX);
+                windowManager.updateViewLayout(overlayView, overlayParams);
+                overlayView.postOnAnimation(() -> {
+                    webView.setVisibility(View.VISIBLE);
+                    overlayView.postOnAnimation(
+                        () -> animatePetExpansion(hiddenTranslationX)
+                    );
+                });
+            })
+            .start();
+    }
+
+    private void animatePetExpansion(int startTranslationX) {
+        edgeAnimator = ValueAnimator.ofFloat(0, 1);
+        edgeAnimator.setDuration(EDGE_ANIMATION_DURATION_MS);
+        edgeAnimator.setInterpolator(new DecelerateInterpolator());
+        edgeAnimator.addUpdateListener(animation -> {
+            float progress = (float) animation.getAnimatedValue();
+            webView.setTranslationX(startTranslationX * (1 - progress));
+            overlayParams.alpha = progress;
+            windowManager.updateViewLayout(overlayView, overlayParams);
+        });
+        edgeAnimator.addListener(
+            new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    collapsedSide = 0;
+                    overlayParams.alpha = 1;
+                    webView.setTranslationX(0);
+                    edgeHandle.setVisibility(View.GONE);
+                    isEdgeAnimating = false;
+                    store.savePosition(overlayParams.x, overlayParams.y);
+                }
+            }
+        );
+        edgeAnimator.start();
+    }
+
+    private void installEdgeHandleGesture(View handle) {
+        int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+
+        handle.setOnTouchListener(
+            new View.OnTouchListener() {
+                private float downRawX;
+                private float downRawY;
+                private int startX;
+                private int startY;
+                private boolean dragging;
+
+                @Override
+                public boolean onTouch(View ignored, MotionEvent event) {
+                    if (isEdgeAnimating) {
+                        return true;
+                    }
+
+                    switch (event.getActionMasked()) {
+                        case MotionEvent.ACTION_DOWN:
+                            downRawX = event.getRawX();
+                            downRawY = event.getRawY();
+                            startX = overlayParams.x;
+                            startY = overlayParams.y;
+                            dragging = false;
+                            return true;
+                        case MotionEvent.ACTION_MOVE:
+                            int deltaX = Math.round(event.getRawX() - downRawX);
+                            int deltaY = Math.round(event.getRawY() - downRawY);
+
+                            if (!dragging && Math.hypot(deltaX, deltaY) >= touchSlop) {
+                                dragging = true;
+                            }
+
+                            if (dragging) {
+                                updateHandlePosition(startX + deltaX, startY + deltaY);
+                            }
+                            return true;
+                        case MotionEvent.ACTION_UP:
+                            if (dragging) {
+                                snapHandleToNearestEdge();
+                            } else {
+                                expandFromEdge();
+                            }
+                            return true;
+                        case MotionEvent.ACTION_CANCEL:
+                            if (dragging) {
+                                snapHandleToNearestEdge();
+                            }
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            }
+        );
+    }
+
+    private void updateHandlePosition(int x, int y) {
+        Rect displayBounds = getSafeDisplayBounds();
+        overlayParams.x = clamp(
+            x,
+            displayBounds.left,
+            displayBounds.right - overlayParams.width
+        );
+        overlayParams.y = clamp(
+            y,
+            displayBounds.top,
+            displayBounds.bottom - overlayParams.height
+        );
+        updateHandleAppearance(getNearestEdge(displayBounds));
         windowManager.updateViewLayout(overlayView, overlayParams);
-        store.savePosition(overlayParams.x, overlayParams.y);
+    }
+
+    private void snapHandleToNearestEdge() {
+        Rect displayBounds = getSafeDisplayBounds();
+        int side = getNearestEdge(displayBounds);
+        int startX = overlayParams.x;
+        int targetX = side < 0
+            ? displayBounds.left
+            : displayBounds.right - overlayParams.width;
+
+        collapsedSide = side;
+        updateHandleAppearance(side);
+        isEdgeAnimating = true;
+        edgeAnimator = ValueAnimator.ofInt(startX, targetX);
+        edgeAnimator.setDuration(160);
+        edgeAnimator.setInterpolator(new DecelerateInterpolator());
+        edgeAnimator.addUpdateListener(animation -> {
+            overlayParams.x = (int) animation.getAnimatedValue();
+            windowManager.updateViewLayout(overlayView, overlayParams);
+        });
+        edgeAnimator.addListener(
+            new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    isEdgeAnimating = false;
+                }
+            }
+        );
+        edgeAnimator.start();
+    }
+
+    private int getNearestEdge(Rect displayBounds) {
+        int centerX = overlayParams.x + overlayParams.width / 2;
+        return centerX < displayBounds.centerX() ? -1 : 1;
+    }
+
+    private void updateHandleAppearance(int side) {
+        edgeHandle.setSide(side);
     }
 
     private void constrainOverlayPosition(Rect displayBounds, Rect contentBounds) {
@@ -481,6 +690,16 @@ public class PetService extends Service {
     }
 
     private void removeOverlay() {
+        if (edgeAnimator != null) {
+            edgeAnimator.removeAllListeners();
+            edgeAnimator.cancel();
+            edgeAnimator = null;
+        }
+
+        if (edgeHandle != null) {
+            edgeHandle.animate().cancel();
+        }
+
         if (overlayView != null) {
             windowManager.removeView(overlayView);
             overlayView = null;
@@ -492,6 +711,8 @@ public class PetService extends Service {
             webView.destroy();
             webView = null;
         }
+
+        edgeHandle = null;
     }
 
     private Notification createNotification() {
@@ -555,5 +776,9 @@ public class PetService extends Service {
 
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private int lerp(int start, int end, float progress) {
+        return Math.round(start + (end - start) * progress);
     }
 }
