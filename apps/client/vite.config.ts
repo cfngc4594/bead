@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   root: __dirname,
+  base: "./",
   envDir: path.resolve(__dirname, "../.."),
   plugins: [
     tanstackRouter({
