@@ -140,23 +140,29 @@ function MobileEditorPanelSkeleton() {
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
       <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
 
-      <div className="min-w-0 shrink-0 border-b">
-        <div className="relative min-w-0 overflow-hidden">
-          <div className="flex w-max flex-row gap-1 p-2">
-            {letterSkeletons.map((letter) => (
-              <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
+      <div className="flex h-[200px] min-h-0 flex-col">
+        <div className="relative h-12 min-w-0 shrink-0">
+          <div className="relative min-w-0 overflow-hidden">
+            <div className="flex w-max flex-row gap-1 p-2">
+              {letterSkeletons.map((letter) => (
+                <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
+              ))}
+            </div>
+          </div>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+          />
+        </div>
+
+        <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+          <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
+            {mobileColorSkeletons.map((item) => (
+              <Skeleton className="size-10 rounded-md" key={item} />
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </div>
-
-      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-        <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
-          {mobileColorSkeletons.map((item) => (
-            <Skeleton className="size-10 rounded-md" key={item} />
-          ))}
-        </div>
-      </ScrollArea>
     </section>
   );
 }

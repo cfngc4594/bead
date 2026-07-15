@@ -104,35 +104,41 @@ export function MobileEditorPanel({
       </div>
 
       {isExpanded ? (
-        isModelPreviewOpen ? (
-          <ScrollArea className="h-[calc(48px+40px*3+8px*2+8px*2)] min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-            <ModelPreviewControls
-              {...modelPreviewControls}
-              className="box-border w-screen max-w-[100vw] min-w-0 overflow-hidden p-4"
-              layout="mobile"
-            />
-          </ScrollArea>
-        ) : (
-          <>
-            <div className="min-w-0 shrink-0 border-b">
-              <ColorLetterIndex
-                letters={letters}
-                onSelectLetter={onSelectLetter}
-                orientation="horizontal"
-                selectedLetter={selectedLetter}
-              />
-            </div>
-
-            <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-              <ColorGrid
-                colors={colors}
+        <div className="h-[200px] min-h-0">
+          {isModelPreviewOpen ? (
+            <ScrollArea className="h-full min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+              <ModelPreviewControls
+                {...modelPreviewControls}
+                className="box-border w-screen max-w-[100vw] min-w-0 overflow-hidden p-4"
                 layout="mobile"
-                onSelectColor={onSelectColor}
-                selectedColor={selectedColor}
               />
             </ScrollArea>
-          </>
-        )
+          ) : (
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="relative h-12 min-w-0 shrink-0">
+                <ColorLetterIndex
+                  letters={letters}
+                  onSelectLetter={onSelectLetter}
+                  orientation="horizontal"
+                  selectedLetter={selectedLetter}
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+                />
+              </div>
+
+              <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+                <ColorGrid
+                  colors={colors}
+                  layout="mobile"
+                  onSelectColor={onSelectColor}
+                  selectedColor={selectedColor}
+                />
+              </ScrollArea>
+            </div>
+          )}
+        </div>
       ) : null}
     </section>
   );
