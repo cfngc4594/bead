@@ -1,7 +1,7 @@
 import { Button } from "@bead/ui/components/button";
 import { Slider } from "@bead/ui/components/slider";
 import { cn } from "@bead/ui/lib/utils";
-import { Check, LoaderCircle, PawPrint, Square } from "lucide-react";
+import { Check, CircleDot, LoaderCircle, PawPrint, Square } from "lucide-react";
 import {
   type ModelPreviewMode,
   type ModelPreviewSettings,
@@ -26,21 +26,6 @@ type ModelPreviewControlsProps = ModelPreviewControlsBinding & {
   className?: string;
   layout: "desktop" | "mobile";
 };
-
-const beadPreviewColors = [
-  "#ef4444",
-  "#f59e0b",
-  "#facc15",
-  "#22c55e",
-  "#38bdf8",
-  "#6366f1",
-  "#a855f7",
-  "#ec4899",
-  "#f8fafc",
-  "#fb923c",
-  "#14b8a6",
-  "#8b5cf6",
-];
 
 export function ModelPreviewControls({
   className,
@@ -231,16 +216,8 @@ export function ModelPreviewControls({
 
 function BeadMaterialPreview() {
   return (
-    <div className="grid size-full grid-cols-3 place-items-center gap-0.5 bg-zinc-100 p-1 dark:bg-zinc-800">
-      {beadPreviewColors.slice(0, 9).map((color) => (
-        <span
-          className="grid aspect-square w-full place-items-center rounded-full shadow-xs"
-          key={color}
-          style={{ backgroundColor: color }}
-        >
-          <span className="size-[35%] rounded-full bg-zinc-100 dark:bg-zinc-800" />
-        </span>
-      ))}
+    <div className="grid size-full place-items-center bg-zinc-100 text-zinc-500">
+      <CircleDot aria-hidden="true" className="size-7" strokeWidth={1.5} />
     </div>
   );
 }
