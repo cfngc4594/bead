@@ -1,7 +1,7 @@
 import { Button } from "@bead/ui/components/button";
 import { Slider } from "@bead/ui/components/slider";
 import { cn } from "@bead/ui/lib/utils";
-import { LoaderCircle, PawPrint, Square } from "lucide-react";
+import { Check, LoaderCircle, PawPrint, Square } from "lucide-react";
 import {
   type ModelPreviewMode,
   type ModelPreviewSettings,
@@ -64,38 +64,34 @@ export function ModelPreviewControls({
     <div className={cn("max-w-full space-y-6", className)}>
       <section aria-labelledby={`${layout}-press-method-heading`}>
         <h2
-          className="mb-3 text-sm font-medium"
+          className="mb-2.5 text-sm font-medium"
           id={`${layout}-press-method-heading`}
         >
           烫法
         </h2>
-        <div
-          className={cn(
-            "min-w-0 gap-2 overflow-hidden",
-            layout === "desktop" ? "grid grid-cols-3" : "grid grid-cols-2",
-          )}
-        >
+        <div className="grid min-w-0 grid-cols-[repeat(auto-fit,56px)] justify-start gap-2">
           {modelPreviewModes.map((item) => {
             const isSelected = item.id === mode;
 
             return (
               <button
                 aria-pressed={isSelected}
-                className="group flex min-w-0 flex-col gap-1.5 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                className="group flex w-fit min-w-0 justify-self-center flex-col items-center gap-1 rounded-md py-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 key={item.id}
                 onClick={() => onModeChange(item.id)}
                 type="button"
               >
                 <div
                   className={cn(
-                    "aspect-square w-full overflow-hidden rounded-lg border bg-muted transition-[border-color,box-shadow] group-hover:border-foreground/30",
-                    isSelected && "border-primary ring-2 ring-primary/20",
+                    "relative size-14 shrink-0 overflow-hidden rounded-md border bg-muted transition-[border-color,box-shadow] group-hover:border-foreground/30",
+                    isSelected &&
+                      "border-primary ring-2 ring-primary/20 group-hover:border-primary",
                   )}
                 >
                   {"previewUrl" in item ? (
                     <img
                       alt=""
-                      className="size-full object-cover grayscale brightness-110 contrast-75 transition-transform group-hover:scale-105"
+                      className="size-full object-cover grayscale brightness-110 contrast-75"
                       decoding="async"
                       height={128}
                       loading="lazy"
@@ -105,10 +101,15 @@ export function ModelPreviewControls({
                   ) : (
                     <BeadMaterialPreview />
                   )}
+                  {isSelected ? (
+                    <span className="absolute top-0.5 right-0.5 grid size-3.5 place-items-center rounded-full bg-primary text-primary-foreground shadow-xs">
+                      <Check aria-hidden="true" className="size-2.5" />
+                    </span>
+                  ) : null}
                 </div>
                 <span
                   className={cn(
-                    "w-full truncate px-1 text-center text-xs text-muted-foreground",
+                    "w-full truncate text-xs text-muted-foreground",
                     isSelected && "font-medium text-primary",
                   )}
                 >
@@ -230,8 +231,8 @@ export function ModelPreviewControls({
 
 function BeadMaterialPreview() {
   return (
-    <div className="grid size-full grid-cols-4 place-items-center gap-1 bg-zinc-100 p-2 dark:bg-zinc-800">
-      {beadPreviewColors.map((color) => (
+    <div className="grid size-full grid-cols-3 place-items-center gap-0.5 bg-zinc-100 p-1 dark:bg-zinc-800">
+      {beadPreviewColors.slice(0, 9).map((color) => (
         <span
           className="grid aspect-square w-full place-items-center rounded-full shadow-xs"
           key={color}
