@@ -2,6 +2,8 @@ import { useThree } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
+import { modelPreviewSpecularIntensity } from "@/features/bead/lib/model-preview-config";
+import { applyColorPreservingModelPreviewShading } from "@/features/bead/lib/model-preview-material";
 import { createPressedSurfaceGeometry } from "@/features/bead/lib/pressed-model-geometry";
 
 export type NormalTextureStatus = "loading" | "ready" | "error";
@@ -39,14 +41,15 @@ export function PressedSurfaceMesh({
     () => new THREE.BoxGeometry(1, 1, pressedModelDepth),
     [],
   );
-  const edgeMaterial = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#ffffff",
-        metalness: 0,
-      }),
-    [],
-  );
+  const edgeMaterial = useMemo(() => {
+    const nextMaterial = new THREE.MeshPhysicalMaterial({
+      color: "#ffffff",
+      metalness: 0,
+      specularIntensity: modelPreviewSpecularIntensity,
+    });
+    nextMaterial.onBeforeCompile = applyColorPreservingModelPreviewShading;
+    return nextMaterial;
+  }, []);
   const normalScaleVector = useMemo(
     () => new THREE.Vector2(normalScale, normalScale),
     [normalScale],
@@ -168,13 +171,15 @@ export function PressedSurfaceMesh({
         geometry={surfaceGeometry}
         position={[0, 0, pressedModelDepth / 2 + 0.002]}
       >
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           color="#ffffff"
           key={normalMap?.uuid ?? normalMapUrl}
           metalness={0}
           normalMap={normalMap}
           normalScale={normalScaleVector}
+          onBeforeCompile={applyColorPreservingModelPreviewShading}
           roughness={roughness}
+          specularIntensity={modelPreviewSpecularIntensity}
           vertexColors
         />
       </mesh>

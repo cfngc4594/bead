@@ -1,6 +1,7 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { type RefObject, useLayoutEffect, useMemo } from "react";
+import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { BeadInstancedMesh } from "@/features/bead/components/bead-instanced-mesh";
 import {
@@ -31,6 +32,12 @@ export type BeadModelSceneProps = {
 
 const cameraFov = 32;
 const maxZoomFactor = 8;
+const studioLights = {
+  ambient: 1.65,
+  back: 0.28,
+  fill: 0.2,
+  key: 0.7,
+} as const;
 
 export function BeadModelScene({
   rows,
@@ -68,20 +75,27 @@ export function BeadModelScene({
         className="h-full w-full"
         dpr={[1, 2]}
         frameloop="demand"
-        gl={{ antialias: true, alpha: true }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          toneMapping: THREE.NoToneMapping,
+        }}
       >
-        <hemisphereLight
+        <ambientLight
           color="#ffffff"
-          groundColor="#d4d4d8"
-          intensity={0.8 * settings.lightIntensity}
+          intensity={studioLights.ambient * settings.lightIntensity}
         />
         <directionalLight
-          intensity={1.6 * settings.lightIntensity}
+          intensity={studioLights.key * settings.lightIntensity}
           position={[8, 10, 14]}
         />
         <directionalLight
-          intensity={0.35 * settings.lightIntensity}
+          intensity={studioLights.fill * settings.lightIntensity}
           position={[-10, -6, 8]}
+        />
+        <directionalLight
+          intensity={studioLights.back * settings.lightIntensity}
+          position={[-6, 8, -12]}
         />
         {pressedConfig ? (
           <PressedSurfaceMesh

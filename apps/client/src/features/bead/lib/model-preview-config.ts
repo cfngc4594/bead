@@ -48,6 +48,8 @@ export type ModelPreviewSettings = {
   textureStrength: number;
 };
 
+export const modelPreviewSpecularIntensity = 0.2;
+
 export const defaultModelPreviewSettings: ModelPreviewSettings = {
   lightIntensity: 1,
   roughness: 0.58,

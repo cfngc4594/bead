@@ -3,6 +3,8 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { createBeadGeometry } from "@/features/bead/lib/bead-model-geometry";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
+import { modelPreviewSpecularIntensity } from "@/features/bead/lib/model-preview-config";
+import { applyColorPreservingModelPreviewShading } from "@/features/bead/lib/model-preview-material";
 
 export function BeadInstancedMesh({
   instances,
@@ -14,14 +16,15 @@ export function BeadInstancedMesh({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
   const geometry = useMemo(() => createBeadGeometry(), []);
-  const material = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#ffffff",
-        metalness: 0,
-      }),
-    [],
-  );
+  const material = useMemo(() => {
+    const nextMaterial = new THREE.MeshPhysicalMaterial({
+      color: "#ffffff",
+      metalness: 0,
+      specularIntensity: modelPreviewSpecularIntensity,
+    });
+    nextMaterial.onBeforeCompile = applyColorPreservingModelPreviewShading;
+    return nextMaterial;
+  }, []);
   const transform = useMemo(() => new THREE.Object3D(), []);
   const color = useMemo(() => new THREE.Color(), []);
 

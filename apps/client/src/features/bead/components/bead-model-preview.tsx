@@ -59,7 +59,7 @@ export function BeadModelPreview({
     <section
       aria-label="3D 预览"
       className={cn(
-        "relative h-full min-h-0 w-full touch-none overflow-hidden overscroll-none bg-muted/30",
+        "relative h-full min-h-0 w-full touch-none overflow-hidden overscroll-none bg-[#f3f4f4] dark:bg-muted/30",
         className,
       )}
     >
