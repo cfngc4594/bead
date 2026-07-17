@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
 import { modelPreviewSpecularIntensity } from "@/features/bead/lib/model-preview-config";
-import { applyColorPreservingModelPreviewShading } from "@/features/bead/lib/model-preview-material";
+import { applyPressedModelPreviewShading } from "@/features/bead/lib/model-preview-material";
 import { createPressedSurfaceGeometry } from "@/features/bead/lib/pressed-model-geometry";
 
 export type NormalTextureStatus = "loading" | "ready" | "error";
@@ -47,7 +47,7 @@ export function PressedSurfaceMesh({
       metalness: 0,
       specularIntensity: modelPreviewSpecularIntensity,
     });
-    nextMaterial.onBeforeCompile = applyColorPreservingModelPreviewShading;
+    nextMaterial.onBeforeCompile = applyPressedModelPreviewShading;
     return nextMaterial;
   }, []);
   const normalScaleVector = useMemo(
@@ -177,7 +177,7 @@ export function PressedSurfaceMesh({
           metalness={0}
           normalMap={normalMap}
           normalScale={normalScaleVector}
-          onBeforeCompile={applyColorPreservingModelPreviewShading}
+          onBeforeCompile={applyPressedModelPreviewShading}
           roughness={roughness}
           specularIntensity={modelPreviewSpecularIntensity}
           vertexColors

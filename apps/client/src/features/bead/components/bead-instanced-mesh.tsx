@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { createBeadGeometry } from "@/features/bead/lib/bead-model-geometry";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
 import { modelPreviewSpecularIntensity } from "@/features/bead/lib/model-preview-config";
-import { applyColorPreservingModelPreviewShading } from "@/features/bead/lib/model-preview-material";
+import { applyBeadModelPreviewShading } from "@/features/bead/lib/model-preview-material";
 
 export function BeadInstancedMesh({
   instances,
@@ -22,7 +22,7 @@ export function BeadInstancedMesh({
       metalness: 0,
       specularIntensity: modelPreviewSpecularIntensity,
     });
-    nextMaterial.onBeforeCompile = applyColorPreservingModelPreviewShading;
+    nextMaterial.onBeforeCompile = applyBeadModelPreviewShading;
     return nextMaterial;
   }, []);
   const transform = useMemo(() => new THREE.Object3D(), []);
