@@ -29,5 +29,5 @@ function HomeRedirect() {
     );
   }
 
-  return <main className="min-h-svh bg-background" />;
+  return <main className="min-h-full bg-background" />;
 }

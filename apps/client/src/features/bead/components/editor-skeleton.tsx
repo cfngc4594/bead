@@ -31,7 +31,7 @@ const mobileColorSkeletons = Array.from(
 
 export function EditorSkeleton() {
   return (
-    <main className="grid h-svh min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
+    <main className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbarSkeleton />
 
@@ -40,8 +40,8 @@ export function EditorSkeleton() {
         </div>
       </section>
 
-      <DesktopColorSidebarSkeleton />
-      <MobileColorPanelSkeleton />
+      <DesktopEditorSidebarSkeleton />
+      <MobileEditorPanelSkeleton />
     </main>
   );
 }
@@ -109,7 +109,7 @@ function ToolbarSeparatorSkeleton() {
   return <Skeleton className="mx-1 h-6 w-px shrink-0 rounded-none" />;
 }
 
-function DesktopColorSidebarSkeleton() {
+function DesktopEditorSidebarSkeleton() {
   return (
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
       <CurrentColorSkeleton className="h-16 border-b px-4" />
@@ -135,28 +135,34 @@ function DesktopColorSidebarSkeleton() {
   );
 }
 
-function MobileColorPanelSkeleton() {
+function MobileEditorPanelSkeleton() {
   return (
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
       <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
 
-      <div className="min-w-0 shrink-0 border-b">
-        <div className="relative min-w-0 overflow-hidden">
-          <div className="flex w-max flex-row gap-1 p-2">
-            {letterSkeletons.map((letter) => (
-              <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
+      <div className="flex h-[200px] min-h-0 flex-col">
+        <div className="relative h-12 min-w-0 shrink-0">
+          <div className="relative min-w-0 overflow-hidden">
+            <div className="flex w-max flex-row gap-1 p-2">
+              {letterSkeletons.map((letter) => (
+                <Skeleton className="size-8 shrink-0 rounded-lg" key={letter} />
+              ))}
+            </div>
+          </div>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+          />
+        </div>
+
+        <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+          <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
+            {mobileColorSkeletons.map((item) => (
+              <Skeleton className="size-10 rounded-md" key={item} />
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </div>
-
-      <ScrollArea className="h-[calc(40px*3+8px*2+8px*2)] overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-        <div className="grid min-w-0 grid-cols-[repeat(auto-fill,40px)] justify-center gap-2 p-2">
-          {mobileColorSkeletons.map((item) => (
-            <Skeleton className="size-10 rounded-md" key={item} />
-          ))}
-        </div>
-      </ScrollArea>
     </section>
   );
 }

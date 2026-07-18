@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   root: __dirname,
+  base: "./",
   envDir: path.resolve(__dirname, "../.."),
   plugins: [
     tanstackRouter({
@@ -26,5 +27,11 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     outDir: "out",
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        app: path.resolve(__dirname, "index.html"),
+        pet: path.resolve(__dirname, "pet.html"),
+      },
+    },
   },
 });

@@ -1,12 +1,3 @@
-import { Button } from "@bead/ui/components/button";
-import {
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@bead/ui/components/dropdown-menu";
 import {
   Empty,
   EmptyContent,
@@ -15,19 +6,17 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { Spinner } from "@bead/ui/components/spinner";
 import { cn } from "@bead/ui/lib/utils";
-import {
-  ChevronDown,
-  CircleDot,
-  Cuboid,
-  type LucideIcon,
-  Sparkles,
-} from "lucide-react";
-import { lazy, Suspense, useState } from "react";
-import type { BeadPreviewMode } from "@/features/bead/lib/bead-model-preview-modes";
+import { CircleAlert, CircleDot } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import type { NormalTextureStatus } from "@/features/bead/components/pressed-surface-mesh";
 import { preloadBeadModelScene } from "@/features/bead/lib/bead-model-scene-loader";
+import type {
+  ModelPreviewMode,
+  ModelPreviewSettings,
+} from "@/features/bead/lib/model-preview-config";
 import type { BeadFill } from "@/features/bead/types";
-import { NativeBackDropdownMenu } from "@/features/native/native-back-overlays";
 
 const BeadModelScene = lazy(() =>
   preloadBeadModelScene().then((module) => ({
@@ -41,35 +30,9 @@ type BeadModelPreviewProps = {
   cols: number;
   resetViewSignal: number;
   beads: readonly (BeadFill | null)[];
+  mode: ModelPreviewMode;
+  settings: ModelPreviewSettings;
 };
-
-type PreviewOption = {
-  mode: BeadPreviewMode;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-};
-
-const previewOptions: PreviewOption[] = [
-  {
-    mode: "beads",
-    label: "摆豆",
-    description: "保留豆孔间隔",
-    icon: CircleDot,
-  },
-  {
-    mode: "standard",
-    label: "常规烫",
-    description: "平整哑光表面",
-    icon: Cuboid,
-  },
-  {
-    mode: "glossy",
-    label: "亮面烫",
-    description: "平滑亮面反光",
-    icon: Sparkles,
-  },
-];
 
 export function BeadModelPreview({
   className,
@@ -77,120 +40,96 @@ export function BeadModelPreview({
   cols,
   resetViewSignal,
   beads,
+  mode,
+  settings,
 }: BeadModelPreviewProps) {
-  const [previewMode, setPreviewMode] = useState<BeadPreviewMode>("standard");
   const hasBeads = beads.some(Boolean);
+  const [textureStatus, setTextureStatus] =
+    useState<NormalTextureStatus>("ready");
+  const handleTextureStatusChange = useCallback(
+    (status: NormalTextureStatus) => setTextureStatus(status),
+    [],
+  );
+
+  useEffect(() => {
+    setTextureStatus(mode === "beads" ? "ready" : "loading");
+  }, [mode]);
 
   return (
     <section
       aria-label="3D 预览"
       className={cn(
-        "relative h-full min-h-0 w-full touch-none overflow-hidden overscroll-none bg-muted/30",
+        "relative h-full min-h-0 w-full touch-none overflow-hidden overscroll-none bg-[#f3f4f4] dark:bg-muted/30",
         className,
       )}
     >
-      <PreviewOptionsPanel
-        previewMode={previewMode}
-        onSelectPreviewMode={setPreviewMode}
-      />
       {hasBeads ? (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ModelPreviewStatus label="正在准备 3D 预览" />}>
           <BeadModelScene
             beads={beads}
             cols={cols}
-            previewMode={previewMode}
+            mode={mode}
+            onTextureStatusChange={handleTextureStatusChange}
             resetViewSignal={resetViewSignal}
             rows={rows}
+            settings={settings}
           />
         </Suspense>
       ) : (
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Cuboid />
+              <CircleDot />
             </EmptyMedia>
             <EmptyTitle>画布还是空的</EmptyTitle>
           </EmptyHeader>
           <EmptyContent>
             <EmptyDescription>
-              铺好颜色后，这里会显示烫平后的薄片模型。
+              铺好颜色后，这里会显示所选的 3D 烫豆效果。
             </EmptyDescription>
           </EmptyContent>
         </Empty>
       )}
+
+      {hasBeads && mode !== "beads" && textureStatus === "loading" ? (
+        <ModelPreviewStatus compact label="正在加载表面纹理" />
+      ) : null}
+      {hasBeads && mode !== "beads" && textureStatus === "error" ? (
+        <ModelPreviewStatus
+          compact
+          error
+          label="纹理加载失败，正使用基础材质"
+        />
+      ) : null}
     </section>
   );
 }
 
-function PreviewOptionsPanel({
-  previewMode,
-  onSelectPreviewMode,
+function ModelPreviewStatus({
+  compact = false,
+  error = false,
+  label,
 }: {
-  previewMode: BeadPreviewMode;
-  onSelectPreviewMode: (mode: BeadPreviewMode) => void;
+  compact?: boolean;
+  error?: boolean;
+  label: string;
 }) {
-  const activeOption =
-    previewOptions.find((option) => option.mode === previewMode) ??
-    previewOptions[0];
-  const ActiveIcon = activeOption.icon;
-
   return (
-    <div className="absolute right-3 top-3 z-10 text-sm md:right-4 md:top-4">
-      <NativeBackDropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className="ml-auto flex max-w-full justify-between gap-2 border bg-background/95 shadow-sm backdrop-blur data-[state=open]:[&_.preview-chevron]:rotate-180"
-            type="button"
-            variant="outline"
-          >
-            <ActiveIcon />
-            <span className="min-w-0 flex-1 truncate text-left">
-              {activeOption.label}
-            </span>
-            <ChevronDown className="preview-chevron transition-transform" />
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent
-          align="end"
-          className="w-80 max-w-[calc(100vw-1.5rem)] bg-background/95 p-1.5 backdrop-blur"
-        >
-          <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-foreground">
-            <Cuboid className="size-4 shrink-0" />
-            <span className="truncate">预览选项</span>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup
-            value={previewMode}
-            onValueChange={(mode) =>
-              onSelectPreviewMode(mode as BeadPreviewMode)
-            }
-          >
-            {previewOptions.map((option) => (
-              <PreviewOptionItem key={option.mode} option={option} />
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </NativeBackDropdownMenu>
-    </div>
-  );
-}
-
-function PreviewOptionItem({ option }: { option: PreviewOption }) {
-  const Icon = option.icon;
-
-  return (
-    <DropdownMenuRadioItem
-      className="min-h-12 items-center gap-3 px-2.5 py-2 pr-8"
-      value={option.mode}
+    <div
+      aria-live="polite"
+      className={cn(
+        "pointer-events-none absolute inset-0 z-5 grid place-items-center",
+        compact && "inset-x-0 top-auto bottom-4",
+      )}
     >
-      <Icon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="grid min-w-0 gap-0.5">
-        <span className="truncate font-medium">{option.label}</span>
-        <span className="truncate text-xs text-muted-foreground">
-          {option.description}
-        </span>
-      </span>
-    </DropdownMenuRadioItem>
+      <div className="flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm">
+        {error ? (
+          <CircleAlert aria-hidden="true" className="size-3.5" />
+        ) : (
+          <Spinner className="size-3.5" />
+        )}
+        <span>{label}</span>
+      </div>
+    </div>
   );
 }

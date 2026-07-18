@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pet_notification_channel">桌面宠物</string>
+    <string name="pet_notification_channel_description">保持桌面宠物在其他应用上方显示</string>
+    <string name="pet_notification_title">桌面宠物正在运行</string>
+    <string name="pet_notification_text">轻触返回 Bead，或停止桌面宠物</string>
+    <string name="pet_notification_stop">停止</string>
+</resources>

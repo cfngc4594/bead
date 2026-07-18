@@ -1,6 +1,5 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -34,6 +33,7 @@ import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
 import type { CanvasTool } from "@/features/bead/types";
 import { NativeBackSheet } from "@/features/native/native-back-overlays";
+import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
 
 type EditorToolbarProps = {
   tool: CanvasTool;
@@ -268,10 +268,7 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
         </TooltipTrigger>
         <TooltipContent className="hidden md:block">更多工具</TooltipContent>
       </Tooltip>
-      <SheetContent
-        className="max-h-[80vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
-        side="bottom"
-      >
+      <NativeBottomSheetContent className="max-h-[80vh] rounded-t-xl">
         <SheetHeader className="pb-0">
           <SheetTitle>更多工具</SheetTitle>
         </SheetHeader>
@@ -289,7 +286,7 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
             />
           ))}
         </div>
-      </SheetContent>
+      </NativeBottomSheetContent>
     </NativeBackSheet>
   );
 }

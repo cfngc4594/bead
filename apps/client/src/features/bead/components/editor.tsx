@@ -12,20 +12,23 @@ import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import type { CanvasBoardProps } from "@/features/bead/components/canvas";
-import { DesktopColorSidebar } from "@/features/bead/components/desktop-color-sidebar";
+import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
-import { MobileColorPanel } from "@/features/bead/components/mobile-color-panel";
+import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import { createBeadModelInstances } from "@/features/bead/lib/bead-model-layout";
+import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
+import { usePet } from "@/features/pet/use-pet";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 const CanvasBoard = lazy(
@@ -111,6 +114,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     onUndo: undo,
   });
   const mixedBeadBrush = useMixedBeadBrush({ beads, size });
+  const pet = usePet();
 
   const filteredColors = useMemo(
     () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
@@ -224,6 +228,14 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setShowGuideLines((value) => !value);
   }
 
+  function changeModelPreviewMode(mode: ModelPreviewMode) {
+    modelPreview.setMode(mode);
+    trackEvent("model_preview_mode_changed", {
+      ...getCanvasProperties(),
+      mode,
+    });
+  }
+
   function getCanvasProperties() {
     return {
       cols: size.cols,
@@ -245,8 +257,35 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     });
   }
 
+  const modelPreviewControls = modelPreview.isOpen
+    ? {
+        pet: pet.supported
+          ? {
+              canStart: hasBeads,
+              isBusy: pet.isBusy,
+              isRunning: pet.isRunning,
+              onStart: () =>
+                pet.start({
+                  instances: createBeadModelInstances({
+                    beads,
+                    cols: size.cols,
+                    rows: size.rows,
+                  }),
+                  mode: modelPreview.mode,
+                  settings: modelPreview.settings,
+                }),
+              onStop: pet.stop,
+            }
+          : undefined,
+        mode: modelPreview.mode,
+        onModeChange: changeModelPreviewMode,
+        onSettingsChange: modelPreview.setSettings,
+        settings: modelPreview.settings,
+      }
+    : null;
+
   return (
-    <main className="grid h-svh min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
+    <main className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbar
           canClear={hasBeads}
@@ -304,8 +343,10 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
             <BeadModelPreview
               beads={beads}
               cols={size.cols}
+              mode={modelPreview.mode}
               resetViewSignal={resetViewSignal}
               rows={size.rows}
+              settings={modelPreview.settings}
             />
           ) : (
             <Suspense fallback={<CanvasBoardSkeleton />}>
@@ -330,17 +371,19 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         </div>
       </section>
 
-      <DesktopColorSidebar
+      <DesktopEditorSidebar
         colors={filteredColors}
         letters={colorLetters}
+        modelPreviewControls={modelPreviewControls}
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
       />
-      <MobileColorPanel
+      <MobileEditorPanel
         colors={filteredColors}
         letters={colorLetters}
+        modelPreviewControls={modelPreviewControls}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }
