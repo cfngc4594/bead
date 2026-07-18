@@ -7,6 +7,13 @@ import { NativeSafeAreaViewport } from "@/features/native/native-safe-area";
 import { initAnalytics } from "@/lib/analytics";
 import "@/styles/globals.css";
 
+const TOASTER_SAFE_AREA_OFFSET = {
+  top: "calc(1rem + env(safe-area-inset-top, 0px))",
+  right: "calc(1rem + env(safe-area-inset-right, 0px))",
+  bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
+  left: "calc(1rem + env(safe-area-inset-left, 0px))",
+};
+
 export const Route = createRootRoute({
   component: RootComponent,
 });
@@ -24,7 +31,11 @@ function RootComponent() {
           <Outlet />
         </NativeSafeAreaViewport>
       </TooltipProvider>
-      <Toaster position="top-right" />
+      <Toaster
+        mobileOffset={TOASTER_SAFE_AREA_OFFSET}
+        offset={TOASTER_SAFE_AREA_OFFSET}
+        position="top-right"
+      />
     </>
   );
 }
