@@ -1,6 +1,5 @@
 import { Button } from "@bead/ui/components/button";
 import {
-  SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
@@ -14,6 +13,7 @@ import {
   shareImageBlob,
 } from "@/features/bead/lib/download-file";
 import { NativeBackSheet } from "@/features/native/native-back-overlays";
+import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
 import { trackEvent } from "@/lib/analytics";
 
 type ExportImageSheetProps = {
@@ -96,10 +96,7 @@ export function ExportImageSheet({
 
   return (
     <NativeBackSheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        className="max-h-[88vh] rounded-t-xl pb-[max(1rem,env(safe-area-inset-bottom))]"
-        side="bottom"
-      >
+      <NativeBottomSheetContent className="max-h-[88vh] rounded-t-xl">
         <SheetHeader className="pb-0">
           <SheetTitle>导出图片</SheetTitle>
           <SheetDescription>{filename}</SheetDescription>
@@ -159,7 +156,7 @@ export function ExportImageSheet({
             分享图片
           </Button>
         </SheetFooter>
-      </SheetContent>
+      </NativeBottomSheetContent>
     </NativeBackSheet>
   );
 }

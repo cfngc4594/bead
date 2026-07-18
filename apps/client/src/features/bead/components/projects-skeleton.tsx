@@ -4,7 +4,7 @@ const projectSkeletons = ["project-1", "project-2", "project-3"];
 
 export function ProjectsSkeleton() {
   return (
-    <main className="flex min-h-svh bg-background px-4 py-6 md:px-8">
+    <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
         <div className="flex flex-1 flex-col gap-4">
           <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">

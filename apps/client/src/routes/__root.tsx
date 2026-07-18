@@ -3,6 +3,7 @@ import { TooltipProvider } from "@bead/ui/components/tooltip";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { NativeBackHandler } from "@/features/native/native-back-handler";
+import { NativeSafeAreaViewport } from "@/features/native/native-safe-area";
 import { initAnalytics } from "@/lib/analytics";
 import "@/styles/globals.css";
 
@@ -19,7 +20,9 @@ function RootComponent() {
     <>
       <NativeBackHandler />
       <TooltipProvider>
-        <Outlet />
+        <NativeSafeAreaViewport>
+          <Outlet />
+        </NativeSafeAreaViewport>
       </TooltipProvider>
       <Toaster position="top-right" />
     </>

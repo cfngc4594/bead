@@ -10,7 +10,7 @@ function NewProjectPage() {
   const navigate = Route.useNavigate();
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-4">
+    <main className="flex min-h-full items-center justify-center px-4">
       <div className="w-full max-w-5xl space-y-10">
         <div className="space-y-2 text-center">
           <h1 className="font-bold text-3xl tracking-tight md:text-5xl">
