@@ -17,7 +17,9 @@ import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -69,6 +71,7 @@ public class PetService extends Service {
             }
         }
     };
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private PetStore store;
     private WindowManager windowManager;
@@ -78,6 +81,7 @@ public class PetService extends Service {
     private PetEdgeHandleView edgeHandle;
     private int collapsedSide;
     private boolean isEdgeAnimating;
+    private boolean menuOpen;
     private ValueAnimator edgeAnimator;
 
     public static boolean isRunning() {
@@ -159,6 +163,7 @@ public class PetService extends Service {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         );
@@ -183,6 +188,7 @@ public class PetService extends Service {
         );
         edgeHandle = createEdgeHandle();
         overlayView.addView(edgeHandle);
+        installOutsideTouchGesture(overlayView);
         installDragGesture(webView);
         windowManager.addView(overlayView, overlayParams);
         webView.loadUrl("file:///android_asset/public/pet.html");
@@ -210,7 +216,7 @@ public class PetService extends Service {
         view.setBackgroundColor(Color.TRANSPARENT);
         view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         view.addJavascriptInterface(
-            new PetJavascriptBridge(store),
+            new PetJavascriptBridge(this, store, () -> menuOpen = false),
             "BeadPetAndroid"
         );
         view.setWebViewClient(
@@ -225,6 +231,24 @@ public class PetService extends Service {
         return view;
     }
 
+    private void installOutsideTouchGesture(View view) {
+        view.setOnTouchListener(
+            new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View ignored, MotionEvent event) {
+                    if (
+                        event.getActionMasked() == MotionEvent.ACTION_OUTSIDE &&
+                        menuOpen
+                    ) {
+                        closeMenuFromOutside();
+                    }
+
+                    return false;
+                }
+            }
+        );
+    }
+
     private void installDragGesture(View view) {
         int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
 
@@ -235,9 +259,23 @@ public class PetService extends Service {
                 private int startX;
                 private int startY;
                 private boolean dragging;
+                private boolean longPressed;
+                private Runnable longPressRunnable;
 
                 @Override
                 public boolean onTouch(View ignored, MotionEvent event) {
+                    if (event.getActionMasked() == MotionEvent.ACTION_OUTSIDE) {
+                        if (menuOpen) {
+                            closeMenuFromOutside();
+                        }
+
+                        return false;
+                    }
+
+                    if (menuOpen) {
+                        return false;
+                    }
+
                     switch (event.getActionMasked()) {
                         case MotionEvent.ACTION_DOWN:
                             downRawX = event.getRawX();
@@ -245,6 +283,16 @@ public class PetService extends Service {
                             startX = overlayParams.x;
                             startY = overlayParams.y;
                             dragging = false;
+                            longPressed = false;
+                            longPressRunnable = () -> {
+                                longPressed = true;
+                                menuOpen = true;
+                                dispatchLongPress();
+                            };
+                            mainHandler.postDelayed(
+                                longPressRunnable,
+                                ViewConfiguration.getLongPressTimeout()
+                            );
                             return true;
                         case MotionEvent.ACTION_MOVE:
                             int deltaX = Math.round(event.getRawX() - downRawX);
@@ -252,6 +300,7 @@ public class PetService extends Service {
 
                             if (!dragging && Math.hypot(deltaX, deltaY) >= touchSlop) {
                                 dragging = true;
+                                cancelLongPress();
                             }
 
                             if (dragging) {
@@ -259,6 +308,12 @@ public class PetService extends Service {
                             }
                             return true;
                         case MotionEvent.ACTION_UP:
+                            cancelLongPress();
+
+                            if (longPressed) {
+                                return true;
+                            }
+
                             if (dragging) {
                                 store.savePosition(overlayParams.x, overlayParams.y);
                                 int edge = getDockEdge();
@@ -271,9 +326,17 @@ public class PetService extends Service {
                             }
                             return true;
                         case MotionEvent.ACTION_CANCEL:
+                            cancelLongPress();
                             return true;
                         default:
                             return false;
+                    }
+                }
+
+                private void cancelLongPress() {
+                    if (longPressRunnable != null) {
+                        mainHandler.removeCallbacks(longPressRunnable);
+                        longPressRunnable = null;
                     }
                 }
             }
@@ -662,6 +725,26 @@ public class PetService extends Service {
         if (webView != null) {
             webView.evaluateJavascript(
                 "window.dispatchEvent(new Event('bead-pet-tap'))",
+                null
+            );
+        }
+    }
+
+    private void dispatchLongPress() {
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new Event('bead-pet-long-press'))",
+                null
+            );
+        }
+    }
+
+    private void closeMenuFromOutside() {
+        menuOpen = false;
+
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new Event('bead-pet-close-menu'))",
                 null
             );
         }
