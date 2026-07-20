@@ -7,10 +7,19 @@ export const boardOrigin = cellSize * labelCells;
 const maxFitScale = 2.5;
 export const maxZoomScale = 3;
 
-export function getBoardSize(rows: number, cols: number) {
+export function getPatternSize(rows: number, cols: number) {
   return {
-    width: (cols + labelCells * 2) * cellSize,
-    height: (rows + labelCells * 2) * cellSize,
+    width: cols * cellSize,
+    height: rows * cellSize,
+  };
+}
+
+export function getBoardSize(rows: number, cols: number) {
+  const pattern = getPatternSize(rows, cols);
+
+  return {
+    width: pattern.width + labelCells * 2 * cellSize,
+    height: pattern.height + labelCells * 2 * cellSize,
   };
 }
 

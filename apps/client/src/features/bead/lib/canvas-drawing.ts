@@ -34,14 +34,24 @@ export function drawBoard(
   options: {
     showBeadCodes?: boolean;
     showGuideLines?: boolean;
+    showGrid?: boolean;
+    showLabels?: boolean;
   } = {},
 ) {
-  const { showBeadCodes = true, showGuideLines = false } = options;
+  const {
+    showBeadCodes = true,
+    showGuideLines = false,
+    showGrid = true,
+    showLabels = true,
+  } = options;
 
   context.save();
-  drawLabels(context, rows, cols);
+  if (showLabels) {
+    drawLabels(context, rows, cols);
+  }
 
-  const origin = getGridOrigin();
+  const origin = showLabels ? getGridOrigin() : { x: 0, y: 0 };
+  const beadInset = showGrid ? 1 : 0;
 
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
@@ -51,13 +61,21 @@ export function drawBoard(
 
       context.fillStyle = "#ffffff";
       context.fillRect(x, y, cellSize, cellSize);
-      context.strokeStyle = gridColor;
-      context.lineWidth = 1;
-      context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+
+      if (showGrid) {
+        context.strokeStyle = gridColor;
+        context.lineWidth = 1;
+        context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+      }
 
       if (color) {
         context.fillStyle = color.hex;
-        context.fillRect(x + 1, y + 1, cellSize - 1, cellSize - 1);
+        context.fillRect(
+          x + beadInset,
+          y + beadInset,
+          cellSize - beadInset,
+          cellSize - beadInset,
+        );
 
         if (showBeadCodes) {
           context.fillStyle = getReadableTextColor(color.hex);
@@ -71,7 +89,7 @@ export function drawBoard(
   }
 
   if (showGuideLines) {
-    drawGuideLines(context, rows, cols);
+    drawGuideLines(context, rows, cols, origin);
   }
 
   context.restore();
@@ -81,8 +99,8 @@ function drawGuideLines(
   context: BoardDrawingContext,
   rows: number,
   cols: number,
+  origin: { x: number; y: number },
 ) {
-  const origin = getGridOrigin();
   const width = cols * cellSize;
   const height = rows * cellSize;
 
