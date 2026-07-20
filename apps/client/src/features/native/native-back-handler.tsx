@@ -4,9 +4,9 @@ import { useMatchRoute, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { consumeNativeBack } from "@/features/native/native-back-store";
 import {
-  nativeSecondaryTabs,
-  nativeStartTab,
-} from "@/features/native/native-tab-config";
+  appSecondaryTabs,
+  appStartTab,
+} from "@/features/navigation/tab-config";
 
 export function NativeBackHandler() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export function NativeBackHandler() {
     matchRoute({ to: "/projects/new", fuzzy: false }) !== false;
   const isProjectEditorRoute =
     matchRoute({ to: "/projects/$projectId", fuzzy: false }) !== false;
-  const isSecondaryTabRoute = nativeSecondaryTabs.some(
+  const isSecondaryTabRoute = appSecondaryTabs.some(
     ({ to }) => matchRoute({ to, fuzzy: false }) !== false,
   );
   const shouldReturnToStartTab =
@@ -32,7 +32,7 @@ export function NativeBackHandler() {
       }
 
       if (shouldReturnToStartTab) {
-        router.navigate({ to: nativeStartTab.to, replace: true });
+        router.navigate({ to: appStartTab.to, replace: true });
         return;
       }
 

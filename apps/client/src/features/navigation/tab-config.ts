@@ -1,10 +1,10 @@
 import { linkOptions } from "@tanstack/react-router";
 
-export const NATIVE_TAB_CONTENT_ID = "native-tab-content";
+export const TAB_CONTENT_ID = "tab-content";
 
-export const NATIVE_TAB_CONTENT_SELECTOR = `#${NATIVE_TAB_CONTENT_ID}`;
+export const TAB_CONTENT_SELECTOR = `#${TAB_CONTENT_ID}`;
 
-export const nativeTabs = linkOptions([
+export const appTabs = linkOptions([
   {
     activeOptions: { exact: true },
     id: "projects",
@@ -25,5 +25,5 @@ export const nativeTabs = linkOptions([
   },
 ]);
 
-export const nativeStartTab = nativeTabs[0];
-export const nativeSecondaryTabs = nativeTabs.slice(1);
+export const appStartTab = appTabs[0];
+export const appSecondaryTabs = appTabs.slice(1);

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { NativeTabLayout } from "@/features/native/native-tab-layout";
+import { TabLayout } from "@/features/navigation/tab-layout";
 
 export const Route = createFileRoute("/_tabs")({
-  component: NativeTabLayout,
+  component: TabLayout,
 });
