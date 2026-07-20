@@ -9,15 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ProjectsRouteRouteImport } from './routes/projects/route'
+import { Route as TabsRouteRouteImport } from './routes/_tabs/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects/$projectId'
+import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
+import { Route as TabsMeRouteImport } from './routes/_tabs/me'
+import { Route as TabsMaterialsRouteImport } from './routes/_tabs/materials'
 
-const ProjectsRouteRoute = ProjectsRouteRouteImport.update({
-  id: '/projects',
-  path: '/projects',
+const TabsRouteRoute = TabsRouteRouteImport.update({
+  id: '/_tabs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,70 +26,100 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProjectsRouteRoute,
-} as any)
 const ProjectsNewRoute = ProjectsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProjectsRouteRoute,
+  id: '/projects/new',
+  path: '/projects/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
-  id: '/$projectId',
-  path: '/$projectId',
-  getParentRoute: () => ProjectsRouteRoute,
+  id: '/projects/$projectId',
+  path: '/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TabsProjectsRoute = TabsProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
+const TabsMeRoute = TabsMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
+const TabsMaterialsRoute = TabsMaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => TabsRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/projects': typeof ProjectsRouteRouteWithChildren
+  '/materials': typeof TabsMaterialsRoute
+  '/me': typeof TabsMeRoute
+  '/projects': typeof TabsProjectsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects/': typeof ProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/materials': typeof TabsMaterialsRoute
+  '/me': typeof TabsMeRoute
+  '/projects': typeof TabsProjectsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects': typeof ProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/projects': typeof ProjectsRouteRouteWithChildren
+  '/_tabs': typeof TabsRouteRouteWithChildren
+  '/_tabs/materials': typeof TabsMaterialsRoute
+  '/_tabs/me': typeof TabsMeRoute
+  '/_tabs/projects': typeof TabsProjectsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects/': typeof ProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/projects' | '/projects/$projectId' | '/projects/new' | '/projects/'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/projects/$projectId' | '/projects/new' | '/projects'
-  id:
-    | '__root__'
     | '/'
+    | '/materials'
+    | '/me'
     | '/projects'
     | '/projects/$projectId'
     | '/projects/new'
-    | '/projects/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/materials'
+    | '/me'
+    | '/projects'
+    | '/projects/$projectId'
+    | '/projects/new'
+  id:
+    | '__root__'
+    | '/'
+    | '/_tabs'
+    | '/_tabs/materials'
+    | '/_tabs/me'
+    | '/_tabs/projects'
+    | '/projects/$projectId'
+    | '/projects/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ProjectsRouteRoute: typeof ProjectsRouteRouteWithChildren
+  TabsRouteRoute: typeof TabsRouteRouteWithChildren
+  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
+  ProjectsNewRoute: typeof ProjectsNewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteRouteImport
+    '/_tabs': {
+      id: '/_tabs'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TabsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -98,49 +129,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/': {
-      id: '/projects/'
-      path: '/'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof ProjectsIndexRouteImport
-      parentRoute: typeof ProjectsRouteRoute
-    }
     '/projects/new': {
       id: '/projects/new'
-      path: '/new'
+      path: '/projects/new'
       fullPath: '/projects/new'
       preLoaderRoute: typeof ProjectsNewRouteImport
-      parentRoute: typeof ProjectsRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/projects/$projectId': {
       id: '/projects/$projectId'
-      path: '/$projectId'
+      path: '/projects/$projectId'
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
-      parentRoute: typeof ProjectsRouteRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/_tabs/projects': {
+      id: '/_tabs/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof TabsProjectsRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
+    '/_tabs/me': {
+      id: '/_tabs/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof TabsMeRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
+    '/_tabs/materials': {
+      id: '/_tabs/materials'
+      path: '/materials'
+      fullPath: '/materials'
+      preLoaderRoute: typeof TabsMaterialsRouteImport
+      parentRoute: typeof TabsRouteRoute
     }
   }
 }
 
-interface ProjectsRouteRouteChildren {
-  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
-  ProjectsNewRoute: typeof ProjectsNewRoute
-  ProjectsIndexRoute: typeof ProjectsIndexRoute
+interface TabsRouteRouteChildren {
+  TabsMaterialsRoute: typeof TabsMaterialsRoute
+  TabsMeRoute: typeof TabsMeRoute
+  TabsProjectsRoute: typeof TabsProjectsRoute
 }
 
-const ProjectsRouteRouteChildren: ProjectsRouteRouteChildren = {
-  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
-  ProjectsNewRoute: ProjectsNewRoute,
-  ProjectsIndexRoute: ProjectsIndexRoute,
+const TabsRouteRouteChildren: TabsRouteRouteChildren = {
+  TabsMaterialsRoute: TabsMaterialsRoute,
+  TabsMeRoute: TabsMeRoute,
+  TabsProjectsRoute: TabsProjectsRoute,
 }
 
-const ProjectsRouteRouteWithChildren = ProjectsRouteRoute._addFileChildren(
-  ProjectsRouteRouteChildren,
+const TabsRouteRouteWithChildren = TabsRouteRoute._addFileChildren(
+  TabsRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProjectsRouteRoute: ProjectsRouteRouteWithChildren,
+  TabsRouteRoute: TabsRouteRouteWithChildren,
+  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
+  ProjectsNewRoute: ProjectsNewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

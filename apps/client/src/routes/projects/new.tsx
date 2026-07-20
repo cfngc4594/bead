@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { canvasSizes } from "@/config/canvas-sizes";
 import { SizePicker } from "@/features/bead/components/size-picker";
+import { preloadProjectsCollection } from "@/features/bead/storage/projects";
 
 export const Route = createFileRoute("/projects/new")({
+  loader: preloadProjectsCollection,
   component: NewProjectPage,
 });
 
