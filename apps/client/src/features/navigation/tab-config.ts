@@ -19,9 +19,9 @@ export const appTabs = linkOptions([
   },
   {
     activeOptions: { exact: true },
-    id: "me",
-    label: "我的",
-    to: "/me",
+    id: "settings",
+    label: "设置",
+    to: "/settings",
   },
 ]);
 

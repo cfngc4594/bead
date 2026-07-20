@@ -1,12 +1,12 @@
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Grid2x2, type LucideIcon, Palette, UserRound } from "lucide-react";
+import { Grid2x2, type LucideIcon, Palette, Settings } from "lucide-react";
 import { appTabs, TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 
 const tabIcons = {
   materials: Palette,
-  me: UserRound,
   projects: Grid2x2,
+  settings: Settings,
 } satisfies Record<(typeof appTabs)[number]["id"], LucideIcon>;
 
 export function TabLayout() {

@@ -13,8 +13,8 @@ import { Route as TabsRouteRouteImport } from './routes/_tabs/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects/$projectId'
+import { Route as TabsSettingsRouteImport } from './routes/_tabs/settings'
 import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
-import { Route as TabsMeRouteImport } from './routes/_tabs/me'
 import { Route as TabsMaterialsRouteImport } from './routes/_tabs/materials'
 
 const TabsRouteRoute = TabsRouteRouteImport.update({
@@ -36,14 +36,14 @@ const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
   path: '/projects/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TabsSettingsRoute = TabsSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
 const TabsProjectsRoute = TabsProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => TabsRouteRoute,
-} as any)
-const TabsMeRoute = TabsMeRouteImport.update({
-  id: '/me',
-  path: '/me',
   getParentRoute: () => TabsRouteRoute,
 } as any)
 const TabsMaterialsRoute = TabsMaterialsRouteImport.update({
@@ -55,16 +55,16 @@ const TabsMaterialsRoute = TabsMaterialsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/materials': typeof TabsMaterialsRoute
-  '/me': typeof TabsMeRoute
   '/projects': typeof TabsProjectsRoute
+  '/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/materials': typeof TabsMaterialsRoute
-  '/me': typeof TabsMeRoute
   '/projects': typeof TabsProjectsRoute
+  '/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
@@ -73,8 +73,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_tabs': typeof TabsRouteRouteWithChildren
   '/_tabs/materials': typeof TabsMaterialsRoute
-  '/_tabs/me': typeof TabsMeRoute
   '/_tabs/projects': typeof TabsProjectsRoute
+  '/_tabs/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
@@ -83,16 +83,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/materials'
-    | '/me'
     | '/projects'
+    | '/settings'
     | '/projects/$projectId'
     | '/projects/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/materials'
-    | '/me'
     | '/projects'
+    | '/settings'
     | '/projects/$projectId'
     | '/projects/new'
   id:
@@ -100,8 +100,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_tabs'
     | '/_tabs/materials'
-    | '/_tabs/me'
     | '/_tabs/projects'
+    | '/_tabs/settings'
     | '/projects/$projectId'
     | '/projects/new'
   fileRoutesById: FileRoutesById
@@ -143,18 +143,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_tabs/settings': {
+      id: '/_tabs/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof TabsSettingsRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
     '/_tabs/projects': {
       id: '/_tabs/projects'
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof TabsProjectsRouteImport
-      parentRoute: typeof TabsRouteRoute
-    }
-    '/_tabs/me': {
-      id: '/_tabs/me'
-      path: '/me'
-      fullPath: '/me'
-      preLoaderRoute: typeof TabsMeRouteImport
       parentRoute: typeof TabsRouteRoute
     }
     '/_tabs/materials': {
@@ -169,14 +169,14 @@ declare module '@tanstack/react-router' {
 
 interface TabsRouteRouteChildren {
   TabsMaterialsRoute: typeof TabsMaterialsRoute
-  TabsMeRoute: typeof TabsMeRoute
   TabsProjectsRoute: typeof TabsProjectsRoute
+  TabsSettingsRoute: typeof TabsSettingsRoute
 }
 
 const TabsRouteRouteChildren: TabsRouteRouteChildren = {
   TabsMaterialsRoute: TabsMaterialsRoute,
-  TabsMeRoute: TabsMeRoute,
   TabsProjectsRoute: TabsProjectsRoute,
+  TabsSettingsRoute: TabsSettingsRoute,
 }
 
 const TabsRouteRouteWithChildren = TabsRouteRoute._addFileChildren(
