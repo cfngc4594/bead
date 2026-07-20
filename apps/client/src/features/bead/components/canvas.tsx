@@ -2,10 +2,13 @@ import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
+import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
+import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
+import { boardInteractionPalettes } from "@/features/bead/lib/board-theme-colors";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
@@ -64,6 +67,9 @@ export function CanvasBoard({
   resetViewAfterResizeSignal,
   viewport = { width: 760, height: 640 },
 }: CanvasBoardProps) {
+  const { theme } = useTheme();
+  const boardTheme = resolveBoardTheme(theme);
+  const interactionPalette = boardInteractionPalettes[boardTheme];
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const { isStageMeasured, stageSize } = useStageSize({
@@ -288,6 +294,7 @@ export function CanvasBoard({
               drawBoard(context, rows, cols, displayedBeads, {
                 showBeadCodes,
                 showGuideLines,
+                theme: boardTheme,
               });
               context.fillStrokeShape(shape);
             }}
@@ -299,7 +306,7 @@ export function CanvasBoard({
                 y={gridOrigin.y + hoveredCell.row * cellSize + 1}
                 width={cellSize - 2}
                 height={cellSize - 2}
-                stroke="#ffffff"
+                stroke={interactionPalette.hoverOuterStroke}
                 strokeWidth={2}
                 listening={false}
               />
@@ -308,7 +315,7 @@ export function CanvasBoard({
                 y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
                 width={cellSize - 5}
                 height={cellSize - 5}
-                stroke="#111111"
+                stroke={interactionPalette.hoverInnerStroke}
                 strokeWidth={1}
                 listening={false}
               />
@@ -317,8 +324,8 @@ export function CanvasBoard({
           {tool === "select" && selectionBox ? (
             <Rect
               {...getSelectionBoxRect(selectionBox)}
-              fill="rgba(59, 130, 246, 0.12)"
-              stroke="#2563eb"
+              fill={interactionPalette.selectionFill}
+              stroke={interactionPalette.selectionStroke}
               strokeWidth={1.5}
               listening={false}
             />
@@ -330,12 +337,12 @@ export function CanvasBoard({
                 moveTargetOrigin ?? selection.origin,
               )}
               dash={[5, 4]}
-              fill="rgba(59, 130, 246, 0.08)"
+              fill={interactionPalette.activeSelectionFill}
               stroke={
                 moveTargetOrigin &&
                 !isSelectionInBounds(selection, moveTargetOrigin, rows, cols)
-                  ? "#dc2626"
-                  : "#2563eb"
+                  ? interactionPalette.invalidSelectionStroke
+                  : interactionPalette.selectionStroke
               }
               strokeWidth={1.5}
               listening={false}
