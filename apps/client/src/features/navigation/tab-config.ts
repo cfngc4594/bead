@@ -13,9 +13,9 @@ export const appTabs = linkOptions([
   },
   {
     activeOptions: { exact: true },
-    id: "materials",
-    label: "素材",
-    to: "/materials",
+    id: "discover",
+    label: "发现",
+    to: "/discover",
   },
   {
     activeOptions: { exact: true },

@@ -15,7 +15,7 @@ import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects/$projectId'
 import { Route as TabsSettingsRouteImport } from './routes/_tabs/settings'
 import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
-import { Route as TabsMaterialsRouteImport } from './routes/_tabs/materials'
+import { Route as TabsDiscoverRouteImport } from './routes/_tabs/discover'
 
 const TabsRouteRoute = TabsRouteRouteImport.update({
   id: '/_tabs',
@@ -46,15 +46,15 @@ const TabsProjectsRoute = TabsProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => TabsRouteRoute,
 } as any)
-const TabsMaterialsRoute = TabsMaterialsRouteImport.update({
-  id: '/materials',
-  path: '/materials',
+const TabsDiscoverRoute = TabsDiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => TabsRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/materials': typeof TabsMaterialsRoute
+  '/discover': typeof TabsDiscoverRoute
   '/projects': typeof TabsProjectsRoute
   '/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -62,7 +62,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/materials': typeof TabsMaterialsRoute
+  '/discover': typeof TabsDiscoverRoute
   '/projects': typeof TabsProjectsRoute
   '/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -72,7 +72,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_tabs': typeof TabsRouteRouteWithChildren
-  '/_tabs/materials': typeof TabsMaterialsRoute
+  '/_tabs/discover': typeof TabsDiscoverRoute
   '/_tabs/projects': typeof TabsProjectsRoute
   '/_tabs/settings': typeof TabsSettingsRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
@@ -82,7 +82,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/materials'
+    | '/discover'
     | '/projects'
     | '/settings'
     | '/projects/$projectId'
@@ -90,7 +90,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/materials'
+    | '/discover'
     | '/projects'
     | '/settings'
     | '/projects/$projectId'
@@ -99,7 +99,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_tabs'
-    | '/_tabs/materials'
+    | '/_tabs/discover'
     | '/_tabs/projects'
     | '/_tabs/settings'
     | '/projects/$projectId'
@@ -157,24 +157,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TabsProjectsRouteImport
       parentRoute: typeof TabsRouteRoute
     }
-    '/_tabs/materials': {
-      id: '/_tabs/materials'
-      path: '/materials'
-      fullPath: '/materials'
-      preLoaderRoute: typeof TabsMaterialsRouteImport
+    '/_tabs/discover': {
+      id: '/_tabs/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof TabsDiscoverRouteImport
       parentRoute: typeof TabsRouteRoute
     }
   }
 }
 
 interface TabsRouteRouteChildren {
-  TabsMaterialsRoute: typeof TabsMaterialsRoute
+  TabsDiscoverRoute: typeof TabsDiscoverRoute
   TabsProjectsRoute: typeof TabsProjectsRoute
   TabsSettingsRoute: typeof TabsSettingsRoute
 }
 
 const TabsRouteRouteChildren: TabsRouteRouteChildren = {
-  TabsMaterialsRoute: TabsMaterialsRoute,
+  TabsDiscoverRoute: TabsDiscoverRoute,
   TabsProjectsRoute: TabsProjectsRoute,
   TabsSettingsRoute: TabsSettingsRoute,
 }
