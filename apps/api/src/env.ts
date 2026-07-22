@@ -9,6 +9,8 @@ export const env = createEnv({
         .map((origin) => origin.trim())
         .filter(Boolean),
     ),
+    SUPABASE_SECRET_KEY: z.string().min(1),
+    SUPABASE_URL: z.url(),
   },
   clientPrefix: "",
   client: {},

@@ -1,3 +1,4 @@
+import type { DiscoverProject } from "@bead/api";
 import { Badge } from "@bead/ui/components/badge";
 import { Button } from "@bead/ui/components/button";
 import {
@@ -12,13 +13,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
-import { eq, useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Check,
   Eye,
-  EyeOff,
   Focus,
   Grid3x3,
   LibraryBig,
@@ -30,18 +28,14 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
-import {
-  addPublishedProject,
-  projectsCollection,
-} from "@/features/bead/storage/projects";
-import type { PublishedProject } from "@/features/bead/storage/published-projects";
+import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
 import { NativeBackDropdownMenu } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
-export function PublishedProjectViewer({
+export function DiscoverProjectViewer({
   project,
 }: {
-  project: PublishedProject;
+  project: DiscoverProject;
 }) {
   const [showBeadCodes, setShowBeadCodes] = useState(true);
   const [showGuideLines, setShowGuideLines] = useState(false);
@@ -49,18 +43,6 @@ export function PublishedProjectViewer({
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
   const [isAdding, setIsAdding] = useState(false);
-  const projectId = project.id;
-  const { data: addedProject } = useLiveQuery(
-    (query) =>
-      query
-        .from({ localProject: projectsCollection })
-        .where(({ localProject }) =>
-          eq(localProject.sourcePublishedProjectId, projectId),
-        )
-        .select(({ localProject }) => ({ id: localProject.id }))
-        .findOne(),
-    [projectId],
-  );
   const beads = useMemo(
     () =>
       expandSnapshot({
@@ -69,7 +51,6 @@ export function PublishedProjectViewer({
       }),
     [project],
   );
-  const isAdded = addedProject !== undefined;
 
   useEffect(() => {
     function resetViewAfterResize() {
@@ -81,25 +62,26 @@ export function PublishedProjectViewer({
   }, []);
 
   async function handleAddToProjects() {
-    if (isAdding || isAdded) {
+    if (isAdding) {
       return;
     }
 
     setIsAdding(true);
 
     try {
-      const wasAdded = await addPublishedProject(project);
-
-      if (!wasAdded) {
-        return;
-      }
-
+      await createProjectFromSnapshot({
+        title: project.title,
+        sizeId: project.sizeId,
+        rows: project.rows,
+        cols: project.cols,
+        snapshot: project.snapshot,
+      });
       trackEvent("project_added_from_discover", {
         sizeId: project.sizeId,
       });
       toast.success("已添加到作品");
     } catch (error) {
-      console.error("Unable to add published project", error);
+      console.error("Unable to add discover project", error);
       toast.error("添加到作品失败");
     } finally {
       setIsAdding(false);
@@ -135,16 +117,18 @@ export function PublishedProjectViewer({
             onClick={resetView}
           />
           <ViewerToolbarButton
-            icon={showBeadCodes ? Eye : EyeOff}
-            isActive={!showBeadCodes}
-            label={showBeadCodes ? "隐藏豆色序号" : "显示豆色序号"}
+            icon={Eye}
+            isActive={showBeadCodes}
+            label="豆色序号"
             onClick={() => setShowBeadCodes((value) => !value)}
+            tooltip={showBeadCodes ? "隐藏豆色序号" : "显示豆色序号"}
           />
           <ViewerToolbarButton
             icon={Grid3x3}
             isActive={showGuideLines}
-            label={showGuideLines ? "隐藏辅助线" : "显示辅助线"}
+            label="辅助线"
             onClick={() => setShowGuideLines((value) => !value)}
+            tooltip={showGuideLines ? "隐藏辅助线" : "显示辅助线"}
           />
         </div>
 
@@ -157,19 +141,18 @@ export function PublishedProjectViewer({
         />
 
         <Button
-          aria-label={isAdded ? "已添加到作品" : "添加到作品"}
-          disabled={isAdding || isAdded}
+          aria-label="添加到作品"
+          disabled={isAdding}
           onClick={() => void handleAddToProjects()}
         >
           {isAdding ? (
             <LoaderCircle className="animate-spin" />
-          ) : isAdded ? (
-            <Check />
           ) : (
             <LibraryBig />
           )}
+          <span className="sm:hidden">{isAdding ? "添加中" : "添加"}</span>
           <span className="hidden sm:inline">
-            {isAdding ? "正在添加" : isAdded ? "已添加" : "添加到作品"}
+            {isAdding ? "正在添加" : "添加到作品"}
           </span>
         </Button>
       </header>
@@ -191,9 +174,6 @@ export function PublishedProjectViewer({
           resetViewAfterResizeSignal={resetViewAfterResizeSignal}
           resetViewSignal={resetViewSignal}
         />
-        <div className="pointer-events-none absolute bottom-3 left-3 hidden rounded-md border bg-background/90 px-2 py-1 text-muted-foreground text-xs shadow-xs backdrop-blur-sm sm:block">
-          只读预览 · 拖动画布，按住 Ctrl 或 ⌘ 滚动缩放
-        </div>
       </section>
     </main>
   );
@@ -201,21 +181,23 @@ export function PublishedProjectViewer({
 
 function ViewerToolbarButton({
   icon: Icon,
-  isActive = false,
+  isActive,
   label,
   onClick,
+  tooltip = label,
 }: {
   icon: LucideIcon;
   isActive?: boolean;
   label: string;
   onClick: () => void;
+  tooltip?: string;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           aria-label={label}
-          aria-pressed={isActive || undefined}
+          aria-pressed={isActive}
           onClick={onClick}
           size="icon-sm"
           type="button"
@@ -224,7 +206,7 @@ function ViewerToolbarButton({
           <Icon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   );
 }

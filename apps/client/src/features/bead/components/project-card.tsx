@@ -26,7 +26,7 @@ export function ProjectCard({
   timestamp,
   timestampLabel,
 }: {
-  actions: ReactNode;
+  actions?: ReactNode;
   openLabel: string;
   onOpen: (source: "preview" | "title") => void;
   project: ProjectCardProject;
@@ -79,13 +79,17 @@ export function ProjectCard({
           </div>
         </Link>
 
-        {actions}
+        {actions ?? null}
       </div>
     </article>
   );
 }
 
-export function ProjectCardSkeleton() {
+export function ProjectCardSkeleton({
+  showActions = true,
+}: {
+  showActions?: boolean;
+}) {
   return (
     <article className="overflow-hidden rounded-xl border bg-card shadow-xs">
       <div className="aspect-4/3 bg-muted/30 p-3">
@@ -102,7 +106,9 @@ export function ProjectCardSkeleton() {
             <Skeleton className="h-3 w-18" />
           </div>
         </div>
-        <Skeleton className="size-7 shrink-0 rounded-md" />
+        {showActions ? (
+          <Skeleton className="size-7 shrink-0 rounded-md" />
+        ) : null}
       </div>
     </article>
   );

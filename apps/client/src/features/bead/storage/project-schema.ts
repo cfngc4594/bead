@@ -1,20 +1,23 @@
+import {
+  type CanvasSnapshot,
+  type CanvasSnapshotCell,
+  canvasSnapshotCellSchema,
+  canvasSnapshotSchema,
+  validateCanvasSnapshot,
+} from "@bead/core/canvas-snapshot";
 import { z } from "zod";
 import { canvasSizeIdSchema } from "@/config/canvas-sizes";
+
+export {
+  type CanvasSnapshot,
+  type CanvasSnapshotCell,
+  canvasSnapshotCellSchema,
+  canvasSnapshotSchema,
+};
 
 const nonEmptyStringSchema = z.string().min(1);
 const nonnegativeIntSchema = z.number().int().nonnegative();
 const positiveIntSchema = z.number().int().positive();
-
-export const canvasSnapshotCellSchema = z.tuple([
-  nonnegativeIntSchema,
-  nonEmptyStringSchema,
-]);
-
-export const canvasSnapshotSchema = z
-  .object({
-    cells: z.array(canvasSnapshotCellSchema),
-  })
-  .strict();
 
 export const projectBaseSchema = z
   .object({
@@ -31,7 +34,6 @@ export const projectSchema = projectBaseSchema
     snapshots: z.array(canvasSnapshotSchema).min(1),
     currentIndex: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
-    sourcePublishedProjectId: nonEmptyStringSchema.optional(),
   })
   .strict();
 
@@ -62,7 +64,7 @@ export function validateProjectIntegrity(
   }
 
   project.snapshots.forEach((snapshot, snapshotIndex) => {
-    validateSnapshotIntegrity({
+    validateCanvasSnapshot({
       addIssue,
       cellCount,
       path: ["snapshots", snapshotIndex],
@@ -70,39 +72,4 @@ export function validateProjectIntegrity(
     });
   });
 }
-
-export function validateSnapshotIntegrity({
-  addIssue,
-  cellCount,
-  path,
-  snapshot,
-}: {
-  addIssue: (issue: ProjectIntegrityIssue) => void;
-  cellCount: number;
-  path: (number | string)[];
-  snapshot: CanvasSnapshot;
-}) {
-  const cellIndexes = new Set<number>();
-
-  snapshot.cells.forEach(([beadIndex], cellIndex) => {
-    if (beadIndex >= cellCount) {
-      addIssue({
-        message: "cell index must be within the project canvas",
-        path: [...path, "cells", cellIndex, 0],
-      });
-    }
-
-    if (cellIndexes.has(beadIndex)) {
-      addIssue({
-        message: "cell indexes must be unique within a snapshot",
-        path: [...path, "cells", cellIndex, 0],
-      });
-    }
-
-    cellIndexes.add(beadIndex);
-  });
-}
-
-export type CanvasSnapshotCell = z.infer<typeof canvasSnapshotCellSchema>;
-export type CanvasSnapshot = z.infer<typeof canvasSnapshotSchema>;
 export type Project = z.infer<typeof projectSchema>;

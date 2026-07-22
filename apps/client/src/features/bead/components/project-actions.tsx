@@ -22,7 +22,6 @@ import {
 } from "@bead/ui/components/dropdown-menu";
 import { Input } from "@bead/ui/components/input";
 import {
-  Check,
   Copy,
   Edit3,
   LoaderCircle,
@@ -40,7 +39,8 @@ import {
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
-import { publishProjects } from "@/features/bead/storage/published-projects";
+import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
+import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import {
   NativeBackAlertDialog,
   NativeBackDialog,
@@ -48,20 +48,11 @@ import {
 } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
-export function ProjectActions({
-  project,
-  publishedSourceUpdatedAt,
-}: {
-  project: Project;
-  publishedSourceUpdatedAt?: number;
-}) {
+export function ProjectActions({ project }: { project: Project }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const isPublished = publishedSourceUpdatedAt !== undefined;
-  const isPublishedVersionCurrent =
-    publishedSourceUpdatedAt === project.updatedAt;
+  const publishMutation = usePublishDiscoverProjects();
 
   async function handleDuplicateProject() {
     try {
@@ -95,18 +86,12 @@ export function ProjectActions({
   }
 
   async function handlePublishProject() {
-    if (
-      isPublishing ||
-      isPublishedVersionCurrent ||
-      getFilledCount(project) === 0
-    ) {
+    if (publishMutation.isPending || getFilledCount(project) === 0) {
       return;
     }
 
-    setIsPublishing(true);
-
     try {
-      await publishProjects([project.id]);
+      await publishMutation.mutateAsync([createPublishInput(project)]);
       trackEvent("project_published", {
         projectCount: 1,
         sizeId: project.sizeId,
@@ -116,8 +101,6 @@ export function ProjectActions({
     } catch (error) {
       console.error("Unable to publish bead project", error);
       toast.error("发布作品失败");
-    } finally {
-      setIsPublishing(false);
     }
   }
 
@@ -152,26 +135,16 @@ export function ProjectActions({
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={
-              isPublishing ||
-              isPublishedVersionCurrent ||
-              getFilledCount(project) === 0
+              publishMutation.isPending || getFilledCount(project) === 0
             }
             onSelect={handlePublishProject}
           >
-            {isPublishing ? (
+            {publishMutation.isPending ? (
               <LoaderCircle className="animate-spin" />
-            ) : isPublishedVersionCurrent ? (
-              <Check />
             ) : (
               <Share2 />
             )}
-            {isPublishing
-              ? "正在发布"
-              : isPublishedVersionCurrent
-                ? "已发布"
-                : isPublished
-                  ? "更新到发现"
-                  : "发布到发现"}
+            {publishMutation.isPending ? "正在发布" : "发布到发现"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -6,7 +6,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
-import { count, eq, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
+import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import { Grid2x2, Plus, Search, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -15,7 +15,6 @@ import { ProjectActions } from "@/features/bead/components/project-actions";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import { ProjectsToolbar } from "@/features/bead/components/projects-toolbar";
 import { projectsCollection } from "@/features/bead/storage/projects";
-import { publishedProjectsCollection } from "@/features/bead/storage/published-projects";
 import { trackEvent } from "@/lib/analytics";
 
 export function ProjectsPage() {
@@ -25,13 +24,7 @@ export function ProjectsPage() {
   const normalizedTitleFilter = titleFilter.trim();
   const { data: projects = [] } = useLiveQuery(
     (query) => {
-      let projectQuery = query
-        .from({ project: projectsCollection })
-        .leftJoin(
-          { publishedProject: publishedProjectsCollection },
-          ({ project, publishedProject }) =>
-            eq(project.id, publishedProject.id),
-        );
+      let projectQuery = query.from({ project: projectsCollection });
 
       if (normalizedTitleFilter.length > 0) {
         projectQuery = projectQuery.where(({ project }) =>
@@ -47,7 +40,7 @@ export function ProjectsPage() {
 
       return projectQuery
         .orderBy(({ project }) => project.updatedAt, "desc")
-        .select(({ project, publishedProject }) => ({
+        .select(({ project }) => ({
           id: project.id,
           sizeId: project.sizeId,
           rows: project.rows,
@@ -56,7 +49,6 @@ export function ProjectsPage() {
           snapshots: project.snapshots,
           currentIndex: project.currentIndex,
           updatedAt: project.updatedAt,
-          publishedSourceUpdatedAt: publishedProject.sourceUpdatedAt,
         }));
     },
     [normalizedTitleFilter, selectedSizes],
@@ -158,14 +150,7 @@ export function ProjectsPage() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => (
                   <ProjectCard
-                    actions={
-                      <ProjectActions
-                        project={project}
-                        publishedSourceUpdatedAt={
-                          project.publishedSourceUpdatedAt
-                        }
-                      />
-                    }
+                    actions={<ProjectActions project={project} />}
                     key={project.id}
                     onOpen={(source) =>
                       trackEvent("project_opened", {

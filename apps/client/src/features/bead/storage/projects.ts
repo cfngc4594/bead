@@ -3,13 +3,16 @@ import {
   createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import type { CanvasSize } from "@/config/canvas-sizes";
+import type { CanvasSize, CanvasSizeId } from "@/config/canvas-sizes";
 import {
   type CanvasState,
   createEmptyCanvas,
   isSameCanvas,
 } from "@/features/bead/lib/canvas-state";
-import type { Project } from "@/features/bead/storage/project-schema";
+import type {
+  CanvasSnapshot,
+  Project,
+} from "@/features/bead/storage/project-schema";
 import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
   cloneSnapshot,
@@ -17,7 +20,6 @@ import {
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
-import type { PublishedProject } from "@/features/bead/storage/published-project-schema";
 
 export type ProjectId = string;
 export type { Project };
@@ -116,34 +118,39 @@ export async function duplicateProject(projectId: ProjectId) {
   return duplicatedProject;
 }
 
-export async function addPublishedProject(project: PublishedProject) {
+export async function createProjectFromSnapshot({
+  cols,
+  rows,
+  sizeId,
+  snapshot,
+  title,
+}: {
+  cols: number;
+  rows: number;
+  sizeId: CanvasSizeId;
+  snapshot: CanvasSnapshot;
+  title: string;
+}) {
   await projectsCollection.preload();
 
-  const existingProject = projectsCollection.toArray.find(
-    (localProject) => localProject.sourcePublishedProjectId === project.id,
-  );
-
-  if (existingProject) {
-    return false;
-  }
-
-  const addedProject: Project = {
+  const normalizedTitle = normalizeProjectTitle(title);
+  const project: Project = {
     id: createProjectId(),
-    title: project.title,
-    sizeId: project.sizeId,
-    rows: project.rows,
-    cols: project.cols,
-    snapshots: [cloneSnapshot(project.snapshot)],
+    title:
+      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
+    sizeId,
+    rows,
+    cols,
+    snapshots: [cloneSnapshot(snapshot)],
     currentIndex: 0,
     updatedAt: Date.now(),
-    sourcePublishedProjectId: project.id,
   };
 
   await commitProjectMutation(() => {
-    projectsCollection.insert(addedProject);
+    projectsCollection.insert(project);
   });
 
-  return true;
+  return project;
 }
 
 export function deleteProject(projectId: ProjectId) {
@@ -197,7 +204,9 @@ export async function createProject(size: CanvasSize) {
   return project;
 }
 
-export function getFilledCount(project: Project) {
+export function getFilledCount(
+  project: Pick<Project, "currentIndex" | "snapshots">,
+) {
   return getSnapshotFilledCount(project.snapshots[project.currentIndex]);
 }
 

@@ -1,0 +1,18 @@
+{
+  "name": "@bead/core",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    "./canvas-sizes": "./src/canvas-sizes.ts",
+    "./canvas-snapshot": "./src/canvas-snapshot.ts"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

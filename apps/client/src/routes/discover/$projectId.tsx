@@ -1,46 +1,28 @@
-import { eq, useLiveQuery } from "@tanstack/react-db";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { PublishedProjectViewer } from "@/features/bead/components/published-project-viewer";
-import { PublishedProjectViewerSkeleton } from "@/features/bead/components/published-project-viewer-skeleton";
-import {
-  preloadProjectSharingCollections,
-  publishedProjectsCollection,
-} from "@/features/bead/storage/published-projects";
+import { discoverProjectQueryOptions } from "@/features/discover/api/discover-queries";
+import { DiscoverError } from "@/features/discover/components/discover-error";
+import { DiscoverProjectViewer } from "@/features/discover/components/discover-project-viewer";
+import { DiscoverProjectViewerSkeleton } from "@/features/discover/components/discover-project-viewer-skeleton";
+import { queryClient } from "@/lib/query-client";
 
 export const Route = createFileRoute("/discover/$projectId")({
-  loader: preloadProjectSharingCollections,
-  component: PublishedProjectRoute,
-  pendingComponent: PublishedProjectViewerSkeleton,
+  loader: ({ params: { projectId } }) =>
+    queryClient.ensureQueryData(discoverProjectQueryOptions(projectId)),
+  component: DiscoverProjectRoute,
+  errorComponent: DiscoverError,
+  pendingComponent: DiscoverProjectViewerSkeleton,
 });
 
-function PublishedProjectRoute() {
+function DiscoverProjectRoute() {
   const { projectId } = Route.useParams();
-  const { data: project, isReady } = useLiveQuery(
-    (query) =>
-      query
-        .from({ project: publishedProjectsCollection })
-        .where(({ project }) => eq(project.id, projectId))
-        .select(({ project }) => ({
-          id: project.id,
-          sizeId: project.sizeId,
-          rows: project.rows,
-          cols: project.cols,
-          title: project.title,
-          snapshot: project.snapshot,
-          sourceUpdatedAt: project.sourceUpdatedAt,
-          publishedAt: project.publishedAt,
-        }))
-        .findOne(),
-    [projectId],
+  const { data: project } = useSuspenseQuery(
+    discoverProjectQueryOptions(projectId),
   );
 
-  if (isReady && !project) {
+  if (!project) {
     return <Navigate replace to="/discover" />;
   }
 
-  if (!project) {
-    return <PublishedProjectViewerSkeleton />;
-  }
-
-  return <PublishedProjectViewer project={project} />;
+  return <DiscoverProjectViewer project={project} />;
 }

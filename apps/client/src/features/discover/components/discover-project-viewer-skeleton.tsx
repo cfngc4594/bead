@@ -1,7 +1,7 @@
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 
-export function PublishedProjectViewerSkeleton() {
+export function DiscoverProjectViewerSkeleton() {
   return (
     <main className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-3 md:gap-3 md:px-5">
@@ -16,7 +16,7 @@ export function PublishedProjectViewerSkeleton() {
           <Skeleton className="size-7 rounded-lg" />
         </div>
         <Skeleton className="size-7 rounded-lg sm:hidden" />
-        <Skeleton className="size-8 rounded-lg sm:w-[112px]" />
+        <Skeleton className="h-8 w-16 rounded-lg sm:w-28" />
       </header>
 
       <section className="relative min-h-0 flex-1 overflow-hidden bg-muted/30">

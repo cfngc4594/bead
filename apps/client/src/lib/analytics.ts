@@ -32,7 +32,6 @@ type AnalyticsEventName =
   | "project_published"
   | "project_renamed"
   | "project_size_selected"
-  | "project_unpublished"
   | "redo_used"
   | "template_export_failed"
   | "template_export_started"
