@@ -4,11 +4,11 @@ import {
   createDiscoverProjects,
   findDiscoverProject,
   listDiscoverProjects,
-} from "./repository.js";
+} from "./repository";
 import {
   discoverProjectParamSchema,
   publishDiscoverProjectsSchema,
-} from "./schema.js";
+} from "./schema";
 
 export const discoverRoutes = new Hono()
   .get("/", async (c) => {

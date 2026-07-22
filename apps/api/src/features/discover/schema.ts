@@ -56,28 +56,10 @@ export const discoverProjectParamSchema = z.object({
   projectId: z.uuid(),
 });
 
-export const discoverProjectRowSchema = z
-  .object({
-    id: z.uuid(),
-    title: z.string().min(1).max(80),
-    size_id: canvasSizeIdSchema,
-    rows: z.number().int().positive(),
-    cols: z.number().int().positive(),
-    snapshot: canvasSnapshotSchema,
-    published_at: z.string().datetime({ offset: true }),
-  })
-  .strict()
-  .transform((row) => ({
-    id: row.id,
-    title: row.title,
-    sizeId: row.size_id,
-    rows: row.rows,
-    cols: row.cols,
-    snapshot: row.snapshot,
-    publishedAt: Date.parse(row.published_at),
-  }));
-
-export type DiscoverProject = z.infer<typeof discoverProjectRowSchema>;
 export type PublishDiscoverProject = z.infer<
   typeof publishDiscoverProjectSchema
 >;
+export type DiscoverProject = PublishDiscoverProject & {
+  id: string;
+  publishedAt: number;
+};

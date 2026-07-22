@@ -1,62 +1,46 @@
-import { supabase } from "../../lib/supabase.js";
-import {
-  type DiscoverProject,
-  discoverProjectRowSchema,
-  type PublishDiscoverProject,
-} from "./schema.js";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { discoverProjects } from "@/db/schema";
+import type { DiscoverProject, PublishDiscoverProject } from "./schema";
 
-const discoverProjectColumns =
-  "id,title,size_id,rows,cols,snapshot,published_at";
+type DiscoverProjectRow = typeof discoverProjects.$inferSelect;
+
+function toDiscoverProject(project: DiscoverProjectRow): DiscoverProject {
+  return {
+    ...project,
+    publishedAt: project.publishedAt.getTime(),
+  };
+}
 
 export async function listDiscoverProjects(): Promise<DiscoverProject[]> {
-  const { data, error } = await supabase
-    .from("discover_projects")
-    .select(discoverProjectColumns)
-    .order("published_at", { ascending: false })
-    .order("id", { ascending: false })
+  const projects = await db
+    .select()
+    .from(discoverProjects)
+    .orderBy(desc(discoverProjects.publishedAt), desc(discoverProjects.id))
     .limit(60);
 
-  if (error) {
-    throw new Error(`Unable to list discover projects: ${error.message}`);
-  }
-
-  return discoverProjectRowSchema.array().parse(data);
+  return projects.map(toDiscoverProject);
 }
 
 export async function findDiscoverProject(
   projectId: string,
 ): Promise<DiscoverProject | null> {
-  const { data, error } = await supabase
-    .from("discover_projects")
-    .select(discoverProjectColumns)
-    .eq("id", projectId)
-    .maybeSingle();
+  const [project] = await db
+    .select()
+    .from(discoverProjects)
+    .where(eq(discoverProjects.id, projectId))
+    .limit(1);
 
-  if (error) {
-    throw new Error(`Unable to load discover project: ${error.message}`);
-  }
-
-  return data ? discoverProjectRowSchema.parse(data) : null;
+  return project ? toDiscoverProject(project) : null;
 }
 
 export async function createDiscoverProjects(
   projects: PublishDiscoverProject[],
 ): Promise<DiscoverProject[]> {
-  const rows = projects.map((project) => ({
-    title: project.title,
-    size_id: project.sizeId,
-    rows: project.rows,
-    cols: project.cols,
-    snapshot: project.snapshot,
-  }));
-  const { data, error } = await supabase
-    .from("discover_projects")
-    .insert(rows)
-    .select(discoverProjectColumns);
+  const createdProjects = await db
+    .insert(discoverProjects)
+    .values(projects)
+    .returning();
 
-  if (error) {
-    throw new Error(`Unable to publish discover projects: ${error.message}`);
-  }
-
-  return discoverProjectRowSchema.array().parse(data);
+  return createdProjects.map(toDiscoverProject);
 }

@@ -1,0 +1,114 @@
+{
+  "id": "79d1a6f3-decd-4983-89d1-9dcd4c497889",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.discover_projects": {
+      "name": "discover_projects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size_id": {
+          "name": "size_id",
+          "type": "canvas_size_id",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rows": {
+          "name": "rows",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cols": {
+          "name": "cols",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "discover_projects_feed_idx": {
+          "name": "discover_projects_feed_idx",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "discover_projects_title_not_empty": {
+          "name": "discover_projects_title_not_empty",
+          "value": "char_length(btrim(\"discover_projects\".\"title\")) > 0"
+        },
+        "discover_projects_dimensions_match_size": {
+          "name": "discover_projects_dimensions_match_size",
+          "value": "(\"discover_projects\".\"size_id\" = '16x16' and \"discover_projects\".\"rows\" = 16 and \"discover_projects\".\"cols\" = 16) or (\"discover_projects\".\"size_id\" = '29x29' and \"discover_projects\".\"rows\" = 29 and \"discover_projects\".\"cols\" = 29) or (\"discover_projects\".\"size_id\" = '58x58' and \"discover_projects\".\"rows\" = 58 and \"discover_projects\".\"cols\" = 58) or (\"discover_projects\".\"size_id\" = '87x87' and \"discover_projects\".\"rows\" = 87 and \"discover_projects\".\"cols\" = 87)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.canvas_size_id": {
+      "name": "canvas_size_id",
+      "schema": "public",
+      "values": ["16x16", "29x29", "58x58", "87x87"]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

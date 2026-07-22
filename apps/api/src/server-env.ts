@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-export const env = createEnv({
+export const serverEnv = createEnv({
   server: {
     CORS_ORIGINS: z.string().transform((value) =>
       value
@@ -9,8 +9,6 @@ export const env = createEnv({
         .map((origin) => origin.trim())
         .filter(Boolean),
     ),
-    SUPABASE_SECRET_KEY: z.string().min(1),
-    SUPABASE_URL: z.url(),
   },
   clientPrefix: "",
   client: {},
