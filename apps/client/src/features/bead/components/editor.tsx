@@ -1,8 +1,8 @@
+import { getMardColor, mardColors } from "@bead/core/colors";
 import { Capacitor } from "@capacitor/core";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
-import { mardColors } from "@/data/colors";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
@@ -151,7 +151,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       return;
     }
 
-    const color = mardColors.find((item) => item.code === bead.code);
+    const color = getMardColor(bead.code);
 
     if (!color) {
       return;

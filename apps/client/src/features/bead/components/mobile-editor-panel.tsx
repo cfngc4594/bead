@@ -1,9 +1,9 @@
+import type { BeadColor } from "@bead/core/colors";
 import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { cn } from "@bead/ui/lib/utils";
 import { ChevronDown, ChevronUp, Rotate3D } from "lucide-react";
 import { useState } from "react";
-import type { BeadColor } from "@/data/colors";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";
@@ -104,7 +104,7 @@ export function MobileEditorPanel({
       </div>
 
       {isExpanded ? (
-        <div className="h-[200px] min-h-0">
+        <div className="h-50 min-h-0">
           {isModelPreviewOpen ? (
             <ScrollArea className="h-full min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
               <ModelPreviewControls

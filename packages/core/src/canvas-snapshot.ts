@@ -1,11 +1,11 @@
 import { z } from "zod";
+import { mardColorCodeSchema } from "./colors";
 
-const nonEmptyStringSchema = z.string().min(1);
 const nonnegativeIntSchema = z.number().int().nonnegative();
 
 export const canvasSnapshotCellSchema = z.tuple([
   nonnegativeIntSchema,
-  nonEmptyStringSchema,
+  mardColorCodeSchema,
 ]);
 
 export const canvasSnapshotSchema = z

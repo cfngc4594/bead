@@ -1,7 +1,10 @@
+import { db } from "@bead/api/db/client";
+import { discoverProjects } from "@bead/api/db/schema";
+import type {
+  DiscoverProject,
+  PublishDiscoverProject,
+} from "@bead/core/discover";
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { discoverProjects } from "@/db/schema";
-import type { DiscoverProject, PublishDiscoverProject } from "./schema";
 
 type DiscoverProjectRow = typeof discoverProjects.$inferSelect;
 

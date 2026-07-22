@@ -1,10 +1,13 @@
-import { mardColors } from "@/data/colors";
+import type {
+  CanvasSnapshot,
+  CanvasSnapshotCell,
+} from "@bead/core/canvas-snapshot";
+import { getMardColor } from "@bead/core/colors";
 import {
   type CanvasState,
   createEmptyCanvas,
 } from "@/features/bead/lib/canvas-state";
 import type { BeadFill } from "@/features/bead/types";
-import type { CanvasSnapshot, CanvasSnapshotCell } from "./project-schema";
 
 export function compactCanvas(beads: CanvasState): CanvasSnapshot {
   return {
@@ -59,7 +62,7 @@ function compactBeads(beads: CanvasState): CanvasSnapshotCell[] {
 }
 
 function getFillByCode(code: string): BeadFill {
-  const color = mardColors.find((item) => item.code === code);
+  const color = getMardColor(code);
 
   if (!color) {
     throw new Error(`Unknown bead color code: ${code}`);

@@ -1,6 +1,6 @@
+import type { BeadColor } from "@bead/core/colors";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Rotate3D } from "lucide-react";
-import type { BeadColor } from "@/data/colors";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";

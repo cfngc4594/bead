@@ -1,19 +1,9 @@
+import { canvasSizeIdSchema } from "@bead/core/canvas-sizes";
 import {
-  type CanvasSnapshot,
-  type CanvasSnapshotCell,
-  canvasSnapshotCellSchema,
   canvasSnapshotSchema,
   validateCanvasSnapshot,
 } from "@bead/core/canvas-snapshot";
 import { z } from "zod";
-import { canvasSizeIdSchema } from "@/config/canvas-sizes";
-
-export {
-  type CanvasSnapshot,
-  type CanvasSnapshotCell,
-  canvasSnapshotCellSchema,
-  canvasSnapshotSchema,
-};
 
 const nonEmptyStringSchema = z.string().min(1);
 const nonnegativeIntSchema = z.number().int().nonnegative();

@@ -1,6 +1,6 @@
+import { mardColors } from "@bead/core/colors";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
-import { mardColors } from "@/data/colors";
 
 const modeToolSkeletons = ["pan", "paint", "mix", "erase", "picker", "select"];
 const toolbarViewSkeletons = ["focus", "model-preview", "codes", "guides"];

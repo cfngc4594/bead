@@ -1,4 +1,4 @@
-import type { BeadColor } from "@/data/colors";
+import type { BeadColor } from "@bead/core/colors";
 
 type CurrentColorProps = {
   color: BeadColor;

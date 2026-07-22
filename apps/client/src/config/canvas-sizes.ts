@@ -1,10 +1,7 @@
 import {
   type CanvasSizeId,
   canvasSizeDefinitions,
-  canvasSizeIdSchema,
 } from "@bead/core/canvas-sizes";
-
-export { canvasSizeIdSchema, type CanvasSizeId };
 
 export const canvasSizes = [
   {

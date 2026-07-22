@@ -1,13 +1,11 @@
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
 import { formatRelativeTime } from "@/features/bead/lib/format-relative-time";
-import type {
-  CanvasSnapshot,
-  Project,
-} from "@/features/bead/storage/project-schema";
+import type { Project } from "@/features/bead/storage/project-schema";
 
 type ProjectCardProject = Pick<
   Project,

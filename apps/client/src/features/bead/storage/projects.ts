@@ -1,18 +1,17 @@
+import type { CanvasSizeId } from "@bead/core/canvas-sizes";
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import {
   createCollection,
   createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import type { CanvasSize, CanvasSizeId } from "@/config/canvas-sizes";
+import type { CanvasSize } from "@/config/canvas-sizes";
 import {
   type CanvasState,
   createEmptyCanvas,
   isSameCanvas,
 } from "@/features/bead/lib/canvas-state";
-import type {
-  CanvasSnapshot,
-  Project,
-} from "@/features/bead/storage/project-schema";
+import type { Project } from "@/features/bead/storage/project-schema";
 import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
   cloneSnapshot,

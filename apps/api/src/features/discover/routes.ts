@@ -1,3 +1,4 @@
+import { publishDiscoverProjectsSchema } from "@bead/core/discover";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import {
@@ -5,10 +6,7 @@ import {
   findDiscoverProject,
   listDiscoverProjects,
 } from "./repository";
-import {
-  discoverProjectParamSchema,
-  publishDiscoverProjectsSchema,
-} from "./schema";
+import { discoverProjectParamSchema } from "./schema";
 
 export const discoverRoutes = new Hono()
   .get("/", async (c) => {

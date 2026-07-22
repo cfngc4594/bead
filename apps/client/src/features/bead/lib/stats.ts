@@ -1,4 +1,4 @@
-import { mardColors } from "@/data/colors";
+import { getMardColorIndex } from "@bead/core/colors";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadStat = BeadFill & {
@@ -35,7 +35,7 @@ function compareBeadStats(a: BeadStat, b: BeadStat) {
 }
 
 function getColorSortIndex(code: string) {
-  const index = mardColors.findIndex((color) => color.code === code);
+  const index = getMardColorIndex(code);
 
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }

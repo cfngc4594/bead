@@ -1,9 +1,9 @@
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import { getPatternSize } from "@/features/bead/lib/canvas-geometry";
-import type { CanvasSnapshot } from "@/features/bead/storage/project-schema";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 
 type ProjectPreviewProps = {

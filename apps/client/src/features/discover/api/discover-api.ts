@@ -1,4 +1,7 @@
-import type { DiscoverProject, PublishDiscoverProject } from "@bead/api";
+import type {
+  DiscoverProject,
+  PublishDiscoverProject,
+} from "@bead/core/discover";
 import { api } from "@/lib/api";
 
 export async function fetchDiscoverProjects(): Promise<DiscoverProject[]> {

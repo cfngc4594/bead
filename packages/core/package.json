@@ -6,6 +6,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
+    "./colors": "./src/colors.ts",
+    "./discover": "./src/discover.ts",
     "./canvas-sizes": "./src/canvas-sizes.ts",
     "./canvas-snapshot": "./src/canvas-snapshot.ts"
   },
@@ -13,6 +15,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.14",
     "typescript": "^5"
   }
 }

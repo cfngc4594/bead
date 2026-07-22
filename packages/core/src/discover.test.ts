@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { publishDiscoverProjectSchema } from "./schema";
+import { publishDiscoverProjectSchema } from "./discover";
 
 describe("publishDiscoverProjectSchema", () => {
   test("accepts an independent discover snapshot", () => {
@@ -27,6 +27,14 @@ describe("publishDiscoverProjectSchema", () => {
             ],
           },
         }),
+      ).success,
+    ).toBe(false);
+  });
+
+  test("rejects bead color codes outside the shared catalog", () => {
+    expect(
+      publishDiscoverProjectSchema.safeParse(
+        createPublishInput({ snapshot: { cells: [[0, "UNKNOWN"]] } }),
       ).success,
     ).toBe(false);
   });

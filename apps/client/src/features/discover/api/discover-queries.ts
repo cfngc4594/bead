@@ -1,4 +1,4 @@
-import type { PublishDiscoverProject } from "@bead/api";
+import type { PublishDiscoverProject } from "@bead/core/discover";
 import {
   queryOptions,
   useMutation,

@@ -1,12 +1,9 @@
+import type { CanvasSizeId } from "@bead/core/canvas-sizes";
 import { Button } from "@bead/ui/components/button";
 import { Card, CardContent } from "@bead/ui/components/card";
 import { cn } from "@bead/ui/lib/utils";
 import { useState } from "react";
-import {
-  type CanvasSizeId,
-  canvasSizes,
-  getCanvasSize,
-} from "@/config/canvas-sizes";
+import { canvasSizes, getCanvasSize } from "@/config/canvas-sizes";
 import {
   createProject as createStoredProject,
   type Project,

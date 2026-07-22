@@ -1,6 +1,6 @@
+import { databaseEnv } from "@bead/api/database-env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { databaseEnv } from "@/database-env";
 import * as schema from "./schema";
 
 type PostgresClient = ReturnType<typeof postgres>;

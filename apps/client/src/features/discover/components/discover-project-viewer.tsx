@@ -1,4 +1,4 @@
-import type { DiscoverProject } from "@bead/api";
+import type { DiscoverProject } from "@bead/core/discover";
 import { Badge } from "@bead/ui/components/badge";
 import { Button } from "@bead/ui/components/button";
 import {

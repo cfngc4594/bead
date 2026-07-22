@@ -1,5 +1,5 @@
+import { getMardColor } from "@bead/core/colors";
 import type { CanvasSize } from "@/config/canvas-sizes";
-import { mardColors } from "@/data/colors";
 import {
   type BeadTemplateFile,
   beadTemplateSchema,
@@ -58,7 +58,7 @@ function normalizeBead(
     return null;
   }
 
-  const color = mardColors.find((item) => item.code === bead.code);
+  const color = getMardColor(bead.code);
 
   if (!color) {
     throw new BeadTemplateImportError(`不支持的豆色色号：${bead.code}`);
