@@ -13,6 +13,7 @@ import { Route as TabsRouteRouteImport } from './routes/_tabs/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects/$projectId'
+import { Route as DiscoverProjectIdRouteImport } from './routes/discover/$projectId'
 import { Route as TabsSettingsRouteImport } from './routes/_tabs/settings'
 import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
 import { Route as TabsDiscoverRouteImport } from './routes/_tabs/discover'
@@ -36,6 +37,11 @@ const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
   path: '/projects/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiscoverProjectIdRoute = DiscoverProjectIdRouteImport.update({
+  id: '/discover/$projectId',
+  path: '/discover/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TabsSettingsRoute = TabsSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof TabsDiscoverRoute
   '/projects': typeof TabsProjectsRoute
   '/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/discover': typeof TabsDiscoverRoute
   '/projects': typeof TabsProjectsRoute
   '/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_tabs/discover': typeof TabsDiscoverRoute
   '/_tabs/projects': typeof TabsProjectsRoute
   '/_tabs/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/projects'
     | '/settings'
+    | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/projects'
     | '/settings'
+    | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/_tabs/discover'
     | '/_tabs/projects'
     | '/_tabs/settings'
+    | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
   fileRoutesById: FileRoutesById
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TabsRouteRoute: typeof TabsRouteRouteWithChildren
+  DiscoverProjectIdRoute: typeof DiscoverProjectIdRoute
   ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
   ProjectsNewRoute: typeof ProjectsNewRoute
 }
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/projects/$projectId'
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover/$projectId': {
+      id: '/discover/$projectId'
+      path: '/discover/$projectId'
+      fullPath: '/discover/$projectId'
+      preLoaderRoute: typeof DiscoverProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_tabs/settings': {
@@ -186,6 +206,7 @@ const TabsRouteRouteWithChildren = TabsRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TabsRouteRoute: TabsRouteRouteWithChildren,
+  DiscoverProjectIdRoute: DiscoverProjectIdRoute,
   ProjectsProjectIdRoute: ProjectsProjectIdRoute,
   ProjectsNewRoute: ProjectsNewRoute,
 }

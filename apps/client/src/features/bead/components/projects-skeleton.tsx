@@ -1,4 +1,5 @@
 import { Skeleton } from "@bead/ui/components/skeleton";
+import { ProjectCardSkeleton } from "@/features/bead/components/project-card";
 
 const projectSkeletons = ["project-1", "project-2", "project-3"];
 
@@ -17,27 +18,7 @@ export function ProjectsSkeleton() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projectSkeletons.map((project) => (
-              <article
-                className="overflow-hidden rounded-xl border bg-card shadow-xs"
-                key={project}
-              >
-                <div className="aspect-4/3 bg-muted/30 p-3">
-                  <Skeleton className="h-full w-full rounded-lg" />
-                </div>
-
-                <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="flex h-4 items-start">
-                      <Skeleton className="h-3.5 w-18" />
-                    </div>
-                    <div className="flex h-4 items-center gap-2">
-                      <Skeleton className="h-4 w-11 rounded-sm" />
-                      <Skeleton className="h-3 w-18" />
-                    </div>
-                  </div>
-                  <Skeleton className="size-7 shrink-0 rounded-md" />
-                </div>
-              </article>
+              <ProjectCardSkeleton key={project} />
             ))}
           </div>
         </div>

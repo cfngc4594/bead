@@ -16,16 +16,22 @@ export const canvasSnapshotSchema = z
   })
   .strict();
 
-export const projectSchema = z
+export const projectBaseSchema = z
   .object({
     id: nonEmptyStringSchema,
     title: nonEmptyStringSchema,
     sizeId: canvasSizeIdSchema,
     rows: positiveIntSchema,
     cols: positiveIntSchema,
+  })
+  .strict();
+
+export const projectSchema = projectBaseSchema
+  .extend({
     snapshots: z.array(canvasSnapshotSchema).min(1),
     currentIndex: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
+    sourcePublishedProjectId: nonEmptyStringSchema.optional(),
   })
   .strict();
 
@@ -56,25 +62,44 @@ export function validateProjectIntegrity(
   }
 
   project.snapshots.forEach((snapshot, snapshotIndex) => {
-    const cellIndexes = new Set<number>();
-
-    snapshot.cells.forEach(([beadIndex], cellIndex) => {
-      if (beadIndex >= cellCount) {
-        addIssue({
-          message: "cell index must be within the project canvas",
-          path: ["snapshots", snapshotIndex, "cells", cellIndex, 0],
-        });
-      }
-
-      if (cellIndexes.has(beadIndex)) {
-        addIssue({
-          message: "cell indexes must be unique within a snapshot",
-          path: ["snapshots", snapshotIndex, "cells", cellIndex, 0],
-        });
-      }
-
-      cellIndexes.add(beadIndex);
+    validateSnapshotIntegrity({
+      addIssue,
+      cellCount,
+      path: ["snapshots", snapshotIndex],
+      snapshot,
     });
+  });
+}
+
+export function validateSnapshotIntegrity({
+  addIssue,
+  cellCount,
+  path,
+  snapshot,
+}: {
+  addIssue: (issue: ProjectIntegrityIssue) => void;
+  cellCount: number;
+  path: (number | string)[];
+  snapshot: CanvasSnapshot;
+}) {
+  const cellIndexes = new Set<number>();
+
+  snapshot.cells.forEach(([beadIndex], cellIndex) => {
+    if (beadIndex >= cellCount) {
+      addIssue({
+        message: "cell index must be within the project canvas",
+        path: [...path, "cells", cellIndex, 0],
+      });
+    }
+
+    if (cellIndexes.has(beadIndex)) {
+      addIssue({
+        message: "cell indexes must be unique within a snapshot",
+        path: [...path, "cells", cellIndex, 0],
+      });
+    }
+
+    cellIndexes.add(beadIndex);
   });
 }
 

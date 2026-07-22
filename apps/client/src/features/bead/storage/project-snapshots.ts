@@ -38,6 +38,12 @@ export function getSnapshotFilledCount(snapshot: CanvasSnapshot) {
   return snapshot.cells.length;
 }
 
+export function cloneSnapshot(snapshot: CanvasSnapshot): CanvasSnapshot {
+  return {
+    cells: snapshot.cells.map(([index, code]) => [index, code]),
+  };
+}
+
 function compactBeads(beads: CanvasState): CanvasSnapshotCell[] {
   const snapshot: CanvasSnapshotCell[] = [];
 

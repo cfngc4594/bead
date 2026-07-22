@@ -12,10 +12,12 @@ import {
 import type { Project } from "@/features/bead/storage/project-schema";
 import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
+  cloneSnapshot,
   compactCanvas,
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
+import type { PublishedProject } from "@/features/bead/storage/published-project-schema";
 
 export type ProjectId = string;
 export type { Project };
@@ -103,10 +105,7 @@ export async function duplicateProject(projectId: ProjectId) {
   const duplicatedProject: Project = {
     ...project,
     id: createProjectId(),
-    snapshots: project.snapshots.map((snapshot) => ({
-      ...snapshot,
-      cells: snapshot.cells.map((cell) => [...cell] as typeof cell),
-    })),
+    snapshots: project.snapshots.map(cloneSnapshot),
     updatedAt: Date.now(),
   };
 
@@ -115,6 +114,36 @@ export async function duplicateProject(projectId: ProjectId) {
   });
 
   return duplicatedProject;
+}
+
+export async function addPublishedProject(project: PublishedProject) {
+  await projectsCollection.preload();
+
+  const existingProject = projectsCollection.toArray.find(
+    (localProject) => localProject.sourcePublishedProjectId === project.id,
+  );
+
+  if (existingProject) {
+    return false;
+  }
+
+  const addedProject: Project = {
+    id: createProjectId(),
+    title: project.title,
+    sizeId: project.sizeId,
+    rows: project.rows,
+    cols: project.cols,
+    snapshots: [cloneSnapshot(project.snapshot)],
+    currentIndex: 0,
+    updatedAt: Date.now(),
+    sourcePublishedProjectId: project.id,
+  };
+
+  await commitProjectMutation(() => {
+    projectsCollection.insert(addedProject);
+  });
+
+  return true;
 }
 
 export function deleteProject(projectId: ProjectId) {

@@ -1,20 +1,12 @@
 import { Capacitor } from "@capacitor/core";
-import {
-  type ComponentType,
-  lazy,
-  Suspense,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { mardColors } from "@/data/colors";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
-import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
-import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
+import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
@@ -30,15 +22,6 @@ import {
 import type { GridCell } from "@/features/bead/types";
 import { usePet } from "@/features/pet/use-pet";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
-
-const CanvasBoard = lazy(
-  () =>
-    import("@/features/bead/components/canvas").then((module) => ({
-      default: module.CanvasBoard,
-    })) as Promise<{
-      default: ComponentType<CanvasBoardProps>;
-    }>,
-);
 
 type EditorProps = {
   projectId: ProjectId;
@@ -349,24 +332,22 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               settings={modelPreview.settings}
             />
           ) : (
-            <Suspense fallback={<CanvasBoardSkeleton />}>
-              <CanvasBoard
-                rows={size.rows}
-                cols={size.cols}
-                beads={beads}
-                tool={tool}
-                showBeadCodes={showBeadCodes}
-                showGuideLines={showGuideLines}
-                onEditCell={editCell}
-                onEditEnd={finishCellEdit}
-                onEditStart={beginCellEdit}
-                onMoveSelection={moveSelection}
-                onPickCell={pickCell}
-                selectionResetSignal={selectionResetSignal}
-                resetViewAfterResizeSignal={resetViewAfterResizeSignal}
-                resetViewSignal={resetViewSignal}
-              />
-            </Suspense>
+            <LazyCanvasBoard
+              rows={size.rows}
+              cols={size.cols}
+              beads={beads}
+              tool={tool}
+              showBeadCodes={showBeadCodes}
+              showGuideLines={showGuideLines}
+              onEditCell={editCell}
+              onEditEnd={finishCellEdit}
+              onEditStart={beginCellEdit}
+              onMoveSelection={moveSelection}
+              onPickCell={pickCell}
+              selectionResetSignal={selectionResetSignal}
+              resetViewAfterResizeSignal={resetViewAfterResizeSignal}
+              resetViewSignal={resetViewSignal}
+            />
           )}
         </div>
       </section>

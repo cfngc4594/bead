@@ -22,6 +22,11 @@ test("projectSchema rejects invalid structure and dimensions", () => {
 
 test("projectIntegritySchema accepts the current project shape", () => {
   expect(projectIntegritySchema.safeParse(createProject()).success).toBe(true);
+  expect(
+    projectIntegritySchema.safeParse(
+      createProject({ sourcePublishedProjectId: "published-project-1" }),
+    ).success,
+  ).toBe(true);
 });
 
 test("projectIntegritySchema rejects invalid snapshot and cell references", () => {

@@ -22,10 +22,12 @@ import {
 } from "@bead/ui/components/dropdown-menu";
 import { Input } from "@bead/ui/components/input";
 import {
+  Check,
   Copy,
   Edit3,
   LoaderCircle,
   MoreHorizontal,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { type SubmitEvent, useEffect, useState } from "react";
@@ -34,9 +36,11 @@ import {
   DEFAULT_PROJECT_TITLE,
   deleteProject as deleteStoredProject,
   duplicateProject as duplicateStoredProject,
+  getFilledCount,
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import { publishProjects } from "@/features/bead/storage/published-projects";
 import {
   NativeBackAlertDialog,
   NativeBackDialog,
@@ -44,10 +48,20 @@ import {
 } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
-export function ProjectActions({ project }: { project: Project }) {
+export function ProjectActions({
+  project,
+  publishedSourceUpdatedAt,
+}: {
+  project: Project;
+  publishedSourceUpdatedAt?: number;
+}) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const isPublished = publishedSourceUpdatedAt !== undefined;
+  const isPublishedVersionCurrent =
+    publishedSourceUpdatedAt === project.updatedAt;
 
   async function handleDuplicateProject() {
     try {
@@ -80,6 +94,33 @@ export function ProjectActions({ project }: { project: Project }) {
     }
   }
 
+  async function handlePublishProject() {
+    if (
+      isPublishing ||
+      isPublishedVersionCurrent ||
+      getFilledCount(project) === 0
+    ) {
+      return;
+    }
+
+    setIsPublishing(true);
+
+    try {
+      await publishProjects([project.id]);
+      trackEvent("project_published", {
+        projectCount: 1,
+        sizeId: project.sizeId,
+        source: "project_actions",
+      });
+      toast.success("作品已发布到发现");
+    } catch (error) {
+      console.error("Unable to publish bead project", error);
+      toast.error("发布作品失败");
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
   function handleDeleteOpenChange(nextOpen: boolean) {
     if (!nextOpen && isDeleting) {
       return;
@@ -108,6 +149,29 @@ export function ProjectActions({ project }: { project: Project }) {
           <DropdownMenuItem onSelect={handleDuplicateProject}>
             <Copy />
             复制
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={
+              isPublishing ||
+              isPublishedVersionCurrent ||
+              getFilledCount(project) === 0
+            }
+            onSelect={handlePublishProject}
+          >
+            {isPublishing ? (
+              <LoaderCircle className="animate-spin" />
+            ) : isPublishedVersionCurrent ? (
+              <Check />
+            ) : (
+              <Share2 />
+            )}
+            {isPublishing
+              ? "正在发布"
+              : isPublishedVersionCurrent
+                ? "已发布"
+                : isPublished
+                  ? "更新到发现"
+                  : "发布到发现"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

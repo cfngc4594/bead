@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "bead",
@@ -40,6 +39,7 @@
         "@t3-oss/env-core": "^0.13.11",
         "@tanstack/react-db": "^0.1.87",
         "@tanstack/react-router": "^1.170.16",
+        "date-fns": "^4.4.0",
         "hono": "^4.12.27",
         "konva": "^10.3.0",
         "lucide-react": "^1.17.0",
