@@ -333,6 +333,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
             />
           ) : (
             <LazyCanvasBoard
+              mode="editable"
               rows={size.rows}
               cols={size.cols}
               beads={beads}

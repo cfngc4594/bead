@@ -1,5 +1,5 @@
-import { databaseEnv } from "@bead/api/database-env";
 import { defineConfig } from "drizzle-kit";
+import { databaseEnv } from "./src/database-env";
 
 export default defineConfig({
   schema: "./src/db/schema.ts",

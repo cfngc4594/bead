@@ -11,8 +11,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    ".": "./src/index.ts"
   },
   "dependencies": {
     "@bead/core": "workspace:*",

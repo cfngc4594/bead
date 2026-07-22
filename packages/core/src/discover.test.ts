@@ -8,13 +8,6 @@ describe("publishDiscoverProjectSchema", () => {
     );
   });
 
-  test("rejects mismatched dimensions", () => {
-    expect(
-      publishDiscoverProjectSchema.safeParse(createPublishInput({ rows: 29 }))
-        .success,
-    ).toBe(false);
-  });
-
   test("rejects duplicate and out-of-range cells", () => {
     expect(
       publishDiscoverProjectSchema.safeParse(
@@ -53,8 +46,6 @@ function createBasePublishInput() {
   return {
     title: "Demo",
     sizeId: "16x16" as const,
-    rows: 16,
-    cols: 16,
     snapshot: { cells: [[0, "A1"]] as [number, string][] },
   };
 }

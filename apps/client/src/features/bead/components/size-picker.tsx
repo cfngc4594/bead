@@ -33,7 +33,7 @@ export function SizePicker({
     setIsCreating(true);
 
     try {
-      const project = await createStoredProject(size);
+      const project = await createStoredProject(selected);
 
       trackEvent("project_created", {
         cols: size.cols,

@@ -43,8 +43,6 @@ export function ProjectsPage() {
         .select(({ project }) => ({
           id: project.id,
           sizeId: project.sizeId,
-          rows: project.rows,
-          cols: project.cols,
           title: project.title,
           snapshots: project.snapshots,
           currentIndex: project.currentIndex,

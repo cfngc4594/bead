@@ -1,4 +1,7 @@
-import { canvasSizeIdSchema } from "@bead/core/canvas-sizes";
+import {
+  canvasSizeIdSchema,
+  getCanvasSizeDefinition,
+} from "@bead/core/canvas-sizes";
 import {
   canvasSnapshotSchema,
   validateCanvasSnapshot,
@@ -7,20 +10,11 @@ import { z } from "zod";
 
 const nonEmptyStringSchema = z.string().min(1);
 const nonnegativeIntSchema = z.number().int().nonnegative();
-const positiveIntSchema = z.number().int().positive();
-
-export const projectBaseSchema = z
+export const projectSchema = z
   .object({
     id: nonEmptyStringSchema,
     title: nonEmptyStringSchema,
     sizeId: canvasSizeIdSchema,
-    rows: positiveIntSchema,
-    cols: positiveIntSchema,
-  })
-  .strict();
-
-export const projectSchema = projectBaseSchema
-  .extend({
     snapshots: z.array(canvasSnapshotSchema).min(1),
     currentIndex: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
@@ -44,7 +38,8 @@ export function validateProjectIntegrity(
   project: Project,
   addIssue: (issue: ProjectIntegrityIssue) => void,
 ) {
-  const cellCount = project.rows * project.cols;
+  const size = getCanvasSizeDefinition(project.sizeId);
+  const cellCount = size.rows * size.cols;
 
   if (project.currentIndex >= project.snapshots.length) {
     addIssue({

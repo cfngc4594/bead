@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { getCanvasSize } from "@/config/canvas-sizes";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
@@ -43,13 +44,14 @@ export function DiscoverProjectViewer({
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
   const [isAdding, setIsAdding] = useState(false);
+  const size = getCanvasSize(project.sizeId);
   const beads = useMemo(
     () =>
       expandSnapshot({
-        cellCount: project.rows * project.cols,
+        cellCount: size.rows * size.cols,
         snapshot: project.snapshot,
       }),
-    [project],
+    [project.snapshot, size.cols, size.rows],
   );
 
   useEffect(() => {
@@ -72,8 +74,6 @@ export function DiscoverProjectViewer({
       await createProjectFromSnapshot({
         title: project.title,
         sizeId: project.sizeId,
-        rows: project.rows,
-        cols: project.cols,
         snapshot: project.snapshot,
       });
       trackEvent("project_added_from_discover", {
@@ -159,18 +159,12 @@ export function DiscoverProjectViewer({
 
       <section className="relative min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
         <LazyCanvasBoard
-          rows={project.rows}
-          cols={project.cols}
+          mode="readonly"
+          rows={size.rows}
+          cols={size.cols}
           beads={beads}
-          tool="pan"
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
-          onEditCell={ignoreInteraction}
-          onEditEnd={ignoreInteraction}
-          onEditStart={ignoreInteraction}
-          onMoveSelection={ignoreInteraction}
-          onPickCell={ignoreInteraction}
-          selectionResetSignal={0}
           resetViewAfterResizeSignal={resetViewAfterResizeSignal}
           resetViewSignal={resetViewSignal}
         />
@@ -257,5 +251,3 @@ function MobileViewerMenu({
     </div>
   );
 }
-
-function ignoreInteraction() {}

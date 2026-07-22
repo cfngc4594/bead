@@ -7,10 +7,7 @@ import { ProjectPreview } from "@/features/bead/components/project-preview";
 import { formatRelativeTime } from "@/features/bead/lib/format-relative-time";
 import type { Project } from "@/features/bead/storage/project-schema";
 
-type ProjectCardProject = Pick<
-  Project,
-  "id" | "title" | "sizeId" | "rows" | "cols"
->;
+type ProjectCardProject = Pick<Project, "id" | "title" | "sizeId">;
 
 type ProjectCardRoute = "/discover/$projectId" | "/projects/$projectId";
 
@@ -46,8 +43,8 @@ export function ProjectCard({
       >
         <div className="aspect-4/3">
           <ProjectPreview
-            cols={project.cols}
-            rows={project.rows}
+            cols={size.cols}
+            rows={size.rows}
             snapshot={snapshot}
           />
         </div>

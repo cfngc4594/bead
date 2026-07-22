@@ -1,11 +1,13 @@
-import type { CanvasSizeId } from "@bead/core/canvas-sizes";
+import {
+  type CanvasSizeId,
+  getCanvasSizeDefinition,
+} from "@bead/core/canvas-sizes";
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import {
   createCollection,
   createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import type { CanvasSize } from "@/config/canvas-sizes";
 import {
   type CanvasState,
   createEmptyCanvas,
@@ -118,14 +120,10 @@ export async function duplicateProject(projectId: ProjectId) {
 }
 
 export async function createProjectFromSnapshot({
-  cols,
-  rows,
   sizeId,
   snapshot,
   title,
 }: {
-  cols: number;
-  rows: number;
   sizeId: CanvasSizeId;
   snapshot: CanvasSnapshot;
   title: string;
@@ -138,8 +136,6 @@ export async function createProjectFromSnapshot({
     title:
       normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
     sizeId,
-    rows,
-    cols,
     snapshots: [cloneSnapshot(snapshot)],
     currentIndex: 0,
     updatedAt: Date.now(),
@@ -184,13 +180,12 @@ export function renameProject({
   });
 }
 
-export async function createProject(size: CanvasSize) {
+export async function createProject(sizeId: CanvasSizeId) {
+  const size = getCanvasSizeDefinition(sizeId);
   const project: Project = {
     id: createProjectId(),
     title: DEFAULT_PROJECT_TITLE,
-    sizeId: size.id,
-    rows: size.rows,
-    cols: size.cols,
+    sizeId,
     snapshots: [compactCanvas(createEmptyCanvas(size.rows * size.cols))],
     currentIndex: 0,
     updatedAt: Date.now(),

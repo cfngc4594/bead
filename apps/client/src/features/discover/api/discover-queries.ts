@@ -37,7 +37,7 @@ export function usePublishDiscoverProjects() {
       publishDiscoverProjects(projects),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: discoverQueryKeys.all,
+        queryKey: discoverQueryKeys.list(),
       });
     },
   });

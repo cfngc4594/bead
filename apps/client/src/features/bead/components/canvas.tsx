@@ -32,41 +32,49 @@ import type {
 
 export type { GridCell };
 
-export type CanvasBoardProps = {
+type CanvasBoardViewProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
-  tool: CanvasTool;
   showBeadCodes: boolean;
   showGuideLines: boolean;
+  resetViewSignal: number;
+  resetViewAfterResizeSignal: number;
+  viewport?: Viewport;
+};
+
+type EditableCanvasBoardProps = {
+  mode: "editable";
+  tool: CanvasTool;
   onEditStart: () => void;
   onEditCell: (cell: GridCell) => void;
   onEditEnd: () => void;
   onPickCell: (cell: GridCell) => void;
   onMoveSelection: (beads: CanvasState) => void;
   selectionResetSignal: number;
-  resetViewSignal: number;
-  resetViewAfterResizeSignal: number;
-  viewport?: Viewport;
 };
 
-export function CanvasBoard({
-  rows,
-  cols,
-  beads,
-  tool,
-  showBeadCodes,
-  showGuideLines,
-  onEditStart,
-  onEditCell,
-  onEditEnd,
-  onPickCell,
-  onMoveSelection,
-  selectionResetSignal,
-  resetViewSignal,
-  resetViewAfterResizeSignal,
-  viewport = { width: 760, height: 640 },
-}: CanvasBoardProps) {
+type ReadonlyCanvasBoardProps = {
+  mode: "readonly";
+};
+
+export type CanvasBoardProps = CanvasBoardViewProps &
+  (EditableCanvasBoardProps | ReadonlyCanvasBoardProps);
+
+export function CanvasBoard(props: CanvasBoardProps) {
+  const {
+    rows,
+    cols,
+    beads,
+    showBeadCodes,
+    showGuideLines,
+    resetViewSignal,
+    resetViewAfterResizeSignal,
+    viewport = { width: 760, height: 640 },
+  } = props;
+  const tool = props.mode === "editable" ? props.tool : "pan";
+  const selectionResetSignal =
+    props.mode === "editable" ? props.selectionResetSignal : 0;
   const { theme } = useTheme();
   const boardTheme = resolveBoardTheme(theme);
   const interactionPalette = boardInteractionPalettes[boardTheme];
@@ -105,8 +113,8 @@ export function CanvasBoard({
     containerRef,
     onPinchMove: handlePinchMove,
     onPinchStart: () => {
-      if (isPainting) {
-        onEditEnd();
+      if (isPainting && props.mode === "editable") {
+        props.onEditEnd();
         setIsPainting(false);
       }
       setHoveredCell(null);
@@ -126,7 +134,7 @@ export function CanvasBoard({
   } = useSelectionGesture({
     beads,
     cols,
-    onMoveSelection,
+    onMoveSelection: moveSelection,
     resetSignal: selectionResetSignal,
     rows,
   });
@@ -151,6 +159,10 @@ export function CanvasBoard({
   }
 
   function editFromPointer() {
+    if (props.mode !== "editable") {
+      return;
+    }
+
     const cell = getCellFromPointer();
 
     if (!cell) {
@@ -158,7 +170,13 @@ export function CanvasBoard({
     }
 
     setHoveredCell(cell);
-    onEditCell(cell);
+    props.onEditCell(cell);
+  }
+
+  function moveSelection(nextBeads: CanvasState) {
+    if (props.mode === "editable") {
+      props.onMoveSelection(nextBeads);
+    }
   }
 
   function handlePointerDown(event: KonvaEventObject<PointerEvent>) {
@@ -168,11 +186,15 @@ export function CanvasBoard({
       return;
     }
 
+    if (props.mode !== "editable") {
+      return;
+    }
+
     if (tool === "picker") {
       const cell = getCellFromPointer();
 
       if (cell) {
-        onPickCell(cell);
+        props.onPickCell(cell);
       }
 
       return;
@@ -192,7 +214,7 @@ export function CanvasBoard({
     }
 
     setIsPainting(true);
-    onEditStart();
+    props.onEditStart();
     editFromPointer();
   }
 
@@ -206,13 +228,17 @@ export function CanvasBoard({
     const cell = getCellFromPointer();
     setHoveredCell(cell);
 
+    if (props.mode !== "editable") {
+      return;
+    }
+
     if (tool === "select") {
       updateSelection(cell);
       return;
     }
 
     if (isEditTool(tool) && isPainting && cell) {
-      onEditCell(cell);
+      props.onEditCell(cell);
     }
   }
 
@@ -223,8 +249,8 @@ export function CanvasBoard({
 
     resetPinchIfIdle(resetPinch);
 
-    if (isPainting) {
-      onEditEnd();
+    if (isPainting && props.mode === "editable") {
+      props.onEditEnd();
     }
 
     if (tool === "select") {
@@ -239,8 +265,8 @@ export function CanvasBoard({
     resetPinch();
     setHoveredCell(null);
 
-    if (isPainting) {
-      onEditEnd();
+    if (isPainting && props.mode === "editable") {
+      props.onEditEnd();
     }
 
     setIsPainting(false);

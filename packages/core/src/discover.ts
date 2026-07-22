@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { canvasSizeDefinitions, canvasSizeIdSchema } from "./canvas-sizes";
+import { canvasSizeIdSchema, getCanvasSizeDefinition } from "./canvas-sizes";
 import {
   type CanvasSnapshotIssue,
   canvasSnapshotSchema,
@@ -10,8 +10,6 @@ const discoverProjectContentSchema = z
   .object({
     title: z.string().trim().min(1).max(80),
     sizeId: canvasSizeIdSchema,
-    rows: z.number().int().positive(),
-    cols: z.number().int().positive(),
     snapshot: canvasSnapshotSchema,
   })
   .strict();
@@ -41,27 +39,11 @@ function addDiscoverProjectIssues(
   project: z.infer<typeof discoverProjectContentSchema>,
   ctx: { addIssue: (issue: { code: "custom" } & CanvasSnapshotIssue) => void },
 ) {
-  const size = canvasSizeDefinitions[project.sizeId];
-
-  if (project.rows !== size.rows) {
-    ctx.addIssue({
-      code: "custom",
-      message: "rows must match sizeId",
-      path: ["rows"],
-    });
-  }
-
-  if (project.cols !== size.cols) {
-    ctx.addIssue({
-      code: "custom",
-      message: "cols must match sizeId",
-      path: ["cols"],
-    });
-  }
+  const size = getCanvasSizeDefinition(project.sizeId);
 
   validateCanvasSnapshot({
     addIssue: (issue) => ctx.addIssue({ code: "custom", ...issue }),
-    cellCount: project.rows * project.cols,
+    cellCount: size.rows * size.cols,
     path: ["snapshot"],
     snapshot: project.snapshot,
   });

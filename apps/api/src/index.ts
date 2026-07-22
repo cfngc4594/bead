@@ -1,6 +1,6 @@
-import { discoverRoutes } from "@bead/api/features/discover/routes";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { discoverRoutes } from "./features/discover/routes";
 import { serverEnv } from "./server-env";
 
 export const app = new Hono()

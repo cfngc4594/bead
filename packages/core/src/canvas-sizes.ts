@@ -16,8 +16,6 @@ export const canvasSizeDefinitions = {
   { id: CanvasSizeId; rows: number; cols: number }
 >;
 
-export type CanvasSizeDefinition = (typeof canvasSizeDefinitions)[CanvasSizeId];
-
 export function getCanvasSizeDefinition(id: CanvasSizeId) {
   return canvasSizeDefinitions[id];
 }

@@ -51,8 +51,6 @@ export function PublishProjectDialog({
         .select(({ project }) => ({
           id: project.id,
           sizeId: project.sizeId,
-          rows: project.rows,
-          cols: project.cols,
           title: project.title,
           snapshots: project.snapshots,
           currentIndex: project.currentIndex,
@@ -131,6 +129,7 @@ export function PublishProjectDialog({
             <div className="grid gap-3 px-1 pb-1 sm:grid-cols-2">
               {publishableProjects.map((project) => {
                 const isSelected = selectedProjectIds.has(project.id);
+                const size = getCanvasSize(project.sizeId);
 
                 return (
                   <button
@@ -146,8 +145,8 @@ export function PublishProjectDialog({
                   >
                     <div className="aspect-4/3 bg-muted/30">
                       <ProjectPreview
-                        cols={project.cols}
-                        rows={project.rows}
+                        cols={size.cols}
+                        rows={size.rows}
                         snapshot={project.snapshots[project.currentIndex]}
                       />
                     </div>
@@ -157,7 +156,7 @@ export function PublishProjectDialog({
                           {project.title}
                         </p>
                         <p className="mt-0.5 text-muted-foreground text-xs tabular-nums">
-                          {getCanvasSize(project.sizeId).title}
+                          {size.title}
                         </p>
                       </div>
                       <span
