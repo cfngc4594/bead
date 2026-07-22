@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/dev.ts",
+    "dev": "bun --env-file=../../.env --hot src/dev.ts",
     "build": "bun run typecheck",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
