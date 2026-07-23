@@ -15,7 +15,10 @@ export function TabLayout() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {isMobile ? null : <DesktopTabHeader />}
-      <div className="min-h-0 flex-1 overflow-auto" id={TAB_CONTENT_ID}>
+      <div
+        className="min-h-0 flex-1 overflow-auto scrollbar-gutter-stable"
+        id={TAB_CONTENT_ID}
+      >
         <Outlet />
       </div>
       {isMobile ? <MobileTabNavigation /> : null}
