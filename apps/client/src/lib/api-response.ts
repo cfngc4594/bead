@@ -5,7 +5,7 @@ export async function throwResponseError(
   let message = fallbackMessage;
 
   try {
-    const body: unknown = await response.clone().json();
+    const body: unknown = await response.json();
 
     if (
       typeof body === "object" &&

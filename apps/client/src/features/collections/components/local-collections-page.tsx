@@ -1,3 +1,4 @@
+import { DISCOVER_COLLECTION_PREVIEW_LIMIT } from "@bead/core/discover";
 import { Button } from "@bead/ui/components/button";
 import {
   Empty,
@@ -72,12 +73,16 @@ export function LocalCollectionsPage() {
                     />
                   }
                   collection={{
-                    ...collection,
-                    projects: collection.projects.map((project) => ({
-                      id: project.id,
-                      sizeId: project.sizeId,
-                      snapshot: project.snapshots[project.currentIndex],
-                    })),
+                    id: collection.id,
+                    title: collection.title,
+                    projectCount: collection.projects.length,
+                    previewProjects: collection.projects
+                      .slice(0, DISCOVER_COLLECTION_PREVIEW_LIMIT)
+                      .map((project) => ({
+                        id: project.id,
+                        sizeId: project.sizeId,
+                        snapshot: project.snapshots[project.currentIndex],
+                      })),
                   }}
                   key={collection.id}
                   onOpen={(source) =>

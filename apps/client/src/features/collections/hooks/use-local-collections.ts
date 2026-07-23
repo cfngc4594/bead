@@ -16,7 +16,6 @@ const collectionsWithProjectsCollection = createLiveQueryCollection((query) =>
     .select(({ collection }) => ({
       id: collection.id,
       title: collection.title,
-      sourceDiscoverCollectionId: collection.sourceDiscoverCollectionId,
       createdAt: collection.createdAt,
       updatedAt: collection.updatedAt,
       projects: toArray(
@@ -33,7 +32,6 @@ const collectionsWithProjectsCollection = createLiveQueryCollection((query) =>
             sizeId: project.sizeId,
             snapshots: project.snapshots,
             currentIndex: project.currentIndex,
-            sourceDiscoverProjectId: project.sourceDiscoverProjectId,
             updatedAt: project.updatedAt,
           })),
       ),

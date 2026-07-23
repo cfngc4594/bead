@@ -1,13 +1,14 @@
-import { createTransaction } from "@tanstack/react-db";
 import { projectsCollection } from "@/features/bead/storage/projects";
 import {
   collectionItemsCollection,
   collectionsCollection,
+  getCollectionItemKey,
   getCollectionItems,
   type LocalCollection,
   type LocalCollectionItem,
   preloadCollectionStorage,
 } from "@/features/collections/storage/collection-storage";
+import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 export const DEFAULT_COLLECTION_TITLE = "未命名合集";
 
@@ -37,7 +38,7 @@ export async function createLocalCollection({
     createdAt: now,
     updatedAt: now,
   };
-  const items = createCollectionItems(collection.id, uniqueProjectIds, now);
+  const items = createCollectionItems(collection.id, uniqueProjectIds);
 
   await commitCollectionMutation(() => {
     collectionsCollection.insert(collection);
@@ -74,7 +75,6 @@ export async function addProjectsToCollection({
   const items = createCollectionItems(
     collectionId,
     nextProjectIds,
-    now,
     nextPosition,
   );
 
@@ -102,11 +102,15 @@ export async function removeProjectFromCollection({
     return;
   }
 
-  const remainingItems = items.filter((item) => item.id !== removedItem.id);
+  const remainingItems = items.filter(
+    (item) => item.projectId !== removedItem.projectId,
+  );
   const now = Date.now();
 
   await commitCollectionMutation(() => {
-    collectionItemsCollection.delete(removedItem.id);
+    collectionItemsCollection.delete(
+      getCollectionItemKey(removedItem.collectionId, removedItem.projectId),
+    );
     reindexItems(remainingItems);
     collectionsCollection.update(collectionId, (draft) => {
       draft.updatedAt = now;
@@ -138,12 +142,18 @@ export async function moveCollectionProject({
   const now = Date.now();
 
   await commitCollectionMutation(() => {
-    collectionItemsCollection.update(currentItem.id, (draft) => {
-      draft.position = nextItem.position;
-    });
-    collectionItemsCollection.update(nextItem.id, (draft) => {
-      draft.position = currentItem.position;
-    });
+    collectionItemsCollection.update(
+      getCollectionItemKey(currentItem.collectionId, currentItem.projectId),
+      (draft) => {
+        draft.position = nextItem.position;
+      },
+    );
+    collectionItemsCollection.update(
+      getCollectionItemKey(nextItem.collectionId, nextItem.projectId),
+      (draft) => {
+        draft.position = currentItem.position;
+      },
+    );
     collectionsCollection.update(collectionId, (draft) => {
       draft.updatedAt = now;
     });
@@ -176,11 +186,13 @@ export async function renameLocalCollection({
 export async function deleteLocalCollection(collectionId: string) {
   await preloadCollectionStorage();
   getRequiredCollection(collectionId);
-  const itemIds = getCollectionItems(collectionId).map((item) => item.id);
+  const itemKeys = getCollectionItems(collectionId).map((item) =>
+    getCollectionItemKey(item.collectionId, item.projectId),
+  );
 
   await commitCollectionMutation(() => {
-    if (itemIds.length > 0) {
-      collectionItemsCollection.delete(itemIds);
+    if (itemKeys.length > 0) {
+      collectionItemsCollection.delete(itemKeys);
     }
     collectionsCollection.delete(collectionId);
   });
@@ -205,15 +217,12 @@ function getUniqueExistingProjectIds(projectIds: string[]) {
 function createCollectionItems(
   collectionId: string,
   projectIds: string[],
-  addedAt: number,
   startPosition = 0,
 ): LocalCollectionItem[] {
   return projectIds.map((projectId, index) => ({
-    id: crypto.randomUUID(),
     collectionId,
     projectId,
     position: startPosition + index,
-    addedAt,
   }));
 }
 
@@ -223,9 +232,12 @@ function reindexItems(items: LocalCollectionItem[]) {
       return;
     }
 
-    collectionItemsCollection.update(item.id, (draft) => {
-      draft.position = position;
-    });
+    collectionItemsCollection.update(
+      getCollectionItemKey(item.collectionId, item.projectId),
+      (draft) => {
+        draft.position = position;
+      },
+    );
   });
 }
 
@@ -235,13 +247,9 @@ function normalizeCollectionTitle(title: string) {
 }
 
 function commitCollectionMutation(mutator: () => void) {
-  const transaction = createTransaction({
-    mutationFn: async ({ transaction }) => {
-      collectionsCollection.utils.acceptMutations(transaction);
-      collectionItemsCollection.utils.acceptMutations(transaction);
-    },
-  });
-
-  transaction.mutate(mutator);
-  return transaction.isPersisted.promise;
+  return commitLocalStorageMutation(
+    mutator,
+    collectionsCollection.utils.acceptMutations,
+    collectionItemsCollection.utils.acceptMutations,
+  );
 }

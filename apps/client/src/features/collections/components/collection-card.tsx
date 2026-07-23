@@ -31,7 +31,8 @@ export function CollectionCard({
   collection: {
     id: string;
     title: string;
-    projects: CollectionPreviewProject[];
+    previewProjects: CollectionPreviewProject[];
+    projectCount: number;
   };
   onOpen: (source: "preview" | "title") => void;
   route: CollectionCardRoute;
@@ -47,7 +48,7 @@ export function CollectionCard({
         params={{ collectionId: collection.id }}
         to={route}
       >
-        <CollectionPreview projects={collection.projects} />
+        <CollectionPreview projects={collection.previewProjects} />
       </Link>
 
       <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
@@ -62,7 +63,7 @@ export function CollectionCard({
           </p>
           <div className="mt-0.5 flex min-w-0 items-center gap-2 text-muted-foreground text-xs leading-4">
             <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
-              {collection.projects.length} 个作品
+              {collection.projectCount} 个作品
             </span>
             <time
               className="truncate"
@@ -85,9 +86,7 @@ function CollectionPreview({
 }: {
   projects: CollectionPreviewProject[];
 }) {
-  const previewProjects = projects.slice(0, 4);
-
-  if (previewProjects.length === 0) {
+  if (projects.length === 0) {
     return (
       <div className="grid aspect-4/3 place-items-center text-muted-foreground">
         <FolderOpen className="size-8" strokeWidth={1.5} />
@@ -99,11 +98,11 @@ function CollectionPreview({
     <div
       className={cn(
         "grid aspect-4/3 overflow-hidden",
-        previewProjects.length === 1 ? "grid-cols-1" : "grid-cols-2",
-        previewProjects.length > 2 && "grid-rows-2",
+        projects.length === 1 ? "grid-cols-1" : "grid-cols-2",
+        projects.length > 2 && "grid-rows-2",
       )}
     >
-      {previewProjects.map((project, index) => {
+      {projects.map((project, index) => {
         const size = getCanvasSize(project.sizeId);
 
         return (
@@ -112,7 +111,7 @@ function CollectionPreview({
               "min-h-0 min-w-0 bg-muted/20",
               index % 2 === 1 && "border-l",
               index > 1 && "border-t",
-              previewProjects.length === 3 && index === 2 && "col-span-2",
+              projects.length === 3 && index === 2 && "col-span-2",
             )}
             key={project.id}
           >

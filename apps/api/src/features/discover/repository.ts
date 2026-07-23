@@ -1,10 +1,13 @@
 import type {
   DiscoverCollection,
+  DiscoverCollectionSummary,
   DiscoverProject,
+  DiscoverProjectPreview,
   PublishDiscoverCollection,
   PublishDiscoverProject,
 } from "@bead/core/discover";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { DISCOVER_COLLECTION_PREVIEW_LIMIT } from "@bead/core/discover";
+import { and, asc, count, desc, eq, inArray, lt } from "drizzle-orm";
 import { db } from "../../db/client";
 import {
   discoverCollectionItems,
@@ -55,7 +58,9 @@ export async function createDiscoverProjects(
   return createdProjects.map(toDiscoverProject);
 }
 
-export async function listDiscoverCollections(): Promise<DiscoverCollection[]> {
+export async function listDiscoverCollections(): Promise<
+  DiscoverCollectionSummary[]
+> {
   const collections = await db
     .select()
     .from(discoverCollections)
@@ -64,16 +69,21 @@ export async function listDiscoverCollections(): Promise<DiscoverCollection[]> {
       desc(discoverCollections.id),
     )
     .limit(30);
-  const projectsByCollection = await listCollectionProjects(
+  const summariesByCollection = await listCollectionSummaries(
     collections.map((collection) => collection.id),
   );
 
-  return collections.map((collection) =>
-    toDiscoverCollection(
-      collection,
-      projectsByCollection.get(collection.id) ?? [],
-    ),
-  );
+  return collections.map((collection) => {
+    const summary = summariesByCollection.get(collection.id);
+
+    return {
+      id: collection.id,
+      title: collection.title,
+      publishedAt: collection.publishedAt.getTime(),
+      projectCount: summary?.projectCount ?? 0,
+      previewProjects: summary?.previewProjects ?? [],
+    };
+  });
 }
 
 export async function findDiscoverCollection(
@@ -173,4 +183,80 @@ async function listCollectionProjects(collectionIds: string[]) {
   }
 
   return projectsByCollection;
+}
+
+async function listCollectionSummaries(collectionIds: string[]) {
+  const summaries = new Map<
+    string,
+    {
+      projectCount: number;
+      previewProjects: DiscoverProjectPreview[];
+    }
+  >();
+
+  if (collectionIds.length === 0) {
+    return summaries;
+  }
+
+  const [counts, previews] = await Promise.all([
+    db
+      .select({
+        collectionId: discoverCollectionItems.collectionId,
+        projectCount: count(discoverCollectionItems.projectId),
+      })
+      .from(discoverCollectionItems)
+      .where(inArray(discoverCollectionItems.collectionId, collectionIds))
+      .groupBy(discoverCollectionItems.collectionId),
+    db
+      .select({
+        collectionId: discoverCollectionItems.collectionId,
+        project: discoverProjects,
+      })
+      .from(discoverCollectionItems)
+      .innerJoin(
+        discoverProjects,
+        eq(discoverCollectionItems.projectId, discoverProjects.id),
+      )
+      .where(
+        and(
+          inArray(discoverCollectionItems.collectionId, collectionIds),
+          lt(
+            discoverCollectionItems.position,
+            DISCOVER_COLLECTION_PREVIEW_LIMIT,
+          ),
+        ),
+      )
+      .orderBy(
+        asc(discoverCollectionItems.collectionId),
+        asc(discoverCollectionItems.position),
+      ),
+  ]);
+
+  for (const row of counts) {
+    summaries.set(row.collectionId, {
+      projectCount: row.projectCount,
+      previewProjects: [],
+    });
+  }
+
+  for (const row of previews) {
+    const summary = summaries.get(row.collectionId) ?? {
+      projectCount: 0,
+      previewProjects: [],
+    };
+    summary.previewProjects.push(toDiscoverProjectPreview(row.project));
+    summaries.set(row.collectionId, summary);
+  }
+
+  return summaries;
+}
+
+function toDiscoverProjectPreview(
+  project: DiscoverProjectRow,
+): DiscoverProjectPreview {
+  return {
+    id: project.id,
+    sizeId: project.sizeId,
+    snapshot: project.snapshot,
+  };
 }

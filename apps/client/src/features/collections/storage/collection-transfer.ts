@@ -2,9 +2,7 @@ import {
   type DiscoverCollection,
   MAX_DISCOVER_PROJECTS_PER_PUBLISH,
   type PublishDiscoverCollection,
-  publishDiscoverCollectionSchema,
 } from "@bead/core/discover";
-import { createTransaction } from "@tanstack/react-db";
 import {
   buildProjectFromSnapshot,
   getFilledCount,
@@ -20,6 +18,7 @@ import {
   type LocalCollectionItem,
 } from "@/features/collections/storage/collection-storage";
 import { createPublishInput } from "@/features/discover/lib/create-publish-input";
+import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 type PublishableProject = Pick<
   Project,
@@ -35,7 +34,6 @@ export async function importDiscoverCollection(
     buildProjectFromSnapshot({
       sizeId: project.sizeId,
       snapshot: project.snapshot,
-      sourceDiscoverProjectId: project.id,
       title: project.title,
       updatedAt: now,
     }),
@@ -43,16 +41,13 @@ export async function importDiscoverCollection(
   const collection: LocalCollection = {
     id: crypto.randomUUID(),
     title: discoverCollection.title,
-    sourceDiscoverCollectionId: discoverCollection.id,
     createdAt: now,
     updatedAt: now,
   };
   const items: LocalCollectionItem[] = projects.map((project, position) => ({
-    id: crypto.randomUUID(),
     collectionId: collection.id,
     projectId: project.id,
     position,
-    addedAt: now,
   }));
 
   await commitLibraryMutation(() => {
@@ -83,10 +78,10 @@ export async function createPublishCollectionInput(
     throw new Error(publishIssue);
   }
 
-  return publishDiscoverCollectionSchema.parse({
+  return {
     title: collection.title,
     projects: projects.map(createPublishInput),
-  });
+  } satisfies PublishDiscoverCollection;
 }
 
 export function getCollectionPublishIssue(projects: PublishableProject[]) {
@@ -106,14 +101,10 @@ export function getCollectionPublishIssue(projects: PublishableProject[]) {
 }
 
 function commitLibraryMutation(mutator: () => void) {
-  const transaction = createTransaction({
-    mutationFn: async ({ transaction }) => {
-      projectsCollection.utils.acceptMutations(transaction);
-      collectionsCollection.utils.acceptMutations(transaction);
-      collectionItemsCollection.utils.acceptMutations(transaction);
-    },
-  });
-
-  transaction.mutate(mutator);
-  return transaction.isPersisted.promise;
+  return commitLocalStorageMutation(
+    mutator,
+    projectsCollection.utils.acceptMutations,
+    collectionsCollection.utils.acceptMutations,
+    collectionItemsCollection.utils.acceptMutations,
+  );
 }

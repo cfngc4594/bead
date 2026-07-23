@@ -27,7 +27,7 @@ export const collectionItemsCollection = createCollection(
     id: "collection-items",
     schema: localCollectionItemSchema,
     storageKey: COLLECTION_ITEMS_STORAGE_KEY,
-    getKey: (item) => item.id,
+    getKey: (item) => getCollectionItemKey(item.collectionId, item.projectId),
   }),
 );
 
@@ -53,6 +53,10 @@ export function getCollectionItems(collectionId: string) {
   return [...collectionItemsCollection.values()]
     .filter((item) => item.collectionId === collectionId)
     .sort((left, right) => left.position - right.position);
+}
+
+export function getCollectionItemKey(collectionId: string, projectId: string) {
+  return JSON.stringify([collectionId, projectId]);
 }
 
 export type { LocalCollection, LocalCollectionItem };

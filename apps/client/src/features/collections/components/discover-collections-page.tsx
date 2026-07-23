@@ -41,7 +41,7 @@ export function DiscoverCollectionsPage() {
                   key={collection.id}
                   onOpen={(source) =>
                     trackEvent("discover_collection_opened", {
-                      projectCount: collection.projects.length,
+                      projectCount: collection.projectCount,
                       source,
                     })
                   }

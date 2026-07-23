@@ -7,7 +7,6 @@ export const localCollectionSchema = z
   .object({
     id: nonEmptyStringSchema,
     title: nonEmptyStringSchema,
-    sourceDiscoverCollectionId: z.uuid().optional(),
     createdAt: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
   })
@@ -15,11 +14,9 @@ export const localCollectionSchema = z
 
 export const localCollectionItemSchema = z
   .object({
-    id: nonEmptyStringSchema,
     collectionId: nonEmptyStringSchema,
     projectId: nonEmptyStringSchema,
     position: nonnegativeIntSchema,
-    addedAt: nonnegativeIntSchema,
   })
   .strict();
 

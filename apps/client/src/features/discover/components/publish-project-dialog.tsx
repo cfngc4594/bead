@@ -16,18 +16,13 @@ import {
   EmptyTitle,
 } from "@bead/ui/components/empty";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
-import { cn } from "@bead/ui/lib/utils";
-import { useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
-import { Check, FolderOpen, LoaderCircle, Plus, Upload } from "lucide-react";
+import { FolderOpen, LoaderCircle, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getCanvasSize } from "@/config/canvas-sizes";
-import { ProjectPreview } from "@/features/bead/components/project-preview";
-import {
-  getFilledCount,
-  projectsCollection,
-} from "@/features/bead/storage/projects";
+import { SelectableProjectCard } from "@/features/bead/components/selectable-project-card";
+import { useProjectChoices } from "@/features/bead/hooks/use-project-choices";
+import { getFilledCount } from "@/features/bead/storage/projects";
 import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
 import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import { NativeBackDialog } from "@/features/native/native-back-overlays";
@@ -44,21 +39,7 @@ export function PublishProjectDialog({
     () => new Set(),
   );
   const publishMutation = usePublishDiscoverProjects();
-  const { data: projects = [] } = useLiveQuery(
-    (query) =>
-      query
-        .from({ project: projectsCollection })
-        .orderBy(({ project }) => project.updatedAt, "desc")
-        .select(({ project }) => ({
-          id: project.id,
-          sizeId: project.sizeId,
-          title: project.title,
-          snapshots: project.snapshots,
-          currentIndex: project.currentIndex,
-          updatedAt: project.updatedAt,
-        })),
-    [],
-  );
+  const { data: projects = [] } = useProjectChoices();
   const publishableProjects = projects.filter(
     (project) => getFilledCount(project) > 0,
   );
@@ -138,48 +119,14 @@ export function PublishProjectDialog({
             <div className="grid gap-3 px-1 pb-1 sm:grid-cols-2">
               {publishableProjects.map((project) => {
                 const isSelected = selectedProjectIds.has(project.id);
-                const size = getCanvasSize(project.sizeId);
 
                 return (
-                  <button
-                    aria-label={`${isSelected ? "取消选择" : "选择"}「${project.title}」`}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      "group relative overflow-hidden rounded-xl border bg-card text-left shadow-xs outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 hover:border-primary/50 hover:bg-muted/20",
-                      isSelected && "border-primary ring-1 ring-primary",
-                    )}
+                  <SelectableProjectCard
+                    isSelected={isSelected}
                     key={project.id}
-                    onClick={() => toggleProject(project.id)}
-                    type="button"
-                  >
-                    <div className="aspect-4/3 bg-muted/30">
-                      <ProjectPreview
-                        cols={size.cols}
-                        rows={size.rows}
-                        snapshot={project.snapshots[project.currentIndex]}
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 border-t px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-sm">
-                          {project.title}
-                        </p>
-                        <p className="mt-0.5 text-muted-foreground text-xs tabular-nums">
-                          {size.title}
-                        </p>
-                      </div>
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "flex size-4 shrink-0 items-center justify-center rounded-lg border border-input",
-                          isSelected &&
-                            "border-primary bg-primary text-primary-foreground",
-                        )}
-                      >
-                        {isSelected ? <Check className="size-3.5" /> : null}
-                      </span>
-                    </div>
-                  </button>
+                    onToggle={() => toggleProject(project.id)}
+                    project={project}
+                  />
                 );
               })}
             </div>

@@ -1,5 +1,6 @@
 import type {
   DiscoverCollection,
+  DiscoverCollectionSummary,
   DiscoverProject,
   PublishDiscoverCollection,
   PublishDiscoverProject,
@@ -38,7 +39,7 @@ export async function fetchDiscoverProject(
 }
 
 export async function fetchDiscoverCollections(): Promise<
-  DiscoverCollection[]
+  DiscoverCollectionSummary[]
 > {
   const response = await api.discover.collections.$get();
 

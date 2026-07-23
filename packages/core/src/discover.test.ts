@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
+  DISCOVER_COLLECTION_PREVIEW_LIMIT,
+  discoverCollectionSummarySchema,
   MAX_DISCOVER_PROJECTS_PER_PUBLISH,
   publishDiscoverCollectionSchema,
   publishDiscoverProjectSchema,
@@ -41,6 +43,46 @@ describe("publishDiscoverProjectSchema", () => {
       publishDiscoverProjectSchema.safeParse(
         createPublishInput({ snapshot: { cells: [] } }),
       ).success,
+    ).toBe(false);
+  });
+});
+
+describe("discoverCollectionSummarySchema", () => {
+  test("accepts a bounded collection preview", () => {
+    const summary = {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+      title: "Spring set",
+      publishedAt: 1,
+      projectCount: 12,
+      previewProjects: Array.from(
+        { length: DISCOVER_COLLECTION_PREVIEW_LIMIT },
+        (_, index) => ({
+          id: `123e4567-e89b-12d3-a456-${String(index).padStart(12, "0")}`,
+          sizeId: "16x16" as const,
+          snapshot: { cells: [[index, "A1"]] as [number, string][] },
+        }),
+      ),
+    };
+
+    expect(discoverCollectionSummarySchema.parse(summary)).toEqual(summary);
+  });
+
+  test("rejects previews larger than the card contract", () => {
+    expect(
+      discoverCollectionSummarySchema.safeParse({
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        title: "Large preview",
+        publishedAt: 1,
+        projectCount: DISCOVER_COLLECTION_PREVIEW_LIMIT + 1,
+        previewProjects: Array.from(
+          { length: DISCOVER_COLLECTION_PREVIEW_LIMIT + 1 },
+          (_, index) => ({
+            id: `123e4567-e89b-12d3-a456-${String(index).padStart(12, "0")}`,
+            sizeId: "16x16",
+            snapshot: { cells: [[index, "A1"]] },
+          }),
+        ),
+      }).success,
     ).toBe(false);
   });
 });

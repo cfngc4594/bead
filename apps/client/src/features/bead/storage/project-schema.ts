@@ -17,7 +17,6 @@ export const projectSchema = z
     sizeId: canvasSizeIdSchema,
     snapshots: z.array(canvasSnapshotSchema).min(1),
     currentIndex: nonnegativeIntSchema,
-    sourceDiscoverProjectId: z.uuid().optional(),
     updatedAt: nonnegativeIntSchema,
   })
   .strict();

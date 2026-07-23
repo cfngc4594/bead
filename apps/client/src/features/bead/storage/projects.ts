@@ -6,7 +6,6 @@ import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import {
   BasicIndex,
   createCollection,
-  createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
 import {
@@ -25,8 +24,10 @@ import {
 import {
   collectionItemsCollection,
   collectionsCollection,
+  getCollectionItemKey,
   preloadCollectionStorage,
 } from "@/features/collections/storage/collection-storage";
+import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 export type ProjectId = string;
 export type { Project };
@@ -121,7 +122,6 @@ export async function duplicateProject(projectId: ProjectId) {
     sizeId: project.sizeId,
     snapshots: project.snapshots.map(cloneSnapshot),
     currentIndex: project.currentIndex,
-    sourceDiscoverProjectId: project.sourceDiscoverProjectId,
     updatedAt: Date.now(),
   };
 
@@ -135,19 +135,16 @@ export async function duplicateProject(projectId: ProjectId) {
 export async function createProjectFromSnapshot({
   sizeId,
   snapshot,
-  sourceDiscoverProjectId,
   title,
 }: {
   sizeId: CanvasSizeId;
   snapshot: CanvasSnapshot;
-  sourceDiscoverProjectId?: string;
   title: string;
 }) {
   await projectsCollection.preload();
   const project = buildProjectFromSnapshot({
     sizeId,
     snapshot,
-    sourceDiscoverProjectId,
     title,
   });
 
@@ -182,7 +179,11 @@ export async function deleteProject(projectId: ProjectId) {
 
   return commitProjectDeletion(() => {
     if (relatedItems.length > 0) {
-      collectionItemsCollection.delete(relatedItems.map((item) => item.id));
+      collectionItemsCollection.delete(
+        relatedItems.map((item) =>
+          getCollectionItemKey(item.collectionId, item.projectId),
+        ),
+      );
     }
     relatedCollectionIds.forEach((collectionId) => {
       if (!collectionsCollection.has(collectionId)) {
@@ -199,9 +200,12 @@ export async function deleteProject(projectId: ProjectId) {
             return;
           }
 
-          collectionItemsCollection.update(item.id, (draft) => {
-            draft.position = position;
-          });
+          collectionItemsCollection.update(
+            getCollectionItemKey(item.collectionId, item.projectId),
+            (draft) => {
+              draft.position = position;
+            },
+          );
         });
     });
     projectsCollection.delete(projectId);
@@ -253,13 +257,11 @@ export async function createProject(sizeId: CanvasSizeId) {
 export function buildProjectFromSnapshot({
   sizeId,
   snapshot,
-  sourceDiscoverProjectId,
   title,
   updatedAt = Date.now(),
 }: {
   sizeId: CanvasSizeId;
   snapshot: CanvasSnapshot;
-  sourceDiscoverProjectId?: string;
   title: string;
   updatedAt?: number;
 }): Project {
@@ -272,7 +274,6 @@ export function buildProjectFromSnapshot({
     sizeId,
     snapshots: [cloneSnapshot(snapshot)],
     currentIndex: 0,
-    sourceDiscoverProjectId,
     updatedAt,
   };
 }
@@ -318,25 +319,17 @@ function normalizeProjectTitle(title: string) {
 }
 
 function commitProjectMutation(mutator: () => void) {
-  const transaction = createTransaction({
-    mutationFn: async ({ transaction }) => {
-      projectsCollection.utils.acceptMutations(transaction);
-    },
-  });
-
-  transaction.mutate(mutator);
-  return transaction.isPersisted.promise;
+  return commitLocalStorageMutation(
+    mutator,
+    projectsCollection.utils.acceptMutations,
+  );
 }
 
 function commitProjectDeletion(mutator: () => void) {
-  const transaction = createTransaction({
-    mutationFn: async ({ transaction }) => {
-      projectsCollection.utils.acceptMutations(transaction);
-      collectionsCollection.utils.acceptMutations(transaction);
-      collectionItemsCollection.utils.acceptMutations(transaction);
-    },
-  });
-
-  transaction.mutate(mutator);
-  return transaction.isPersisted.promise;
+  return commitLocalStorageMutation(
+    mutator,
+    projectsCollection.utils.acceptMutations,
+    collectionsCollection.utils.acceptMutations,
+    collectionItemsCollection.utils.acceptMutations,
+  );
 }
