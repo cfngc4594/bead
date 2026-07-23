@@ -49,14 +49,9 @@ export function DiscoverPage() {
       className="flex min-h-full bg-background px-4 py-6 md:px-8"
     >
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4">
-        <header className="flex flex-col items-start gap-4 border-b pb-5 min-[360px]:flex-row min-[360px]:items-end min-[360px]:justify-between">
-          <div className="min-w-0">
-            <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-            <p className="mt-1 text-muted-foreground text-sm">
-              浏览大家发布的拼豆作品
-            </p>
-          </div>
-          <Button onClick={openPublishDialog}>
+        <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
+          <h1 className="font-semibold text-lg tracking-tight">发现</h1>
+          <Button className="ml-auto" onClick={openPublishDialog}>
             <Upload aria-hidden="true" />
             发布作品
           </Button>
