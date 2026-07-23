@@ -8,7 +8,7 @@ import {
 } from "@bead/ui/components/empty";
 import { count, ilike, inArray, useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
-import { Grid2x2, Plus, Search, X } from "lucide-react";
+import { Folders, Grid2x2, Plus, Search, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { canvasSizes } from "@/config/canvas-sizes";
 import { ProjectActions } from "@/features/bead/components/project-actions";
@@ -123,9 +123,9 @@ export function ProjectsPage() {
   return (
     <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
-        {hasProjects ? (
-          <div className="flex flex-1 flex-col gap-4">
-            <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
+        <div className="flex flex-1 flex-col gap-4">
+          <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
+            {hasProjects ? (
               <ProjectsToolbar
                 onSizeFilterChange={handleSizeFilterChange}
                 sizeFilter={selectedSizes}
@@ -133,7 +133,17 @@ export function ProjectsPage() {
                 titleFilter={titleFilter}
                 onTitleFilterChange={handleTitleFilterChange}
               />
-              <Button asChild className="ml-auto">
+            ) : (
+              <h1 className="font-semibold text-lg tracking-tight">作品</h1>
+            )}
+            <div className="ml-auto flex items-center gap-2">
+              <Button asChild variant="outline">
+                <Link to="/projects/collections">
+                  <Folders aria-hidden="true" />
+                  <span className="hidden sm:inline">合集</span>
+                </Link>
+              </Button>
+              <Button asChild>
                 <Link
                   onClick={() => trackEvent("project_new_clicked")}
                   to="/projects/new"
@@ -142,9 +152,11 @@ export function ProjectsPage() {
                   新建
                 </Link>
               </Button>
-            </header>
+            </div>
+          </header>
 
-            {projects.length > 0 ? (
+          {hasProjects ? (
+            projects.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => (
                   <ProjectCard
@@ -184,31 +196,31 @@ export function ProjectsPage() {
                   </Button>
                 </EmptyContent>
               </Empty>
-            )}
-          </div>
-        ) : (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Grid2x2 />
-              </EmptyMedia>
-              <EmptyTitle>还没有拼豆作品</EmptyTitle>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link
-                  onClick={() =>
-                    trackEvent("project_new_clicked", { source: "empty" })
-                  }
-                  to="/projects/new"
-                >
-                  <Plus aria-hidden="true" />
-                  开始拼豆
-                </Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        )}
+            )
+          ) : (
+            <Empty className="min-h-72 flex-none border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Grid2x2 />
+                </EmptyMedia>
+                <EmptyTitle>还没有拼豆作品</EmptyTitle>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button asChild>
+                  <Link
+                    onClick={() =>
+                      trackEvent("project_new_clicked", { source: "empty" })
+                    }
+                    to="/projects/new"
+                  >
+                    <Plus aria-hidden="true" />
+                    开始拼豆
+                  </Link>
+                </Button>
+              </EmptyContent>
+            </Empty>
+          )}
+        </div>
       </div>
     </main>
   );

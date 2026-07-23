@@ -1,3 +1,4 @@
+import { MAX_DISCOVER_PROJECTS_PER_PUBLISH } from "@bead/core/discover";
 import { Button } from "@bead/ui/components/button";
 import {
   DialogContent,
@@ -72,6 +73,14 @@ export function PublishProjectDialog({
   }
 
   function toggleProject(projectId: string) {
+    if (
+      !selectedProjectIds.has(projectId) &&
+      selectedProjectIds.size >= MAX_DISCOVER_PROJECTS_PER_PUBLISH
+    ) {
+      toast.error(`每次最多发布 ${MAX_DISCOVER_PROJECTS_PER_PUBLISH} 个作品`);
+      return;
+    }
+
     setSelectedProjectIds((currentIds) => {
       const nextIds = new Set(currentIds);
 
@@ -162,7 +171,7 @@ export function PublishProjectDialog({
                       <span
                         aria-hidden="true"
                         className={cn(
-                          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input",
+                          "flex size-4 shrink-0 items-center justify-center rounded-lg border border-input",
                           isSelected &&
                             "border-primary bg-primary text-primary-foreground",
                         )}

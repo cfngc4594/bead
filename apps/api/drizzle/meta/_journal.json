@@ -8,6 +8,13 @@
       "when": 1784729597898,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784789577601,
+      "tag": "0001_short_red_hulk",
+      "breakpoints": true
     }
   ]
 }

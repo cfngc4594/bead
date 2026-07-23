@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { publishDiscoverProjectSchema } from "./discover";
+import {
+  MAX_DISCOVER_PROJECTS_PER_PUBLISH,
+  publishDiscoverCollectionSchema,
+  publishDiscoverProjectSchema,
+} from "./discover";
 
 describe("publishDiscoverProjectSchema", () => {
   test("accepts an independent discover snapshot", () => {
@@ -29,6 +33,49 @@ describe("publishDiscoverProjectSchema", () => {
       publishDiscoverProjectSchema.safeParse(
         createPublishInput({ snapshot: { cells: [[0, "UNKNOWN"]] } }),
       ).success,
+    ).toBe(false);
+  });
+
+  test("rejects an empty snapshot", () => {
+    expect(
+      publishDiscoverProjectSchema.safeParse(
+        createPublishInput({ snapshot: { cells: [] } }),
+      ).success,
+    ).toBe(false);
+  });
+});
+
+describe("publishDiscoverCollectionSchema", () => {
+  test("accepts an ordered collection of project snapshots", () => {
+    const input = {
+      title: "Spring set",
+      projects: [
+        createPublishInput({ title: "Rabbit" }),
+        createPublishInput({ title: "Flower" }),
+      ],
+    };
+
+    expect(publishDiscoverCollectionSchema.parse(input)).toEqual(input);
+  });
+
+  test("requires at least one valid project", () => {
+    expect(
+      publishDiscoverCollectionSchema.safeParse({
+        title: "Empty set",
+        projects: [],
+      }).success,
+    ).toBe(false);
+  });
+
+  test("enforces the shared publish limit", () => {
+    expect(
+      publishDiscoverCollectionSchema.safeParse({
+        title: "Large set",
+        projects: Array.from(
+          { length: MAX_DISCOVER_PROJECTS_PER_PUBLISH + 1 },
+          () => createPublishInput(),
+        ),
+      }).success,
     ).toBe(false);
   });
 });

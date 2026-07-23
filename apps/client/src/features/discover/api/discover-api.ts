@@ -1,13 +1,19 @@
 import type {
+  DiscoverCollection,
   DiscoverProject,
+  PublishDiscoverCollection,
   PublishDiscoverProject,
 } from "@bead/core/discover";
 import { api } from "@/lib/api";
+import { throwResponseError } from "@/lib/api-response";
 
 export async function fetchDiscoverProjects(): Promise<DiscoverProject[]> {
   const response = await api.discover.$get();
 
-  await assertOk(response, "加载发现作品失败");
+  if (!response.ok) {
+    return throwResponseError(response, "加载发现作品失败");
+  }
+
   const body = await response.json();
   return body.projects;
 }
@@ -23,14 +29,44 @@ export async function fetchDiscoverProject(
     return null;
   }
 
-  await assertOk(response, "加载发现作品失败");
-  const body = await response.json();
-
-  if (!("project" in body)) {
-    throw new Error("Discover project response is missing project data");
+  if (!response.ok) {
+    return throwResponseError(response, "加载发现作品失败");
   }
 
+  const body = await response.json();
   return body.project;
+}
+
+export async function fetchDiscoverCollections(): Promise<
+  DiscoverCollection[]
+> {
+  const response = await api.discover.collections.$get();
+
+  if (!response.ok) {
+    return throwResponseError(response, "加载发现合集失败");
+  }
+
+  const body = await response.json();
+  return body.collections;
+}
+
+export async function fetchDiscoverCollection(
+  collectionId: string,
+): Promise<DiscoverCollection | null> {
+  const response = await api.discover.collections[":collectionId"].$get({
+    param: { collectionId },
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    return throwResponseError(response, "加载发现合集失败");
+  }
+
+  const body = await response.json();
+  return body.collection;
 }
 
 export async function publishDiscoverProjects(
@@ -38,37 +74,23 @@ export async function publishDiscoverProjects(
 ): Promise<DiscoverProject[]> {
   const response = await api.discover.$post({ json: { projects } });
 
-  await assertOk(response, "发布作品失败");
-  const body = await response.json();
-
-  if (!("projects" in body)) {
-    throw new Error("Discover publish response is missing project data");
+  if (!response.ok) {
+    return throwResponseError(response, "发布作品失败");
   }
 
+  const body = await response.json();
   return body.projects;
 }
 
-async function assertOk(response: Response, fallbackMessage: string) {
-  if (response.ok) {
-    return;
+export async function publishDiscoverCollection(
+  collection: PublishDiscoverCollection,
+): Promise<DiscoverCollection> {
+  const response = await api.discover.collections.$post({ json: collection });
+
+  if (!response.ok) {
+    return throwResponseError(response, "发布合集失败");
   }
 
-  let message = fallbackMessage;
-
-  try {
-    const body: unknown = await response.clone().json();
-
-    if (
-      typeof body === "object" &&
-      body !== null &&
-      "error" in body &&
-      typeof body.error === "string"
-    ) {
-      message = body.error;
-    }
-  } catch {
-    // Keep the user-facing fallback for non-JSON failures.
-  }
-
-  throw new Error(message);
+  const body = await response.json();
+  return body.collection;
 }

@@ -42,7 +42,7 @@ export function ProjectsToolbar({
   return (
     <div className="min-w-0 flex flex-1 items-center gap-2">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-        <div className="relative w-32 sm:w-48 lg:w-56">
+        <div className="relative w-28 sm:w-48 lg:w-56">
           <Input
             aria-label="搜索作品标题"
             className="h-8 pr-8"

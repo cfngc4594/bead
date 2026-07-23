@@ -4,6 +4,7 @@ import {
 } from "@bead/core/canvas-sizes";
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import {
+  BasicIndex,
   createCollection,
   createTransaction,
   localStorageCollectionOptions,
@@ -21,6 +22,11 @@ import {
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
+import {
+  collectionItemsCollection,
+  collectionsCollection,
+  preloadCollectionStorage,
+} from "@/features/collections/storage/collection-storage";
 
 export type ProjectId = string;
 export type { Project };
@@ -36,6 +42,10 @@ export const projectsCollection = createCollection(
     getKey: (project) => project.id,
   }),
 );
+
+projectsCollection.createIndex((project) => project.id, {
+  indexType: BasicIndex,
+});
 
 export async function preloadProjectsCollection() {
   await projectsCollection.preload();
@@ -106,9 +116,12 @@ export function redoProject(projectId: ProjectId) {
 export async function duplicateProject(projectId: ProjectId) {
   const project = getRequiredProject(projectId);
   const duplicatedProject: Project = {
-    ...project,
     id: createProjectId(),
+    title: project.title,
+    sizeId: project.sizeId,
     snapshots: project.snapshots.map(cloneSnapshot),
+    currentIndex: project.currentIndex,
+    sourceDiscoverProjectId: project.sourceDiscoverProjectId,
     updatedAt: Date.now(),
   };
 
@@ -122,24 +135,21 @@ export async function duplicateProject(projectId: ProjectId) {
 export async function createProjectFromSnapshot({
   sizeId,
   snapshot,
+  sourceDiscoverProjectId,
   title,
 }: {
   sizeId: CanvasSizeId;
   snapshot: CanvasSnapshot;
+  sourceDiscoverProjectId?: string;
   title: string;
 }) {
   await projectsCollection.preload();
-
-  const normalizedTitle = normalizeProjectTitle(title);
-  const project: Project = {
-    id: createProjectId(),
-    title:
-      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
+  const project = buildProjectFromSnapshot({
     sizeId,
-    snapshots: [cloneSnapshot(snapshot)],
-    currentIndex: 0,
-    updatedAt: Date.now(),
-  };
+    snapshot,
+    sourceDiscoverProjectId,
+    title,
+  });
 
   await commitProjectMutation(() => {
     projectsCollection.insert(project);
@@ -148,10 +158,52 @@ export async function createProjectFromSnapshot({
   return project;
 }
 
-export function deleteProject(projectId: ProjectId) {
+export async function deleteProject(projectId: ProjectId) {
+  await Promise.all([projectsCollection.preload(), preloadCollectionStorage()]);
   getRequiredProject(projectId);
+  const relatedItems = [...collectionItemsCollection.values()].filter(
+    (item) => item.projectId === projectId,
+  );
+  const relatedCollectionIds = new Set(
+    relatedItems.map((item) => item.collectionId),
+  );
+  const remainingItemsByCollection = new Map(
+    [...relatedCollectionIds].map((collectionId) => [
+      collectionId,
+      [...collectionItemsCollection.values()]
+        .filter(
+          (item) =>
+            item.collectionId === collectionId && item.projectId !== projectId,
+        )
+        .sort((left, right) => left.position - right.position),
+    ]),
+  );
+  const now = Date.now();
 
-  return commitProjectMutation(() => {
+  return commitProjectDeletion(() => {
+    if (relatedItems.length > 0) {
+      collectionItemsCollection.delete(relatedItems.map((item) => item.id));
+    }
+    relatedCollectionIds.forEach((collectionId) => {
+      if (!collectionsCollection.has(collectionId)) {
+        return;
+      }
+
+      collectionsCollection.update(collectionId, (draft) => {
+        draft.updatedAt = now;
+      });
+      remainingItemsByCollection
+        .get(collectionId)
+        ?.forEach((item, position) => {
+          if (item.position === position) {
+            return;
+          }
+
+          collectionItemsCollection.update(item.id, (draft) => {
+            draft.position = position;
+          });
+        });
+    });
     projectsCollection.delete(projectId);
   });
 }
@@ -198,6 +250,33 @@ export async function createProject(sizeId: CanvasSizeId) {
   return project;
 }
 
+export function buildProjectFromSnapshot({
+  sizeId,
+  snapshot,
+  sourceDiscoverProjectId,
+  title,
+  updatedAt = Date.now(),
+}: {
+  sizeId: CanvasSizeId;
+  snapshot: CanvasSnapshot;
+  sourceDiscoverProjectId?: string;
+  title: string;
+  updatedAt?: number;
+}): Project {
+  const normalizedTitle = normalizeProjectTitle(title);
+
+  return {
+    id: createProjectId(),
+    title:
+      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
+    sizeId,
+    snapshots: [cloneSnapshot(snapshot)],
+    currentIndex: 0,
+    sourceDiscoverProjectId,
+    updatedAt,
+  };
+}
+
 export function getFilledCount(
   project: Pick<Project, "currentIndex" | "snapshots">,
 ) {
@@ -242,6 +321,19 @@ function commitProjectMutation(mutator: () => void) {
   const transaction = createTransaction({
     mutationFn: async ({ transaction }) => {
       projectsCollection.utils.acceptMutations(transaction);
+    },
+  });
+
+  transaction.mutate(mutator);
+  return transaction.isPersisted.promise;
+}
+
+function commitProjectDeletion(mutator: () => void) {
+  const transaction = createTransaction({
+    mutationFn: async ({ transaction }) => {
+      projectsCollection.utils.acceptMutations(transaction);
+      collectionsCollection.utils.acceptMutations(transaction);
+      collectionItemsCollection.utils.acceptMutations(transaction);
     },
   });
 

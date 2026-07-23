@@ -10,7 +10,7 @@ import {
 import { useLiveQuery } from "@tanstack/react-db";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Compass, Plus, Upload } from "lucide-react";
+import { Compass, Folders, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import {
@@ -51,10 +51,18 @@ export function DiscoverPage() {
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4">
         <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
           <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-          <Button className="ml-auto" onClick={openPublishDialog}>
-            <Upload aria-hidden="true" />
-            发布作品
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link to="/discover/collections">
+                <Folders aria-hidden="true" />
+                <span className="hidden sm:inline">合集</span>
+              </Link>
+            </Button>
+            <Button onClick={openPublishDialog}>
+              <Upload aria-hidden="true" />
+              发布作品
+            </Button>
+          </div>
         </header>
 
         {discoverProjects.length > 0 ? (

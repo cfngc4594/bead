@@ -13,7 +13,10 @@ export function ProjectsSkeleton() {
               <Skeleton className="h-8 w-32 rounded-lg sm:w-48 lg:w-56" />
               <Skeleton className="h-8 w-18 rounded-lg" />
             </div>
-            <Skeleton className="ml-auto h-8 w-[72px] rounded-lg" />
+            <div className="ml-auto flex items-center gap-2">
+              <Skeleton className="h-8 w-9 rounded-lg sm:w-16" />
+              <Skeleton className="h-8 w-18 rounded-lg" />
+            </div>
           </header>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

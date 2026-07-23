@@ -75,6 +75,7 @@ export function DiscoverProjectViewer({
         title: project.title,
         sizeId: project.sizeId,
         snapshot: project.snapshot,
+        sourceDiscoverProjectId: project.id,
       });
       trackEvent("project_added_from_discover", {
         sizeId: project.sizeId,
