@@ -5,90 +5,131 @@ import {
   projectsCollection,
 } from "@/features/bead/storage/projects";
 import {
-  addProjectsToCollection,
+  addProjectToCollection,
   createLocalCollection,
   deleteLocalCollection,
+  mergeProjectsIntoCollection,
   moveCollectionProject,
   removeProjectFromCollection,
 } from "@/features/collections/storage/collection-commands";
-import {
-  collectionsCollection,
-  getCollectionItems,
-} from "@/features/collections/storage/collection-storage";
+import { collectionsCollection } from "@/features/collections/storage/collection-storage";
 
-test("deleting a project reindexes memberships before adding another", async () => {
+test("merging projects creates an exclusive collection", async () => {
   const first = await createProject("16x16");
-  const removed = await createProject("16x16");
+  const second = await createProject("16x16");
   const third = await createProject("16x16");
-  const added = await createProject("16x16");
-  const collection = await createLocalCollection({
-    projectIds: [first.id, removed.id, third.id, first.id],
-    title: "Order test",
-  });
 
   try {
-    expect(getCollectionItems(collection.id)).toHaveLength(3);
-    await deleteProject(removed.id);
-    expect(getCollectionItems(collection.id)).toMatchObject([
-      { projectId: first.id, position: 0 },
-      { projectId: third.id, position: 1 },
-    ]);
-
-    await addProjectsToCollection({
-      collectionId: collection.id,
-      projectIds: [added.id],
+    const collection = await mergeProjectsIntoCollection({
+      sourceProjectId: first.id,
+      targetProjectId: second.id,
     });
-    expect(getCollectionItems(collection.id)).toMatchObject([
-      { projectId: first.id, position: 0 },
-      { projectId: third.id, position: 1 },
-      { projectId: added.id, position: 2 },
+
+    expect(collection?.projectIds).toEqual([second.id, first.id]);
+
+    await addProjectToCollection({
+      collectionId: collection!.id,
+      projectId: third.id,
+    });
+    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+      second.id,
+      first.id,
+      third.id,
     ]);
 
     await moveCollectionProject({
-      collectionId: collection.id,
+      collectionId: collection!.id,
       direction: -1,
-      projectId: added.id,
+      projectId: third.id,
     });
-    expect(getCollectionItems(collection.id)).toMatchObject([
-      { projectId: first.id, position: 0 },
-      { projectId: added.id, position: 1 },
-      { projectId: third.id, position: 2 },
+    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+      second.id,
+      third.id,
+      first.id,
     ]);
 
     await removeProjectFromCollection({
-      collectionId: collection.id,
-      projectId: added.id,
+      collectionId: collection!.id,
+      projectId: third.id,
     });
-    expect(getCollectionItems(collection.id)).toMatchObject([
-      { projectId: first.id, position: 0 },
-      { projectId: third.id, position: 1 },
+    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+      second.id,
+      first.id,
     ]);
+
+    await deleteProject(first.id);
+    expect(collectionsCollection.has(collection!.id)).toBe(false);
   } finally {
-    await deleteLocalCollection(collection.id);
-    await Promise.all(
-      [first.id, third.id, added.id].map((projectId) =>
-        deleteProject(projectId),
-      ),
-    );
+    for (const projectId of [first.id, second.id, third.id]) {
+      if (projectsCollection.has(projectId)) {
+        await deleteProject(projectId);
+      }
+    }
+    for (const collection of [...collectionsCollection.values()]) {
+      await deleteLocalCollection(collection.id);
+    }
   }
 });
 
 test("deleting a collection preserves its projects", async () => {
-  const project = await createProject("16x16");
+  const first = await createProject("16x16");
+  const second = await createProject("16x16");
   const collection = await createLocalCollection({
-    projectIds: [project.id],
+    projectIds: [first.id, second.id],
     title: "Disposable collection",
   });
 
   try {
     await deleteLocalCollection(collection.id);
-    expect(projectsCollection.has(project.id)).toBe(true);
+    expect(projectsCollection.has(first.id)).toBe(true);
+    expect(projectsCollection.has(second.id)).toBe(true);
   } finally {
     if (collectionsCollection.has(collection.id)) {
       await deleteLocalCollection(collection.id);
     }
-    if (projectsCollection.has(project.id)) {
-      await deleteProject(project.id);
+    for (const projectId of [first.id, second.id]) {
+      if (projectsCollection.has(projectId)) {
+        await deleteProject(projectId);
+      }
+    }
+  }
+});
+
+test("a project can only belong to one collection", async () => {
+  const first = await createProject("16x16");
+  const second = await createProject("16x16");
+  const third = await createProject("16x16");
+  const fourth = await createProject("16x16");
+
+  try {
+    const left = await createLocalCollection({
+      projectIds: [first.id, second.id],
+      title: "Left",
+    });
+    const right = await createLocalCollection({
+      projectIds: [third.id, fourth.id],
+      title: "Right",
+    });
+
+    await addProjectToCollection({
+      collectionId: right.id,
+      projectId: first.id,
+    });
+
+    expect(collectionsCollection.has(left.id)).toBe(false);
+    expect(collectionsCollection.get(right.id)?.projectIds).toEqual([
+      third.id,
+      fourth.id,
+      first.id,
+    ]);
+  } finally {
+    for (const collection of [...collectionsCollection.values()]) {
+      await deleteLocalCollection(collection.id);
+    }
+    for (const projectId of [first.id, second.id, third.id, fourth.id]) {
+      if (projectsCollection.has(projectId)) {
+        await deleteProject(projectId);
+      }
     }
   }
 });

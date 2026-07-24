@@ -55,7 +55,9 @@ export function LocalCollectionActions({
 }: {
   collection: LocalCollection;
   onDeleted?: () => void;
-  projects: Project[];
+  projects: Array<
+    Pick<Project, "currentIndex" | "sizeId" | "snapshots" | "title">
+  >;
 }) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);

@@ -1,11 +1,9 @@
 import { projectsCollection } from "@/features/bead/storage/projects";
 import {
-  collectionItemsCollection,
   collectionsCollection,
-  getCollectionItemKey,
-  getCollectionItems,
+  detachProjectFromCollections,
+  findCollectionIdForProject,
   type LocalCollection,
-  type LocalCollectionItem,
   preloadCollectionStorage,
 } from "@/features/collections/storage/collection-storage";
 import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
@@ -17,75 +15,94 @@ export async function preloadLocalCollections() {
   return null;
 }
 
+/** Create a collection from ungrouped (or forcibly moved) projects. */
 export async function createLocalCollection({
   projectIds,
-  title,
+  title = "",
 }: {
   projectIds: string[];
-  title: string;
+  title?: string;
 }) {
   await preloadLocalCollections();
   const uniqueProjectIds = getUniqueExistingProjectIds(projectIds);
 
-  if (uniqueProjectIds.length === 0) {
-    throw new Error("A collection requires at least one project");
+  if (uniqueProjectIds.length < 2) {
+    throw new Error("A collection requires at least two projects");
   }
 
   const now = Date.now();
   const collection: LocalCollection = {
     id: crypto.randomUUID(),
     title: normalizeCollectionTitle(title),
+    projectIds: uniqueProjectIds,
     createdAt: now,
     updatedAt: now,
   };
-  const items = createCollectionItems(collection.id, uniqueProjectIds);
 
   await commitCollectionMutation(() => {
+    for (const projectId of uniqueProjectIds) {
+      detachProjectFromCollections(projectId);
+    }
     collectionsCollection.insert(collection);
-    collectionItemsCollection.insert(items);
   });
 
   return collection;
 }
 
-export async function addProjectsToCollection({
-  collectionId,
-  projectIds,
+/** Drag project A onto project B → collection at B with [B, A]. */
+export async function mergeProjectsIntoCollection({
+  sourceProjectId,
+  targetProjectId,
+  title = "",
 }: {
-  collectionId: string;
-  projectIds: string[];
+  sourceProjectId: string;
+  targetProjectId: string;
+  title?: string;
 }) {
-  await preloadLocalCollections();
-  const collection = getRequiredCollection(collectionId);
-  const existingItems = getCollectionItems(collectionId);
-  const existingProjectIds = new Set(
-    existingItems.map((item) => item.projectId),
-  );
-  const nextProjectIds = getUniqueExistingProjectIds(projectIds).filter(
-    (projectId) => !existingProjectIds.has(projectId),
-  );
-
-  if (nextProjectIds.length === 0) {
-    return;
+  if (sourceProjectId === targetProjectId) {
+    return null;
   }
 
-  const now = Date.now();
-  const nextPosition =
-    Math.max(-1, ...existingItems.map((item) => item.position)) + 1;
-  const items = createCollectionItems(
-    collectionId,
-    nextProjectIds,
-    nextPosition,
-  );
-
-  await commitCollectionMutation(() => {
-    collectionItemsCollection.insert(items);
-    collectionsCollection.update(collection.id, (draft) => {
-      draft.updatedAt = now;
-    });
+  return createLocalCollection({
+    projectIds: [targetProjectId, sourceProjectId],
+    title,
   });
 }
 
+/** Drag an ungrouped project onto a collection. */
+export async function addProjectToCollection({
+  collectionId,
+  projectId,
+}: {
+  collectionId: string;
+  projectId: string;
+}) {
+  await preloadLocalCollections();
+  const collection = getRequiredCollection(collectionId);
+
+  if (!projectsCollection.has(projectId)) {
+    throw new Error(`Bead project not found: ${projectId}`);
+  }
+
+  if (collection.projectIds.includes(projectId)) {
+    return collection;
+  }
+
+  const now = Date.now();
+
+  await commitCollectionMutation(() => {
+    detachProjectFromCollections(projectId);
+    const current = getRequiredCollection(collectionId);
+    collectionsCollection.update(collectionId, (draft) => {
+      draft.projectIds = [...current.projectIds, projectId];
+      draft.updatedAt = now;
+    });
+  });
+
+  return collectionsCollection.get(collectionId) ?? collection;
+}
+
+/** Remove a project from its collection; dissolve if fewer than 2 remain. */
 export async function removeProjectFromCollection({
   collectionId,
   projectId,
@@ -94,26 +111,25 @@ export async function removeProjectFromCollection({
   projectId: string;
 }) {
   await preloadCollectionStorage();
-  getRequiredCollection(collectionId);
-  const items = getCollectionItems(collectionId);
-  const removedItem = items.find((item) => item.projectId === projectId);
+  const collection = collectionsCollection.get(collectionId);
 
-  if (!removedItem) {
+  if (!collection || !collection.projectIds.includes(projectId)) {
     return;
   }
 
-  const remainingItems = items.filter(
-    (item) => item.projectId !== removedItem.projectId,
+  const nextProjectIds = collection.projectIds.filter(
+    (id) => id !== projectId,
   );
-  const now = Date.now();
 
   await commitCollectionMutation(() => {
-    collectionItemsCollection.delete(
-      getCollectionItemKey(removedItem.collectionId, removedItem.projectId),
-    );
-    reindexItems(remainingItems);
+    if (nextProjectIds.length < 2) {
+      collectionsCollection.delete(collectionId);
+      return;
+    }
+
     collectionsCollection.update(collectionId, (draft) => {
-      draft.updatedAt = now;
+      draft.projectIds = nextProjectIds;
+      draft.updatedAt = Date.now();
     });
   });
 }
@@ -128,34 +144,55 @@ export async function moveCollectionProject({
   projectId: string;
 }) {
   await preloadCollectionStorage();
-  getRequiredCollection(collectionId);
-  const items = getCollectionItems(collectionId);
-  const currentIndex = items.findIndex((item) => item.projectId === projectId);
+  const collection = getRequiredCollection(collectionId);
+  const currentIndex = collection.projectIds.indexOf(projectId);
   const nextIndex = currentIndex + direction;
 
-  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= items.length) {
+  if (
+    currentIndex < 0 ||
+    nextIndex < 0 ||
+    nextIndex >= collection.projectIds.length
+  ) {
     return;
   }
 
-  const currentItem = items[currentIndex];
-  const nextItem = items[nextIndex];
-  const now = Date.now();
+  const nextProjectIds = [...collection.projectIds];
+  const [moved] = nextProjectIds.splice(currentIndex, 1);
+  nextProjectIds.splice(nextIndex, 0, moved);
 
   await commitCollectionMutation(() => {
-    collectionItemsCollection.update(
-      getCollectionItemKey(currentItem.collectionId, currentItem.projectId),
-      (draft) => {
-        draft.position = nextItem.position;
-      },
-    );
-    collectionItemsCollection.update(
-      getCollectionItemKey(nextItem.collectionId, nextItem.projectId),
-      (draft) => {
-        draft.position = currentItem.position;
-      },
-    );
     collectionsCollection.update(collectionId, (draft) => {
-      draft.updatedAt = now;
+      draft.projectIds = nextProjectIds;
+      draft.updatedAt = Date.now();
+    });
+  });
+}
+
+export async function reorderCollectionProjects({
+  collectionId,
+  projectIds,
+}: {
+  collectionId: string;
+  projectIds: string[];
+}) {
+  await preloadCollectionStorage();
+  const collection = getRequiredCollection(collectionId);
+  const currentSet = new Set(collection.projectIds);
+  const nextProjectIds = projectIds.filter((projectId) =>
+    currentSet.has(projectId),
+  );
+
+  if (
+    nextProjectIds.length !== collection.projectIds.length ||
+    nextProjectIds.some((projectId) => !currentSet.has(projectId))
+  ) {
+    throw new Error("Collection reorder must include the same projects");
+  }
+
+  await commitCollectionMutation(() => {
+    collectionsCollection.update(collectionId, (draft) => {
+      draft.projectIds = nextProjectIds;
+      draft.updatedAt = Date.now();
     });
   });
 }
@@ -186,16 +223,19 @@ export async function renameLocalCollection({
 export async function deleteLocalCollection(collectionId: string) {
   await preloadCollectionStorage();
   getRequiredCollection(collectionId);
-  const itemKeys = getCollectionItems(collectionId).map((item) =>
-    getCollectionItemKey(item.collectionId, item.projectId),
-  );
 
   await commitCollectionMutation(() => {
-    if (itemKeys.length > 0) {
-      collectionItemsCollection.delete(itemKeys);
-    }
     collectionsCollection.delete(collectionId);
   });
+}
+
+/** Called when a project is deleted from the library. */
+export function removeDeletedProjectFromCollections(projectId: string) {
+  detachProjectFromCollections(projectId);
+}
+
+export function getProjectCollectionId(projectId: string) {
+  return findCollectionIdForProject(projectId);
 }
 
 function getRequiredCollection(collectionId: string) {
@@ -214,33 +254,6 @@ function getUniqueExistingProjectIds(projectIds: string[]) {
   );
 }
 
-function createCollectionItems(
-  collectionId: string,
-  projectIds: string[],
-  startPosition = 0,
-): LocalCollectionItem[] {
-  return projectIds.map((projectId, index) => ({
-    collectionId,
-    projectId,
-    position: startPosition + index,
-  }));
-}
-
-function reindexItems(items: LocalCollectionItem[]) {
-  items.forEach((item, position) => {
-    if (item.position === position) {
-      return;
-    }
-
-    collectionItemsCollection.update(
-      getCollectionItemKey(item.collectionId, item.projectId),
-      (draft) => {
-        draft.position = position;
-      },
-    );
-  });
-}
-
 function normalizeCollectionTitle(title: string) {
   const normalizedTitle = title.trim().slice(0, 80);
   return normalizedTitle || DEFAULT_COLLECTION_TITLE;
@@ -250,6 +263,5 @@ function commitCollectionMutation(mutator: () => void) {
   return commitLocalStorageMutation(
     mutator,
     collectionsCollection.utils.acceptMutations,
-    collectionItemsCollection.utils.acceptMutations,
   );
 }

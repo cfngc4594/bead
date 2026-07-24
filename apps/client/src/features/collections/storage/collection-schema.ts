@@ -7,18 +7,10 @@ export const localCollectionSchema = z
   .object({
     id: nonEmptyStringSchema,
     title: nonEmptyStringSchema,
+    projectIds: z.array(nonEmptyStringSchema).min(2),
     createdAt: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
   })
   .strict();
 
-export const localCollectionItemSchema = z
-  .object({
-    collectionId: nonEmptyStringSchema,
-    projectId: nonEmptyStringSchema,
-    position: nonnegativeIntSchema,
-  })
-  .strict();
-
 export type LocalCollection = z.infer<typeof localCollectionSchema>;
-export type LocalCollectionItem = z.infer<typeof localCollectionItemSchema>;

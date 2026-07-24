@@ -32,15 +32,12 @@ export function DiscoverCollectionPage({
     setIsImporting(true);
 
     try {
-      const localCollection = await importDiscoverCollection(collection);
+      await importDiscoverCollection(collection);
       trackEvent("collection_added_from_discover", {
         projectCount: collection.projects.length,
       });
       toast.success(`已添加合集和 ${collection.projects.length} 个作品`);
-      await navigate({
-        to: "/projects/collections/$collectionId",
-        params: { collectionId: localCollection.id },
-      });
+      await navigate({ to: "/projects" });
     } catch (error) {
       console.error("Unable to import discover collection", error);
       toast.error("添加合集失败");
@@ -52,7 +49,7 @@ export function DiscoverCollectionPage({
     <main className="flex h-full min-h-0 min-w-0 flex-col bg-background">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-3 md:gap-3 md:px-5">
         <Button asChild size="icon-sm" variant="outline">
-          <Link aria-label="返回发现合集" to="/discover/collections">
+          <Link aria-label="返回发现" to="/discover">
             <ArrowLeft />
           </Link>
         </Button>
@@ -118,9 +115,9 @@ export function DiscoverCollectionNotFound() {
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link to="/discover/collections">
+              <Link to="/discover">
                 <ArrowLeft aria-hidden="true" />
-                返回发现合集
+                返回发现
               </Link>
             </Button>
           </EmptyContent>

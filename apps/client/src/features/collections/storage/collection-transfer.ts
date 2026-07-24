@@ -11,11 +11,8 @@ import {
 } from "@/features/bead/storage/projects";
 import { preloadLocalCollections } from "@/features/collections/storage/collection-commands";
 import {
-  collectionItemsCollection,
   collectionsCollection,
-  getCollectionItems,
   type LocalCollection,
-  type LocalCollectionItem,
 } from "@/features/collections/storage/collection-storage";
 import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
@@ -38,22 +35,25 @@ export async function importDiscoverCollection(
       updatedAt: now,
     }),
   );
+
+  if (projects.length < 2) {
+    await commitLocalStorageMutation(() => {
+      projectsCollection.insert(projects);
+    }, projectsCollection.utils.acceptMutations);
+    return null;
+  }
+
   const collection: LocalCollection = {
     id: crypto.randomUUID(),
     title: discoverCollection.title,
+    projectIds: projects.map((project) => project.id),
     createdAt: now,
     updatedAt: now,
   };
-  const items: LocalCollectionItem[] = projects.map((project, position) => ({
-    collectionId: collection.id,
-    projectId: project.id,
-    position,
-  }));
 
   await commitLibraryMutation(() => {
     projectsCollection.insert(projects);
     collectionsCollection.insert(collection);
-    collectionItemsCollection.insert(items);
   });
 
   return collection;
@@ -69,8 +69,8 @@ export async function createPublishCollectionInput(
     throw new Error(`Bead collection not found: ${collectionId}`);
   }
 
-  const projects = getCollectionItems(collectionId)
-    .map((item) => projectsCollection.get(item.projectId))
+  const projects = collection.projectIds
+    .map((projectId) => projectsCollection.get(projectId))
     .filter((project) => project !== undefined);
   const publishIssue = getCollectionPublishIssue(projects);
 
@@ -105,6 +105,5 @@ function commitLibraryMutation(mutator: () => void) {
     mutator,
     projectsCollection.utils.acceptMutations,
     collectionsCollection.utils.acceptMutations,
-    collectionItemsCollection.utils.acceptMutations,
   );
 }

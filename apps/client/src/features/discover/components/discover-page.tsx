@@ -10,14 +10,18 @@ import {
 import { useLiveQuery } from "@tanstack/react-db";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Compass, Folders, Plus, Upload } from "lucide-react";
-import { useState } from "react";
+import { Compass, Plus, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import {
   getFilledCount,
   projectsCollection,
 } from "@/features/bead/storage/projects";
-import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
+import { CollectionCard } from "@/features/collections/components/collection-card";
+import {
+  discoverCollectionsQueryOptions,
+  discoverProjectsQueryOptions,
+} from "@/features/discover/api/discover-queries";
 import { PublishProjectDialog } from "@/features/discover/components/publish-project-dialog";
 import { trackEvent } from "@/lib/analytics";
 
@@ -25,6 +29,9 @@ export function DiscoverPage() {
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const { data: discoverProjects } = useSuspenseQuery(
     discoverProjectsQueryOptions,
+  );
+  const { data: discoverCollections } = useSuspenseQuery(
+    discoverCollectionsQueryOptions,
   );
   const { data: localProjects = [] } = useLiveQuery(
     (query) =>
@@ -38,6 +45,34 @@ export function DiscoverPage() {
   const hasPublishableProjects = localProjects.some(
     (project) => getFilledCount(project) > 0,
   );
+  const feedItems = useMemo(() => {
+    const items: Array<
+      | {
+          kind: "project";
+          publishedAt: number;
+          project: (typeof discoverProjects)[number];
+        }
+      | {
+          kind: "collection";
+          publishedAt: number;
+          collection: (typeof discoverCollections)[number];
+        }
+    > = [
+      ...discoverProjects.map((project) => ({
+        kind: "project" as const,
+        publishedAt: project.publishedAt,
+        project,
+      })),
+      ...discoverCollections.map((collection) => ({
+        kind: "collection" as const,
+        publishedAt: collection.publishedAt,
+        collection,
+      })),
+    ];
+
+    items.sort((left, right) => right.publishedAt - left.publishedAt);
+    return items;
+  }, [discoverCollections, discoverProjects]);
 
   function openPublishDialog() {
     setIsPublishDialogOpen(true);
@@ -52,12 +87,6 @@ export function DiscoverPage() {
         <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
           <h1 className="font-semibold text-lg tracking-tight">发现</h1>
           <div className="ml-auto flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link to="/discover/collections">
-                <Folders aria-hidden="true" />
-                <span className="hidden sm:inline">合集</span>
-              </Link>
-            </Button>
             <Button onClick={openPublishDialog}>
               <Upload aria-hidden="true" />
               发布
@@ -65,25 +94,41 @@ export function DiscoverPage() {
           </div>
         </header>
 
-        {discoverProjects.length > 0 ? (
+        {feedItems.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {discoverProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                onOpen={(source) =>
-                  trackEvent("discover_project_opened", {
-                    sizeId: project.sizeId,
-                    source,
-                  })
-                }
-                openLabel="查看"
-                project={project}
-                route="/discover/$projectId"
-                snapshot={project.snapshot}
-                timestamp={project.publishedAt}
-                timestampLabel="发布"
-              />
-            ))}
+            {feedItems.map((item) =>
+              item.kind === "project" ? (
+                <ProjectCard
+                  key={`project:${item.project.id}`}
+                  onOpen={(source) =>
+                    trackEvent("discover_project_opened", {
+                      sizeId: item.project.sizeId,
+                      source,
+                    })
+                  }
+                  openLabel="查看"
+                  project={item.project}
+                  route="/discover/$projectId"
+                  snapshot={item.project.snapshot}
+                  timestamp={item.project.publishedAt}
+                  timestampLabel="发布"
+                />
+              ) : (
+                <CollectionCard
+                  key={`collection:${item.collection.id}`}
+                  onOpen={(source) =>
+                    trackEvent("discover_collection_opened", {
+                      projectCount: item.collection.projectCount,
+                      source,
+                    })
+                  }
+                  collection={item.collection}
+                  route="/discover/collections/$collectionId"
+                  timestamp={item.collection.publishedAt}
+                  timestampLabel="发布"
+                />
+              ),
+            )}
           </div>
         ) : (
           <Empty className="flex-1 border">

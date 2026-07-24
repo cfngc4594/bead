@@ -15,13 +15,13 @@ type CollectionPreviewProject = {
   snapshot: CanvasSnapshot;
 };
 
-type CollectionCardRoute =
-  | "/discover/collections/$collectionId"
-  | "/projects/collections/$collectionId";
+type CollectionCardRoute = "/discover/collections/$collectionId";
 
 export function CollectionCard({
   actions,
   collection,
+  dropTarget = false,
+  onActivate,
   onOpen,
   route,
   timestamp,
@@ -34,46 +34,88 @@ export function CollectionCard({
     previewProjects: CollectionPreviewProject[];
     projectCount: number;
   };
-  onOpen: (source: "preview" | "title") => void;
-  route: CollectionCardRoute;
+  dropTarget?: boolean;
+  onActivate?: (source: "preview" | "title") => void;
+  onOpen?: (source: "preview" | "title") => void;
+  route?: CollectionCardRoute;
   timestamp: number;
   timestampLabel: string;
 }) {
+  const preview = <CollectionPreview projects={collection.previewProjects} />;
+  const meta = (
+    <>
+      <p className="truncate font-medium text-sm leading-4">
+        {collection.title}
+      </p>
+      <div className="mt-0.5 flex min-w-0 items-center gap-2 text-muted-foreground text-xs leading-4">
+        <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
+          {collection.projectCount} 个作品
+        </span>
+        <time
+          className="truncate"
+          dateTime={new Date(timestamp).toISOString()}
+        >
+          {formatRelativeTime(timestamp)}
+          {timestampLabel}
+        </time>
+      </div>
+    </>
+  );
+
   return (
-    <article className="group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50">
-      <Link
-        aria-label={`打开合集 ${collection.title}`}
-        className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-        onClick={() => onOpen("preview")}
-        params={{ collectionId: collection.id }}
-        to={route}
-      >
-        <CollectionPreview projects={collection.previewProjects} />
-      </Link>
+    <article
+      className={cn(
+        "group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50",
+        dropTarget && "border-primary ring-2 ring-primary/30",
+      )}
+      data-collection-id={collection.id}
+    >
+      {onActivate ? (
+        <button
+          aria-label={`打开合集 ${collection.title}`}
+          className="block w-full bg-muted/30 text-left outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+          onClick={() => {
+            onOpen?.("preview");
+            onActivate("preview");
+          }}
+          type="button"
+        >
+          {preview}
+        </button>
+      ) : (
+        <Link
+          aria-label={`打开合集 ${collection.title}`}
+          className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+          onClick={() => onOpen?.("preview")}
+          params={{ collectionId: collection.id }}
+          to={route ?? "/discover/collections/$collectionId"}
+        >
+          {preview}
+        </Link>
+      )}
 
       <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
-        <Link
-          className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          onClick={() => onOpen("title")}
-          params={{ collectionId: collection.id }}
-          to={route}
-        >
-          <p className="truncate font-medium text-sm leading-4">
-            {collection.title}
-          </p>
-          <div className="mt-0.5 flex min-w-0 items-center gap-2 text-muted-foreground text-xs leading-4">
-            <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
-              {collection.projectCount} 个作品
-            </span>
-            <time
-              className="truncate"
-              dateTime={new Date(timestamp).toISOString()}
-            >
-              {formatRelativeTime(timestamp)}
-              {timestampLabel}
-            </time>
-          </div>
-        </Link>
+        {onActivate ? (
+          <button
+            className="min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            onClick={() => {
+              onOpen?.("title");
+              onActivate("title");
+            }}
+            type="button"
+          >
+            {meta}
+          </button>
+        ) : (
+          <Link
+            className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            onClick={() => onOpen?.("title")}
+            params={{ collectionId: collection.id }}
+            to={route ?? "/discover/collections/$collectionId"}
+          >
+            {meta}
+          </Link>
+        )}
 
         {actions ?? null}
       </div>

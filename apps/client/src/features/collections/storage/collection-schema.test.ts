@@ -1,50 +1,39 @@
 import { describe, expect, test } from "bun:test";
-import {
-  localCollectionItemSchema,
-  localCollectionSchema,
-} from "@/features/collections/storage/collection-schema";
+import { localCollectionSchema } from "@/features/collections/storage/collection-schema";
 
 describe("localCollectionSchema", () => {
-  test("accepts collection metadata", () => {
+  test("accepts a collection with ordered project ids", () => {
     expect(
       localCollectionSchema.safeParse({
         id: "collection-1",
         title: "Flowers",
+        projectIds: ["project-1", "project-2"],
         createdAt: 1,
         updatedAt: 2,
       }).success,
     ).toBe(true);
   });
 
-  test("rejects invalid collection metadata", () => {
+  test("rejects collections with fewer than two projects", () => {
     expect(
       localCollectionSchema.safeParse({
         id: "collection-1",
-        title: "",
+        title: "Flowers",
+        projectIds: ["project-1"],
         createdAt: 1,
         updatedAt: 2,
       }).success,
     ).toBe(false);
   });
-});
 
-describe("localCollectionItemSchema", () => {
-  test("accepts an ordered project membership", () => {
+  test("rejects blank titles", () => {
     expect(
-      localCollectionItemSchema.safeParse({
-        collectionId: "collection-1",
-        projectId: "project-1",
-        position: 0,
-      }).success,
-    ).toBe(true);
-  });
-
-  test("rejects negative positions", () => {
-    expect(
-      localCollectionItemSchema.safeParse({
-        collectionId: "collection-1",
-        projectId: "project-1",
-        position: -1,
+      localCollectionSchema.safeParse({
+        id: "collection-1",
+        title: "",
+        projectIds: ["project-1", "project-2"],
+        createdAt: 1,
+        updatedAt: 2,
       }).success,
     ).toBe(false);
   });

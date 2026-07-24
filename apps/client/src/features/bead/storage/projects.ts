@@ -22,9 +22,8 @@ import {
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
 import {
-  collectionItemsCollection,
   collectionsCollection,
-  getCollectionItemKey,
+  detachProjectFromCollections,
   preloadCollectionStorage,
 } from "@/features/collections/storage/collection-storage";
 import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
@@ -158,56 +157,9 @@ export async function createProjectFromSnapshot({
 export async function deleteProject(projectId: ProjectId) {
   await Promise.all([projectsCollection.preload(), preloadCollectionStorage()]);
   getRequiredProject(projectId);
-  const relatedItems = [...collectionItemsCollection.values()].filter(
-    (item) => item.projectId === projectId,
-  );
-  const relatedCollectionIds = new Set(
-    relatedItems.map((item) => item.collectionId),
-  );
-  const remainingItemsByCollection = new Map(
-    [...relatedCollectionIds].map((collectionId) => [
-      collectionId,
-      [...collectionItemsCollection.values()]
-        .filter(
-          (item) =>
-            item.collectionId === collectionId && item.projectId !== projectId,
-        )
-        .sort((left, right) => left.position - right.position),
-    ]),
-  );
-  const now = Date.now();
 
   return commitProjectDeletion(() => {
-    if (relatedItems.length > 0) {
-      collectionItemsCollection.delete(
-        relatedItems.map((item) =>
-          getCollectionItemKey(item.collectionId, item.projectId),
-        ),
-      );
-    }
-    relatedCollectionIds.forEach((collectionId) => {
-      if (!collectionsCollection.has(collectionId)) {
-        return;
-      }
-
-      collectionsCollection.update(collectionId, (draft) => {
-        draft.updatedAt = now;
-      });
-      remainingItemsByCollection
-        .get(collectionId)
-        ?.forEach((item, position) => {
-          if (item.position === position) {
-            return;
-          }
-
-          collectionItemsCollection.update(
-            getCollectionItemKey(item.collectionId, item.projectId),
-            (draft) => {
-              draft.position = position;
-            },
-          );
-        });
-    });
+    detachProjectFromCollections(projectId);
     projectsCollection.delete(projectId);
   });
 }
@@ -330,6 +282,5 @@ function commitProjectDeletion(mutator: () => void) {
     mutator,
     projectsCollection.utils.acceptMutations,
     collectionsCollection.utils.acceptMutations,
-    collectionItemsCollection.utils.acceptMutations,
   );
 }

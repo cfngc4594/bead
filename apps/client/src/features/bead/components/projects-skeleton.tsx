@@ -1,7 +1,6 @@
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { ProjectCardSkeleton } from "@/features/bead/components/project-card";
-
-const projectSkeletons = ["project-1", "project-2", "project-3"];
+import { CollectionCardSkeleton } from "@/features/collections/components/collection-card";
 
 export function ProjectsSkeleton() {
   return (
@@ -20,9 +19,9 @@ export function ProjectsSkeleton() {
           </header>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {projectSkeletons.map((project) => (
-              <ProjectCardSkeleton key={project} />
-            ))}
+            <CollectionCardSkeleton />
+            <ProjectCardSkeleton />
+            <ProjectCardSkeleton />
           </div>
         </div>
       </div>
