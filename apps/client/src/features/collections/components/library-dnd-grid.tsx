@@ -5,16 +5,13 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
-  PointerSensor,
   pointerWithin,
-  TouchSensor,
   useDraggable,
   useDroppable,
-  useSensor,
-  useSensors,
 } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import { type ReactNode, useState } from "react";
+import { useLibraryDndSensors } from "@/features/collections/hooks/use-library-dnd-sensors";
 
 export type LibraryFeedItem<TProject, TCollection> =
   | { kind: "project"; id: string; project: TProject }
@@ -78,14 +75,7 @@ export function LibraryDndGrid<TProject, TCollection>({
   ) => ReactNode;
 }) {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 180, tolerance: 8 },
-    }),
-  );
+  const sensors = useLibraryDndSensors();
   const isDraggingProject = activeProjectId !== null;
   const activeProject = activeProjectId
     ? items.find(
@@ -195,7 +185,7 @@ function LibraryProjectItem({
   return (
     <motion.div
       className={cn(
-        "relative touch-manipulation",
+        "relative touch-manipulation select-none",
         isDragging && "opacity-35",
         !disabled && "cursor-grab active:cursor-grabbing",
       )}

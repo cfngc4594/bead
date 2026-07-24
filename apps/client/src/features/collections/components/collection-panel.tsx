@@ -20,17 +20,11 @@ import {
   type DragMoveEvent,
   DragOverlay,
   type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
   pointerWithin,
-  TouchSensor,
-  useSensor,
-  useSensors,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -51,6 +45,7 @@ import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
 import type { Project } from "@/features/bead/storage/projects";
 import { LocalCollectionActions } from "@/features/collections/components/local-collection-actions";
+import { useLibraryDndSensors } from "@/features/collections/hooks/use-library-dnd-sensors";
 import {
   removeProjectFromCollection,
   reorderCollectionProjects,
@@ -83,17 +78,7 @@ export function CollectionPanel({
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [isOutsidePanel, setIsOutsidePanel] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 160, tolerance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const sensors = useLibraryDndSensors({ withKeyboard: true });
   const projectIds = orderedProjects.map((project) => project.id);
   const activeProject = activeProjectId
     ? (orderedProjects.find((project) => project.id === activeProjectId) ??
@@ -394,7 +379,7 @@ function CollectionProjectRow({
 
       <button
         aria-label={`拖动 ${project.title}`}
-        className="flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="flex size-8 shrink-0 touch-none select-none cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
         type="button"
         {...dragHandleProps}
       >
