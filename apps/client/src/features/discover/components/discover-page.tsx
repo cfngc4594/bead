@@ -48,7 +48,7 @@ export function DiscoverPage() {
       aria-label="发现"
       className="flex min-h-full bg-background px-4 py-6 md:px-8"
     >
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 min-h-0">
         <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
           <h1 className="font-semibold text-lg tracking-tight">发现</h1>
           <div className="ml-auto flex items-center gap-2">
@@ -86,7 +86,7 @@ export function DiscoverPage() {
             ))}
           </div>
         ) : (
-          <Empty className="min-h-72 flex-none border">
+          <Empty className="flex-1 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Compass />

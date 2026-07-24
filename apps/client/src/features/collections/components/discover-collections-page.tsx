@@ -32,7 +32,7 @@ export function DiscoverCollectionsPage() {
       </header>
 
       <section className="min-h-0 flex-1 overflow-auto scrollbar-gutter-stable px-4 py-6 md:px-8">
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col">
           {collections.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {collections.map((collection) => (
@@ -52,7 +52,7 @@ export function DiscoverCollectionsPage() {
               ))}
             </div>
           ) : (
-            <Empty className="min-h-72 flex-none border">
+            <Empty className="flex-1 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Folders />

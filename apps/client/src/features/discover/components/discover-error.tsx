@@ -16,7 +16,7 @@ export function DiscoverError() {
   return (
     <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
-        <Empty className="min-h-72 flex-none border">
+        <Empty className="flex-1 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <WifiOff />
@@ -40,7 +40,7 @@ export function DiscoverProjectNotFound() {
   return (
     <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
-        <Empty className="min-h-72 flex-none border">
+        <Empty className="flex-1 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <SearchX />

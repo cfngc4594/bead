@@ -118,7 +118,7 @@ export function ProjectSelectionDialog({
           id="project-selection-form"
           onSubmit={handleSubmit}
         >
-          <div className="flex min-h-0 flex-col gap-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
             {collectionTitle !== undefined ? (
               <Input
                 aria-label="合集名称"
@@ -148,7 +148,7 @@ export function ProjectSelectionDialog({
                 </div>
               </ScrollArea>
             ) : (
-              <Empty className="min-h-56 border">
+              <Empty className="flex-1 border">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     <FolderOpen />

@@ -132,7 +132,7 @@ export function PublishProjectDialog({
             </div>
           </ScrollArea>
         ) : (
-          <Empty className="min-h-64 border">
+          <Empty className="flex-1 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <FolderOpen />

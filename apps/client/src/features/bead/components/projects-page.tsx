@@ -178,7 +178,7 @@ export function ProjectsPage() {
                 ))}
               </div>
             ) : (
-              <Empty className="border">
+              <Empty className="flex-1 border">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     <Search />
@@ -198,7 +198,7 @@ export function ProjectsPage() {
               </Empty>
             )
           ) : (
-            <Empty className="min-h-72 flex-none border">
+            <Empty className="flex-1 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Grid2x2 />
