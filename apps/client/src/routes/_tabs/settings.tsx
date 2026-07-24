@@ -42,20 +42,14 @@ function SettingsPage() {
       aria-label="设置"
       className="flex h-full min-h-0 flex-col bg-background"
     >
-      <header className="mx-auto w-full max-w-3xl shrink-0 space-y-1 border-b px-4 pt-6 pb-5 sm:px-6 lg:px-8">
+      <header className="mx-auto w-full max-w-3xl shrink-0 border-b px-4 pt-6 pb-5 sm:px-6 lg:px-8">
         <h1 className="font-semibold text-2xl tracking-normal">设置</h1>
-        <p className="text-muted-foreground text-sm">管理外观和应用信息。</p>
       </header>
 
       <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
           <section aria-labelledby="appearance-title" className="space-y-4">
-            <SectionHeading
-              description="选择应用使用的颜色模式。"
-              icon={Monitor}
-              id="appearance-title"
-              title="外观"
-            />
+            <SectionHeading icon={Monitor} id="appearance-title" title="外观" />
             <RadioGroup
               className="gap-2"
               onValueChange={setTheme}
@@ -87,12 +81,7 @@ function SettingsPage() {
           <Separator />
 
           <section aria-labelledby="about-title" className="space-y-4">
-            <SectionHeading
-              description="查看当前应用版本。"
-              icon={Info}
-              id="about-title"
-              title="关于"
-            />
+            <SectionHeading icon={Info} id="about-title" title="关于" />
             <dl className="grid gap-3 rounded-lg border px-3 py-3 text-sm sm:grid-cols-[8rem_1fr]">
               <dt className="text-muted-foreground">应用</dt>
               <dd className="font-medium">{appConfig.name}</dd>
@@ -107,27 +96,22 @@ function SettingsPage() {
 }
 
 function SectionHeading({
-  description,
   icon: Icon,
   id,
   title,
 }: {
-  description: string;
   icon: LucideIcon;
   id: string;
   title: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-center gap-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         <Icon aria-hidden="true" className="size-4" strokeWidth={1.8} />
       </span>
-      <div className="space-y-1">
-        <h2 className="font-medium text-base" id={id}>
-          {title}
-        </h2>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
+      <h2 className="font-medium text-base" id={id}>
+        {title}
+      </h2>
     </div>
   );
 }
