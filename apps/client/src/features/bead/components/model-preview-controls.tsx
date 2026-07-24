@@ -201,9 +201,7 @@ export function ModelPreviewControls({
             ) : null}
           </div>
           {!pet.canStart ? (
-            <p className="text-xs text-muted-foreground">
-              请先铺上豆子
-            </p>
+            <p className="text-xs text-muted-foreground">请先铺上豆子</p>
           ) : null}
         </section>
       ) : null}

@@ -160,9 +160,7 @@ export function CollectionContextMenu({
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>删除合集？</AlertDialogTitle>
-              <AlertDialogDescription>
-                作品将保留
-              </AlertDialogDescription>
+              <AlertDialogDescription>作品将保留</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>

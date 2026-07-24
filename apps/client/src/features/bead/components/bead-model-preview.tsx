@@ -88,11 +88,7 @@ export function BeadModelPreview({
         <ModelPreviewStatus compact label="正在加载纹理" />
       ) : null}
       {hasBeads && mode !== "beads" && textureStatus === "error" ? (
-        <ModelPreviewStatus
-          compact
-          error
-          label="纹理加载失败"
-        />
+        <ModelPreviewStatus compact error label="纹理加载失败" />
       ) : null}
     </section>
   );
