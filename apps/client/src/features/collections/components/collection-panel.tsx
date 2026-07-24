@@ -14,11 +14,8 @@ import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { cn } from "@bead/ui/lib/utils";
 import {
   type CollisionDetection,
-  closestCenter,
   DndContext,
   type DragEndEvent,
-  type DragMoveEvent,
-  DragOverlay,
   type DragStartEvent,
   pointerWithin,
 } from "@dnd-kit/core";
@@ -34,12 +31,15 @@ import { FolderOpen, GripVertical } from "lucide-react";
 import {
   type ButtonHTMLAttributes,
   type ComponentType,
+  createContext,
   type ReactNode,
   type RefObject,
+  useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
@@ -62,6 +62,8 @@ type PanelProject = Pick<
   "id" | "title" | "sizeId" | "snapshots" | "currentIndex" | "updatedAt"
 >;
 
+const CollectionDragFeedbackContext = createContext(true);
+
 export function CollectionPanel({
   collection,
   onOpenChange,
@@ -77,7 +79,13 @@ export function CollectionPanel({
   const [orderedProjects, setOrderedProjects] = useState(projects);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [isOutsidePanel, setIsOutsidePanel] = useState(false);
+  const [dragPosition, setDragPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const isOutsidePanelRef = useRef(false);
   const sensors = useLibraryDndSensors({ withKeyboard: true });
   const projectIds = orderedProjects.map((project) => project.id);
   const activeProject = activeProjectId
@@ -90,22 +98,48 @@ export function CollectionPanel({
     setOrderedProjects(projects);
   }, [projects]);
 
-  const collisionDetection: CollisionDetection = (args) => {
-    const { pointerCoordinates } = args;
-    const rect = panelRef.current?.getBoundingClientRect();
+  function syncOutsideState(outside: boolean) {
+    isOutsidePanelRef.current = outside;
+    setIsOutsidePanel((current) => (current === outside ? current : outside));
+  }
 
-    if (pointerCoordinates && rect) {
-      const { x, y } = pointerCoordinates;
-      const outside =
-        x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
+  function isUngroupPointer(x: number, y: number) {
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    const listRect = listRef.current?.getBoundingClientRect();
 
-      if (outside) {
-        return [];
-      }
+    if (!panelRect) {
+      return false;
     }
 
-    const pointerHits = pointerWithin(args);
-    return pointerHits.length > 0 ? pointerHits : closestCenter(args);
+    // Header / area above the list counts as ungroup (natural “drag up” on bottom drawer).
+    if (listRect && y < listRect.top) {
+      return true;
+    }
+
+    return (
+      x < panelRect.left ||
+      x > panelRect.right ||
+      y < panelRect.top ||
+      y > panelRect.bottom
+    );
+  }
+
+  const collisionDetection: CollisionDetection = (args) => {
+    const { pointerCoordinates } = args;
+
+    if (
+      pointerCoordinates &&
+      isUngroupPointer(pointerCoordinates.x, pointerCoordinates.y)
+    ) {
+      isOutsidePanelRef.current = true;
+      return [];
+    }
+
+    isOutsidePanelRef.current = false;
+
+    // Only reorder when the pointer is directly over another row — no closestCenter
+    // fallback, so dragging up toward the exit does not flash reorder targets.
+    return pointerWithin(args);
   };
 
   async function removeProject(projectId: string) {
@@ -126,34 +160,50 @@ export function CollectionPanel({
     }
   }
 
-  function handleDragStart(event: DragStartEvent) {
-    setActiveProjectId(String(event.active.id));
-    setIsOutsidePanel(false);
+  function resetDragState() {
+    setActiveProjectId(null);
+    setDragPosition(null);
+    syncOutsideState(false);
   }
 
-  function handleDragMove(event: DragMoveEvent) {
-    setIsOutsidePanel(event.over == null);
+  function handleDragStart(event: DragStartEvent) {
+    setActiveProjectId(String(event.active.id));
+    syncOutsideState(false);
+
+    const activator = event.activatorEvent;
+    if (activator instanceof PointerEvent) {
+      setDragPosition({ x: activator.clientX, y: activator.clientY });
+    } else if (activator instanceof TouchEvent) {
+      const touch = activator.touches[0] ?? activator.changedTouches[0];
+      if (touch) {
+        setDragPosition({ x: touch.clientX, y: touch.clientY });
+      }
+    } else if (activator instanceof MouseEvent) {
+      setDragPosition({ x: activator.clientX, y: activator.clientY });
+    }
   }
 
   function handleDragCancel() {
-    setActiveProjectId(null);
-    setIsOutsidePanel(false);
+    resetDragState();
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     const projectId = String(active.id);
-    setActiveProjectId(null);
-    setIsOutsidePanel(false);
+    const shouldUngroup = isOutsidePanelRef.current;
+    resetDragState();
 
-    // Dropped outside the panel → ungroup. On another member → reorder. Else no-op.
-    if (!over) {
+    if (shouldUngroup) {
       await removeProject(projectId);
       return;
     }
 
-    const overProjectId = String(over.id);
-    if (overProjectId === projectId || !projectIds.includes(overProjectId)) {
+    const overProjectId = over ? String(over.id) : null;
+    if (
+      overProjectId === null ||
+      overProjectId === projectId ||
+      !projectIds.includes(overProjectId)
+    ) {
       return;
     }
 
@@ -181,6 +231,49 @@ export function CollectionPanel({
     }
   }
 
+  // Keep overlay locked to the real finger/cursor. Vaul drawer transforms break
+  // DragOverlay's default positioning inside the panel.
+  useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+
+    const updateFromClient = (x: number, y: number) => {
+      setDragPosition({ x, y });
+
+      const panelRect = panelRef.current?.getBoundingClientRect();
+      const listRect = listRef.current?.getBoundingClientRect();
+      const outside = panelRect
+        ? (listRect != null && y < listRect.top) ||
+          x < panelRect.left ||
+          x > panelRect.right ||
+          y < panelRect.top ||
+          y > panelRect.bottom
+        : false;
+
+      isOutsidePanelRef.current = outside;
+      setIsOutsidePanel((current) => (current === outside ? current : outside));
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      updateFromClient(event.clientX, event.clientY);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (touch) {
+        updateFromClient(touch.clientX, touch.clientY);
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [isDragging]);
+
   const panel = (
     <CollectionPanelFrame
       Description={isMobile ? DrawerDescription : SheetDescription}
@@ -196,46 +289,40 @@ export function CollectionPanel({
       description={
         isDragging && isOutsidePanel
           ? "松开即可移回作品库"
-          : `${orderedProjects.length} 个作品 · 拖动手柄排序，拖出面板即可移回作品库`
+          : isMobile
+            ? `${orderedProjects.length} 个作品 · 拖动手柄排序，拖到标题栏上方可移出`
+            : `${orderedProjects.length} 个作品 · 拖动手柄排序，拖出面板即可移回作品库`
       }
       isDimmed={isDragging && isOutsidePanel}
+      isUngroupReady={isDragging && isOutsidePanel}
+      listRef={listRef}
       panelRef={panelRef}
       title={collection.title}
     >
       {orderedProjects.length > 0 ? (
-        <DndContext
-          collisionDetection={collisionDetection}
-          onDragCancel={handleDragCancel}
-          onDragEnd={(event) => void handleDragEnd(event)}
-          onDragMove={handleDragMove}
-          onDragStart={handleDragStart}
-          sensors={sensors}
-        >
-          <SortableContext
-            items={projectIds}
-            strategy={verticalListSortingStrategy}
+        <CollectionDragFeedbackContext.Provider value={!isOutsidePanel}>
+          <DndContext
+            collisionDetection={collisionDetection}
+            onDragCancel={handleDragCancel}
+            onDragEnd={(event) => void handleDragEnd(event)}
+            onDragStart={handleDragStart}
+            sensors={sensors}
           >
-            <ul className="grid gap-3">
-              {orderedProjects.map((project) => (
-                <SortableCollectionProject key={project.id} project={project} />
-              ))}
-            </ul>
-          </SortableContext>
-
-          <DragOverlay dropAnimation={null}>
-            {activeProject ? (
-              <CollectionProjectRow
-                className={cn(
-                  "cursor-grabbing shadow-lg",
-                  isOutsidePanel &&
-                    "border-dashed border-primary bg-primary/5 ring-2 ring-primary/30",
-                )}
-                dropLabel={isOutsidePanel ? "移出合集" : undefined}
-                project={activeProject}
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            <SortableContext
+              items={projectIds}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="grid gap-3">
+                {orderedProjects.map((project) => (
+                  <SortableCollectionProject
+                    key={project.id}
+                    project={project}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        </CollectionDragFeedbackContext.Provider>
       ) : (
         <div className="grid place-items-center gap-2 py-16 text-muted-foreground">
           <FolderOpen className="size-8" strokeWidth={1.5} />
@@ -245,28 +332,59 @@ export function CollectionPanel({
     </CollectionPanelFrame>
   );
 
+  const dragOverlay =
+    activeProject && dragPosition
+      ? createPortal(
+          <div
+            className="pointer-events-none fixed z-200 w-[min(100vw-2rem,28rem)]"
+            style={{
+              left: dragPosition.x,
+              top: dragPosition.y,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <CollectionProjectRow
+              className={cn(
+                "cursor-grabbing shadow-lg",
+                isOutsidePanel &&
+                  "border-dashed border-primary bg-primary/5 ring-2 ring-primary/30",
+              )}
+              dropLabel={isOutsidePanel ? "移出合集" : undefined}
+              project={activeProject}
+            />
+          </div>,
+          document.body,
+        )
+      : null;
+
   if (isMobile) {
     return (
-      <NativeBackDrawer
-        direction="bottom"
-        dismissible={!isDragging}
-        onOpenChange={onOpenChange}
-        open={open}
-        shouldScaleBackground={false}
-      >
-        <DrawerContent className="gap-0 pr-[env(safe-area-inset-right,0px)] pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pl-[env(safe-area-inset-left,0px)] data-[vaul-drawer-direction=bottom]:max-h-[85vh]">
-          {panel}
-        </DrawerContent>
-      </NativeBackDrawer>
+      <>
+        <NativeBackDrawer
+          direction="bottom"
+          dismissible={!isDragging}
+          onOpenChange={onOpenChange}
+          open={open}
+          shouldScaleBackground={false}
+        >
+          <DrawerContent className="gap-0 pr-[env(safe-area-inset-right,0px)] pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pl-[env(safe-area-inset-left,0px)] data-[vaul-drawer-direction=bottom]:max-h-[85vh]">
+            {panel}
+          </DrawerContent>
+        </NativeBackDrawer>
+        {dragOverlay}
+      </>
     );
   }
 
   return (
-    <NativeBackSheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="w-full gap-0 sm:max-w-md" side="right">
-        {panel}
-      </SheetContent>
-    </NativeBackSheet>
+    <>
+      <NativeBackSheet onOpenChange={onOpenChange} open={open}>
+        <SheetContent className="w-full gap-0 sm:max-w-md" side="right">
+          {panel}
+        </SheetContent>
+      </NativeBackSheet>
+      {dragOverlay}
+    </>
   );
 }
 
@@ -278,6 +396,8 @@ function CollectionPanelFrame({
   children,
   description,
   isDimmed,
+  isUngroupReady,
+  listRef,
   panelRef,
   title,
 }: {
@@ -288,6 +408,8 @@ function CollectionPanelFrame({
   children: ReactNode;
   description: string;
   isDimmed: boolean;
+  isUngroupReady: boolean;
+  listRef: RefObject<HTMLDivElement | null>;
   panelRef: RefObject<HTMLDivElement | null>;
   title: string;
 }) {
@@ -299,7 +421,12 @@ function CollectionPanelFrame({
       )}
       ref={panelRef}
     >
-      <Header className="border-b text-left">
+      <Header
+        className={cn(
+          "border-b text-left transition-colors duration-150",
+          isUngroupReady && "border-primary bg-primary/5",
+        )}
+      >
         <div className="flex items-start gap-2 pr-8">
           <div className="min-w-0 flex-1">
             <Title className="truncate">{title}</Title>
@@ -309,12 +436,15 @@ function CollectionPanelFrame({
         </div>
       </Header>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto p-4" ref={listRef}>
+        {children}
+      </div>
     </div>
   );
 }
 
 function SortableCollectionProject({ project }: { project: PanelProject }) {
+  const dropFeedbackEnabled = useContext(CollectionDragFeedbackContext);
   const {
     attributes,
     listeners,
@@ -324,6 +454,7 @@ function SortableCollectionProject({ project }: { project: PanelProject }) {
     isDragging,
     isOver,
   } = useSortable({ id: project.id });
+  const showDropFeedback = dropFeedbackEnabled && !isDragging && isOver;
 
   return (
     <li
@@ -336,12 +467,11 @@ function SortableCollectionProject({ project }: { project: PanelProject }) {
     >
       <CollectionProjectRow
         className={cn(
-          !isDragging &&
-            isOver &&
+          showDropFeedback &&
             "border-primary bg-primary/5 ring-2 ring-primary/25",
         )}
         dragHandleProps={{ ...attributes, ...listeners }}
-        dropLabel={!isDragging && isOver ? "调整顺序" : undefined}
+        dropLabel={showDropFeedback ? "调整顺序" : undefined}
         project={project}
       />
     </li>
@@ -379,7 +509,7 @@ function CollectionProjectRow({
 
       <button
         aria-label={`拖动 ${project.title}`}
-        className="flex size-8 shrink-0 touch-none select-none cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="flex size-8 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
         type="button"
         {...dragHandleProps}
       >
