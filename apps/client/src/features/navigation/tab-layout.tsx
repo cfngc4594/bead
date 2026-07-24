@@ -28,7 +28,7 @@ function DesktopTabHeader() {
     <header className="shrink-0 border-b bg-background">
       <nav
         aria-label="主要导航"
-        className="mx-auto flex h-14 w-full max-w-5xl items-stretch gap-1 px-8"
+        className="mx-auto flex h-16 w-full max-w-5xl items-stretch gap-1 px-8"
       >
         {appTabs.map(({ id, label, ...linkProps }) => {
           const Icon = tabIcons[id];

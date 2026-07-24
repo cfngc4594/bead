@@ -292,10 +292,10 @@ export function ProjectsPage() {
 
   return (
     <main className="flex h-full min-h-0 flex-col bg-background">
-      <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
         {hasLibrary ? (
           selectMode ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <h1 className="font-semibold text-lg tracking-tight">选择作品</h1>
               <Button
                 onClick={exitSelectMode}

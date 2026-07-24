@@ -7,7 +7,7 @@ import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 export function DiscoverSkeleton() {
   return (
     <main className="flex h-full min-h-0 flex-col bg-background">
-      <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
         <Skeleton className="h-5 w-12" />
         <div className="ml-auto flex items-center gap-2">
           <Skeleton className="h-8 w-18 rounded-lg" />

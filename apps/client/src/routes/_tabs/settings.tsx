@@ -39,8 +39,8 @@ function SettingsPage() {
       aria-label="设置"
       className="flex h-full min-h-0 flex-col bg-background"
     >
-      <header className="mx-auto w-full max-w-3xl shrink-0 border-b px-4 pt-6 pb-5 sm:px-6 lg:px-8">
-        <h1 className="font-semibold text-2xl tracking-normal">设置</h1>
+      <header className="mx-auto flex h-16 w-full max-w-3xl shrink-0 items-center border-b px-4 sm:px-6 lg:px-8">
+        <h1 className="font-semibold text-lg tracking-tight">设置</h1>
       </header>
 
       <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>

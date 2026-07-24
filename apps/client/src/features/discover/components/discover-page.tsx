@@ -61,7 +61,7 @@ export function DiscoverPage() {
       aria-label="发现"
       className="flex h-full min-h-0 flex-col bg-background"
     >
-      <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
         <h1 className="font-semibold text-lg tracking-tight">发现</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button onClick={() => setIsPublishDialogOpen(true)}>
