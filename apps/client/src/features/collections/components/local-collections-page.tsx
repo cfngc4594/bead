@@ -56,7 +56,7 @@ export function LocalCollectionsPage() {
         </h1>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus aria-hidden="true" />
-          新建合集
+          新建
         </Button>
       </header>
 
@@ -111,7 +111,7 @@ export function LocalCollectionsPage() {
               <EmptyContent>
                 <Button onClick={() => setIsCreateOpen(true)}>
                   <Plus aria-hidden="true" />
-                  新建合集
+                  新建
                 </Button>
               </EmptyContent>
             </Empty>

@@ -15,7 +15,7 @@ export function CollectionsIndexSkeleton({
         <Skeleton className="size-7 shrink-0 rounded-lg" />
         <Skeleton className="h-4 w-20" />
         {showCreate ? (
-          <Skeleton className="ml-auto h-8 w-22 rounded-lg" />
+          <Skeleton className="ml-auto h-8 w-18 rounded-lg" />
         ) : null}
       </header>
       <section className="min-h-0 flex-1 overflow-hidden px-4 py-6 md:px-8">
