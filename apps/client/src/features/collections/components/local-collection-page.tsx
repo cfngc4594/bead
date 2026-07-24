@@ -146,9 +146,9 @@ export function LocalCollectionPage({
         />
       </header>
 
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
-          {orderedProjects.length > 0 ? (
+      {orderedProjects.length > 0 ? (
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
             <DndContext
               collisionDetection={closestCenter}
               onDragCancel={() => setActiveProjectId(null)}
@@ -190,25 +190,27 @@ export function LocalCollectionPage({
                 ) : null}
               </DragOverlay>
             </DndContext>
-          ) : (
-            <Empty className="border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FolderOpen />
-                </EmptyMedia>
-                <EmptyTitle>合集是空的</EmptyTitle>
-                <EmptyDescription>添加作品到这个合集。</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button onClick={() => setIsAddOpen(true)} type="button">
-                  <Plus aria-hidden="true" />
-                  添加作品
-                </Button>
-              </EmptyContent>
-            </Empty>
-          )}
+          </div>
+        </ScrollArea>
+      ) : (
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FolderOpen />
+              </EmptyMedia>
+              <EmptyTitle>合集是空的</EmptyTitle>
+              <EmptyDescription>添加作品到这个合集。</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => setIsAddOpen(true)} type="button">
+                <Plus aria-hidden="true" />
+                添加作品
+              </Button>
+            </EmptyContent>
+          </Empty>
         </div>
-      </ScrollArea>
+      )}
 
       {isAddOpen ? (
         <AddProjectsToCollectionDialog

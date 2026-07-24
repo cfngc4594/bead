@@ -344,16 +344,16 @@ export function ProjectsPage() {
         </div>
       ) : null}
 
-      <ScrollArea
-        className={
-          isMobile && selectMode && selectedCount > 0
-            ? "min-h-0 flex-1 pb-28"
-            : "min-h-0 flex-1"
-        }
-        id={TAB_CONTENT_ID}
-      >
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
-          {hasLibrary ? (
+      {hasLibrary ? (
+        <ScrollArea
+          className={
+            isMobile && selectMode && selectedCount > 0
+              ? "min-h-0 flex-1 pb-28"
+              : "min-h-0 flex-1"
+          }
+          id={TAB_CONTENT_ID}
+        >
+          <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
             <LibraryDndGrid
               disabled={selectMode}
               items={feedItems}
@@ -471,34 +471,39 @@ export function ProjectsPage() {
                 );
               }}
             />
-          ) : (
-            <Empty className="min-h-64 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Grid2x2 />
-                </EmptyMedia>
-                <EmptyTitle>还没有拼豆作品</EmptyTitle>
-                <EmptyDescription>
-                  创建作品后，可用「选择」合并多个作品为合集。
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button asChild>
-                  <Link
-                    onClick={() =>
-                      trackEvent("project_new_clicked", { source: "empty" })
-                    }
-                    to="/projects/new"
-                  >
-                    <Plus aria-hidden="true" />
-                    开始拼豆
-                  </Link>
-                </Button>
-              </EmptyContent>
-            </Empty>
-          )}
+          </div>
+        </ScrollArea>
+      ) : (
+        <div
+          className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8"
+          id={TAB_CONTENT_ID}
+        >
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Grid2x2 />
+              </EmptyMedia>
+              <EmptyTitle>还没有拼豆作品</EmptyTitle>
+              <EmptyDescription>
+                创建作品后，可用「选择」合并多个作品为合集。
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link
+                  onClick={() =>
+                    trackEvent("project_new_clicked", { source: "empty" })
+                  }
+                  to="/projects/new"
+                >
+                  <Plus aria-hidden="true" />
+                  开始拼豆
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         </div>
-      </ScrollArea>
+      )}
 
       {isMobile && batchActions ? (
         <div className="fixed inset-x-0 bottom-16 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">

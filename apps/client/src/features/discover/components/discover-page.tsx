@@ -95,89 +95,90 @@ export function DiscoverPage() {
         </div>
       </header>
 
-      <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
-          {feedItems.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {feedItems.map((item) =>
-                item.kind === "project" ? (
-                  <ProjectCard
-                    key={`project:${item.project.id}`}
-                    onOpen={(source) =>
-                      trackEvent("discover_project_opened", {
-                        sizeId: item.project.sizeId,
-                        source,
+      {feedItems.length > 0 ? (
+        <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
+          <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
+            {feedItems.map((item) =>
+              item.kind === "project" ? (
+                <ProjectCard
+                  key={`project:${item.project.id}`}
+                  onOpen={(source) =>
+                    trackEvent("discover_project_opened", {
+                      sizeId: item.project.sizeId,
+                      source,
+                    })
+                  }
+                  openLabel="查看"
+                  project={item.project}
+                  route="/discover/$projectId"
+                  snapshot={item.project.snapshot}
+                  timestamp={item.project.publishedAt}
+                  timestampLabel="发布"
+                />
+              ) : (
+                <CollectionCard
+                  key={`collection:${item.collection.id}`}
+                  onOpen={(source) =>
+                    trackEvent("discover_collection_opened", {
+                      projectCount: item.collection.projectCount,
+                      source,
+                    })
+                  }
+                  collection={item.collection}
+                  route="/discover/collections/$collectionId"
+                  timestamp={item.collection.publishedAt}
+                  timestampLabel="发布"
+                />
+              ),
+            )}
+          </div>
+        </ScrollArea>
+      ) : (
+        <div
+          className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8"
+          id={TAB_CONTENT_ID}
+        >
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Compass />
+              </EmptyMedia>
+              <EmptyTitle>
+                {hasPublishableProjects ? "分享你的第一个作品" : "发现页还空着"}
+              </EmptyTitle>
+              <EmptyDescription>
+                {hasPublishableProjects
+                  ? "选择一个本地作品，将当前快照发布到这里。"
+                  : hasLocalProjects
+                    ? "完成一个拼豆作品后，就可以把它发布到这里。"
+                    : "先创作一个拼豆作品，再把它发布到这里。"}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              {hasPublishableProjects ? (
+                <Button onClick={openPublishDialog}>
+                  <Upload aria-hidden="true" />
+                  选择作品
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link
+                    onClick={() =>
+                      trackEvent("project_new_clicked", {
+                        source: "discover_empty",
                       })
                     }
-                    openLabel="查看"
-                    project={item.project}
-                    route="/discover/$projectId"
-                    snapshot={item.project.snapshot}
-                    timestamp={item.project.publishedAt}
-                    timestampLabel="发布"
-                  />
-                ) : (
-                  <CollectionCard
-                    key={`collection:${item.collection.id}`}
-                    onOpen={(source) =>
-                      trackEvent("discover_collection_opened", {
-                        projectCount: item.collection.projectCount,
-                        source,
-                      })
-                    }
-                    collection={item.collection}
-                    route="/discover/collections/$collectionId"
-                    timestamp={item.collection.publishedAt}
-                    timestampLabel="发布"
-                  />
-                ),
+                    to={hasLocalProjects ? "/projects" : "/projects/new"}
+                  >
+                    <Plus aria-hidden="true" />
+                    {hasLocalProjects ? "继续创作" : "开始拼豆"}
+                  </Link>
+                </Button>
               )}
-            </div>
-          ) : (
-            <Empty className="min-h-64 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Compass />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {hasPublishableProjects
-                    ? "分享你的第一个作品"
-                    : "发现页还空着"}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {hasPublishableProjects
-                    ? "选择一个本地作品，将当前快照发布到这里。"
-                    : hasLocalProjects
-                      ? "完成一个拼豆作品后，就可以把它发布到这里。"
-                      : "先创作一个拼豆作品，再把它发布到这里。"}
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                {hasPublishableProjects ? (
-                  <Button onClick={openPublishDialog}>
-                    <Upload aria-hidden="true" />
-                    选择作品
-                  </Button>
-                ) : (
-                  <Button asChild>
-                    <Link
-                      onClick={() =>
-                        trackEvent("project_new_clicked", {
-                          source: "discover_empty",
-                        })
-                      }
-                      to={hasLocalProjects ? "/projects" : "/projects/new"}
-                    >
-                      <Plus aria-hidden="true" />
-                      {hasLocalProjects ? "继续创作" : "开始拼豆"}
-                    </Link>
-                  </Button>
-                )}
-              </EmptyContent>
-            </Empty>
-          )}
+            </EmptyContent>
+          </Empty>
         </div>
-      </ScrollArea>
+      )}
 
       {isPublishDialogOpen ? (
         <PublishProjectDialog
