@@ -1,4 +1,3 @@
-import { DISCOVER_COLLECTION_PREVIEW_LIMIT } from "@bead/core/discover";
 import { Button } from "@bead/ui/components/button";
 import {
   SheetContent,
@@ -300,24 +299,4 @@ function CollectionProjectRow({
       ) : null}
     </div>
   );
-}
-
-export function toCollectionCardModel(
-  collection: LocalCollection,
-  projects: Array<
-    Pick<Project, "id" | "sizeId" | "snapshots" | "currentIndex">
-  >,
-) {
-  return {
-    id: collection.id,
-    title: collection.title,
-    projectCount: collection.projectIds.length,
-    previewProjects: projects
-      .slice(0, DISCOVER_COLLECTION_PREVIEW_LIMIT)
-      .map((project) => ({
-        id: project.id,
-        sizeId: project.sizeId,
-        snapshot: project.snapshots[project.currentIndex],
-      })),
-  };
 }

@@ -9,8 +9,8 @@ import {
   createLocalCollection,
   deleteLocalCollection,
   mergeProjectsIntoCollection,
-  moveCollectionProject,
   removeProjectFromCollection,
+  reorderCollectionProjects,
 } from "@/features/collections/storage/collection-commands";
 import { collectionsCollection } from "@/features/collections/storage/collection-storage";
 
@@ -25,40 +25,39 @@ test("merging projects creates an exclusive collection", async () => {
       targetProjectId: second.id,
     });
 
-    expect(collection?.projectIds).toEqual([second.id, first.id]);
+    expect(collection.projectIds).toEqual([second.id, first.id]);
 
     await addProjectToCollection({
-      collectionId: collection!.id,
+      collectionId: collection.id,
       projectId: third.id,
     });
-    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+    expect(collectionsCollection.get(collection.id)?.projectIds).toEqual([
       second.id,
       first.id,
       third.id,
     ]);
 
-    await moveCollectionProject({
-      collectionId: collection!.id,
-      direction: -1,
-      projectId: third.id,
+    await reorderCollectionProjects({
+      collectionId: collection.id,
+      projectIds: [second.id, third.id, first.id],
     });
-    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+    expect(collectionsCollection.get(collection.id)?.projectIds).toEqual([
       second.id,
       third.id,
       first.id,
     ]);
 
     await removeProjectFromCollection({
-      collectionId: collection!.id,
+      collectionId: collection.id,
       projectId: third.id,
     });
-    expect(collectionsCollection.get(collection!.id)?.projectIds).toEqual([
+    expect(collectionsCollection.get(collection.id)?.projectIds).toEqual([
       second.id,
       first.id,
     ]);
 
     await deleteProject(first.id);
-    expect(collectionsCollection.has(collection!.id)).toBe(false);
+    expect(collectionsCollection.has(collection.id)).toBe(false);
   } finally {
     for (const projectId of [first.id, second.id, third.id]) {
       if (projectsCollection.has(projectId)) {

@@ -35,20 +35,6 @@ export async function preloadCollectionStorage() {
   return null;
 }
 
-export function getCollectionProjectIds(collectionId: string) {
-  return collectionsCollection.get(collectionId)?.projectIds ?? [];
-}
-
-export function findCollectionIdForProject(projectId: string) {
-  for (const collection of collectionsCollection.values()) {
-    if (collection.projectIds.includes(projectId)) {
-      return collection.id;
-    }
-  }
-
-  return null;
-}
-
 /** Drop a project from every collection; dissolve collections with fewer than 2. */
 export function detachProjectFromCollections(projectId: string) {
   for (const collection of [...collectionsCollection.values()]) {

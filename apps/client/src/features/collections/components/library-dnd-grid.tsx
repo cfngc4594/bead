@@ -16,9 +16,14 @@ import {
 import { motion } from "motion/react";
 import { type ReactNode, useState } from "react";
 
-export type LibraryFeedItem =
-  | { kind: "project"; id: string }
-  | { kind: "collection"; id: string };
+export type LibraryFeedItem<TProject, TCollection> =
+  | { kind: "project"; id: string; project: TProject }
+  | {
+      kind: "collection";
+      id: string;
+      collection: TCollection;
+      projects: TProject[];
+    };
 
 function projectDragId(projectId: string) {
   return `project:${projectId}`;
@@ -30,7 +35,7 @@ function collectionDragId(collectionId: string) {
 
 function parseLibraryId(
   id: string | number | null | undefined,
-): LibraryFeedItem | null {
+): { kind: "project" | "collection"; id: string } | null {
   if (typeof id !== "string") {
     return null;
   }
@@ -46,7 +51,7 @@ function parseLibraryId(
   return null;
 }
 
-export function LibraryDndGrid({
+export function LibraryDndGrid<TProject, TCollection>({
   disabled = false,
   items,
   onMergeProjects,
@@ -56,20 +61,23 @@ export function LibraryDndGrid({
   renderProject,
 }: {
   disabled?: boolean;
-  items: LibraryFeedItem[];
+  items: Array<LibraryFeedItem<TProject, TCollection>>;
   onMergeProjects: (sourceProjectId: string, targetProjectId: string) => void;
   onAddProjectToCollection: (projectId: string, collectionId: string) => void;
-  overlay?: (active: LibraryFeedItem | null) => ReactNode;
+  overlay?: (project: TProject) => ReactNode;
   renderCollection: (
-    collectionId: string,
+    item: Extract<
+      LibraryFeedItem<TProject, TCollection>,
+      { kind: "collection" }
+    >,
     state: { isOver: boolean },
   ) => ReactNode;
   renderProject: (
-    projectId: string,
+    item: Extract<LibraryFeedItem<TProject, TCollection>, { kind: "project" }>,
     state: { isDragging: boolean; isOver: boolean },
   ) => ReactNode;
 }) {
-  const [activeItem, setActiveItem] = useState<LibraryFeedItem | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -78,19 +86,26 @@ export function LibraryDndGrid({
       activationConstraint: { delay: 180, tolerance: 8 },
     }),
   );
+  const activeProject = activeProjectId
+    ? items.find(
+        (item): item is Extract<typeof item, { kind: "project" }> =>
+          item.kind === "project" && item.id === activeProjectId,
+      )?.project
+    : undefined;
 
   function handleDragStart(event: DragStartEvent) {
-    setActiveItem(parseLibraryId(event.active.id));
+    const active = parseLibraryId(event.active.id);
+    setActiveProjectId(active?.kind === "project" ? active.id : null);
   }
 
   function handleDragCancel() {
-    setActiveItem(null);
+    setActiveProjectId(null);
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const active = parseLibraryId(event.active.id);
     const over = parseLibraryId(event.over?.id);
-    setActiveItem(null);
+    setActiveProjectId(null);
 
     if (!active || !over || active.kind !== "project" || disabled) {
       return;
@@ -125,7 +140,7 @@ export function LibraryDndGrid({
               key={`project:${item.id}`}
               projectId={item.id}
             >
-              {(state) => renderProject(item.id, state)}
+              {(state) => renderProject(item, state)}
             </LibraryProjectItem>
           ) : (
             <LibraryCollectionItem
@@ -133,16 +148,16 @@ export function LibraryDndGrid({
               disabled={disabled}
               key={`collection:${item.id}`}
             >
-              {(state) => renderCollection(item.id, state)}
+              {(state) => renderCollection(item, state)}
             </LibraryCollectionItem>
           ),
         )}
       </div>
 
       <DragOverlay dropAnimation={null}>
-        {activeItem && overlay ? (
+        {activeProject && overlay ? (
           <div className="cursor-grabbing opacity-90 shadow-lg">
-            {overlay(activeItem)}
+            {overlay(activeProject)}
           </div>
         ) : null}
       </DragOverlay>

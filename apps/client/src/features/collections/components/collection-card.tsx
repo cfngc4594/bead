@@ -1,5 +1,6 @@
 import type { CanvasSizeId } from "@bead/core/canvas-sizes";
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
+import { DISCOVER_COLLECTION_PREVIEW_LIMIT } from "@bead/core/discover";
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
@@ -15,7 +16,58 @@ type CollectionPreviewProject = {
   snapshot: CanvasSnapshot;
 };
 
+export type CollectionCardModel = {
+  id: string;
+  title: string;
+  previewProjects: CollectionPreviewProject[];
+  projectCount: number;
+};
+
 type CollectionCardRoute = "/discover/collections/$collectionId";
+
+type CollectionCardBaseProps = {
+  actions?: ReactNode;
+  collection: CollectionCardModel;
+  dropTarget?: boolean;
+  onOpen?: (source: "preview" | "title") => void;
+  timestamp: number;
+  timestampLabel: string;
+};
+
+type CollectionCardProps = CollectionCardBaseProps &
+  (
+    | {
+        onActivate: (source: "preview" | "title") => void;
+        route?: never;
+      }
+    | {
+        onActivate?: never;
+        route: CollectionCardRoute;
+      }
+  );
+
+export function toCollectionCardModel(
+  collection: { id: string; title: string; projectIds: readonly string[] },
+  projects: Array<{
+    id: string;
+    sizeId: CanvasSizeId;
+    snapshots: CanvasSnapshot[];
+    currentIndex: number;
+  }>,
+): CollectionCardModel {
+  return {
+    id: collection.id,
+    title: collection.title,
+    projectCount: collection.projectIds.length,
+    previewProjects: projects
+      .slice(0, DISCOVER_COLLECTION_PREVIEW_LIMIT)
+      .map((project) => ({
+        id: project.id,
+        sizeId: project.sizeId,
+        snapshot: project.snapshots[project.currentIndex],
+      })),
+  };
+}
 
 export function CollectionCard({
   actions,
@@ -26,21 +78,7 @@ export function CollectionCard({
   route,
   timestamp,
   timestampLabel,
-}: {
-  actions?: ReactNode;
-  collection: {
-    id: string;
-    title: string;
-    previewProjects: CollectionPreviewProject[];
-    projectCount: number;
-  };
-  dropTarget?: boolean;
-  onActivate?: (source: "preview" | "title") => void;
-  onOpen?: (source: "preview" | "title") => void;
-  route?: CollectionCardRoute;
-  timestamp: number;
-  timestampLabel: string;
-}) {
+}: CollectionCardProps) {
   const preview = <CollectionPreview projects={collection.previewProjects} />;
   const meta = (
     <>
@@ -51,10 +89,7 @@ export function CollectionCard({
         <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
           {collection.projectCount} 个作品
         </span>
-        <time
-          className="truncate"
-          dateTime={new Date(timestamp).toISOString()}
-        >
+        <time className="truncate" dateTime={new Date(timestamp).toISOString()}>
           {formatRelativeTime(timestamp)}
           {timestampLabel}
         </time>
@@ -88,7 +123,7 @@ export function CollectionCard({
           className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
           onClick={() => onOpen?.("preview")}
           params={{ collectionId: collection.id }}
-          to={route ?? "/discover/collections/$collectionId"}
+          to={route}
         >
           {preview}
         </Link>
@@ -111,7 +146,7 @@ export function CollectionCard({
             className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             onClick={() => onOpen?.("title")}
             params={{ collectionId: collection.id }}
-            to={route ?? "/discover/collections/$collectionId"}
+            to={route}
           >
             {meta}
           </Link>

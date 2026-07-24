@@ -2,7 +2,6 @@ import { projectsCollection } from "@/features/bead/storage/projects";
 import {
   collectionsCollection,
   detachProjectFromCollections,
-  findCollectionIdForProject,
   type LocalCollection,
   preloadCollectionStorage,
 } from "@/features/collections/storage/collection-storage";
@@ -60,7 +59,7 @@ export async function mergeProjectsIntoCollection({
   title?: string;
 }) {
   if (sourceProjectId === targetProjectId) {
-    return null;
+    throw new Error("Cannot merge a project with itself");
   }
 
   return createLocalCollection({
@@ -99,7 +98,7 @@ export async function addProjectToCollection({
     });
   });
 
-  return collectionsCollection.get(collectionId) ?? collection;
+  return getRequiredCollection(collectionId);
 }
 
 /** Remove a project from its collection; dissolve if fewer than 2 remain. */
@@ -117,9 +116,7 @@ export async function removeProjectFromCollection({
     return;
   }
 
-  const nextProjectIds = collection.projectIds.filter(
-    (id) => id !== projectId,
-  );
+  const nextProjectIds = collection.projectIds.filter((id) => id !== projectId);
 
   await commitCollectionMutation(() => {
     if (nextProjectIds.length < 2) {
@@ -127,40 +124,6 @@ export async function removeProjectFromCollection({
       return;
     }
 
-    collectionsCollection.update(collectionId, (draft) => {
-      draft.projectIds = nextProjectIds;
-      draft.updatedAt = Date.now();
-    });
-  });
-}
-
-export async function moveCollectionProject({
-  collectionId,
-  direction,
-  projectId,
-}: {
-  collectionId: string;
-  direction: -1 | 1;
-  projectId: string;
-}) {
-  await preloadCollectionStorage();
-  const collection = getRequiredCollection(collectionId);
-  const currentIndex = collection.projectIds.indexOf(projectId);
-  const nextIndex = currentIndex + direction;
-
-  if (
-    currentIndex < 0 ||
-    nextIndex < 0 ||
-    nextIndex >= collection.projectIds.length
-  ) {
-    return;
-  }
-
-  const nextProjectIds = [...collection.projectIds];
-  const [moved] = nextProjectIds.splice(currentIndex, 1);
-  nextProjectIds.splice(nextIndex, 0, moved);
-
-  await commitCollectionMutation(() => {
     collectionsCollection.update(collectionId, (draft) => {
       draft.projectIds = nextProjectIds;
       draft.updatedAt = Date.now();
@@ -178,20 +141,17 @@ export async function reorderCollectionProjects({
   await preloadCollectionStorage();
   const collection = getRequiredCollection(collectionId);
   const currentSet = new Set(collection.projectIds);
-  const nextProjectIds = projectIds.filter((projectId) =>
-    currentSet.has(projectId),
-  );
 
   if (
-    nextProjectIds.length !== collection.projectIds.length ||
-    nextProjectIds.some((projectId) => !currentSet.has(projectId))
+    projectIds.length !== collection.projectIds.length ||
+    projectIds.some((projectId) => !currentSet.has(projectId))
   ) {
     throw new Error("Collection reorder must include the same projects");
   }
 
   await commitCollectionMutation(() => {
     collectionsCollection.update(collectionId, (draft) => {
-      draft.projectIds = nextProjectIds;
+      draft.projectIds = projectIds;
       draft.updatedAt = Date.now();
     });
   });
@@ -227,15 +187,6 @@ export async function deleteLocalCollection(collectionId: string) {
   await commitCollectionMutation(() => {
     collectionsCollection.delete(collectionId);
   });
-}
-
-/** Called when a project is deleted from the library. */
-export function removeDeletedProjectFromCollections(projectId: string) {
-  detachProjectFromCollections(projectId);
-}
-
-export function getProjectCollectionId(projectId: string) {
-  return findCollectionIdForProject(projectId);
 }
 
 function getRequiredCollection(collectionId: string) {
