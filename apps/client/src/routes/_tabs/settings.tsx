@@ -1,7 +1,6 @@
-import { Label } from "@bead/ui/components/label";
-import { RadioGroup, RadioGroupItem } from "@bead/ui/components/radio-group";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Separator } from "@bead/ui/components/separator";
+import { cn } from "@bead/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Info, Monitor, Moon, Sun } from "lucide-react";
@@ -47,27 +46,39 @@ function SettingsPage() {
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
           <section aria-labelledby="appearance-title" className="space-y-4">
             <SectionHeading icon={Monitor} id="appearance-title" title="外观" />
-            <RadioGroup
-              className="gap-2"
-              onValueChange={setTheme}
-              value={theme}
+            <fieldset
+              aria-labelledby="appearance-title"
+              className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0"
             >
-              {themeOptions.map(({ icon: Icon, label, value }) => (
-                <Label
-                  className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border bg-background px-3 py-3 transition-colors hover:bg-muted/60 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-muted"
-                  htmlFor={`theme-${value}`}
-                  key={value}
-                >
-                  <RadioGroupItem id={`theme-${value}`} value={value} />
-                  <Icon
-                    aria-hidden="true"
-                    className="size-4 shrink-0 text-muted-foreground"
-                    strokeWidth={1.8}
-                  />
-                  <span className="min-w-0 flex-1 text-sm">{label}</span>
-                </Label>
-              ))}
-            </RadioGroup>
+              {themeOptions.map(({ icon: Icon, label, value }) => {
+                const isSelected = theme === value;
+
+                return (
+                  <label
+                    className={cn(
+                      "flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border bg-background px-3 py-3 transition-colors hover:bg-muted/60",
+                      isSelected && "border-primary bg-muted",
+                    )}
+                    key={value}
+                  >
+                    <input
+                      checked={isSelected}
+                      className="sr-only"
+                      name="theme"
+                      onChange={() => setTheme(value)}
+                      type="radio"
+                      value={value}
+                    />
+                    <Icon
+                      aria-hidden="true"
+                      className="size-4 shrink-0 text-muted-foreground"
+                      strokeWidth={1.8}
+                    />
+                    <span className="min-w-0 flex-1 text-sm">{label}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
           </section>
 
           <Separator />
