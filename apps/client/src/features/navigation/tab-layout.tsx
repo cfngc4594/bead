@@ -1,8 +1,7 @@
-import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { Link, Outlet } from "@tanstack/react-router";
 import { Compass, Grid2x2, type LucideIcon, Settings } from "lucide-react";
-import { appTabs, TAB_CONTENT_ID } from "@/features/navigation/tab-config";
+import { appTabs } from "@/features/navigation/tab-config";
 
 const tabIcons = {
   discover: Compass,
@@ -16,9 +15,9 @@ export function TabLayout() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {isMobile ? null : <DesktopTabHeader />}
-      <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
+      <div className="min-h-0 flex-1 overflow-hidden">
         <Outlet />
-      </ScrollArea>
+      </div>
       {isMobile ? <MobileTabNavigation /> : null}
     </div>
   );

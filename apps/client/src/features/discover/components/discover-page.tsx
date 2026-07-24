@@ -7,6 +7,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { useLiveQuery } from "@tanstack/react-db";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -23,6 +24,7 @@ import {
   discoverProjectsQueryOptions,
 } from "@/features/discover/api/discover-queries";
 import { PublishProjectDialog } from "@/features/discover/components/publish-project-dialog";
+import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
 
 export function DiscoverPage() {
@@ -81,97 +83,101 @@ export function DiscoverPage() {
   return (
     <main
       aria-label="发现"
-      className="flex min-h-full bg-background px-4 py-6 md:px-8"
+      className="flex h-full min-h-0 flex-col bg-background"
     >
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 min-h-0">
-        <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
-          <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-          <div className="ml-auto flex items-center gap-2">
-            <Button onClick={openPublishDialog}>
-              <Upload aria-hidden="true" />
-              发布
-            </Button>
-          </div>
-        </header>
+      <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
+        <h1 className="font-semibold text-lg tracking-tight">发现</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <Button onClick={openPublishDialog}>
+            <Upload aria-hidden="true" />
+            发布
+          </Button>
+        </div>
+      </header>
 
-        {feedItems.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {feedItems.map((item) =>
-              item.kind === "project" ? (
-                <ProjectCard
-                  key={`project:${item.project.id}`}
-                  onOpen={(source) =>
-                    trackEvent("discover_project_opened", {
-                      sizeId: item.project.sizeId,
-                      source,
-                    })
-                  }
-                  openLabel="查看"
-                  project={item.project}
-                  route="/discover/$projectId"
-                  snapshot={item.project.snapshot}
-                  timestamp={item.project.publishedAt}
-                  timestampLabel="发布"
-                />
-              ) : (
-                <CollectionCard
-                  key={`collection:${item.collection.id}`}
-                  onOpen={(source) =>
-                    trackEvent("discover_collection_opened", {
-                      projectCount: item.collection.projectCount,
-                      source,
-                    })
-                  }
-                  collection={item.collection}
-                  route="/discover/collections/$collectionId"
-                  timestamp={item.collection.publishedAt}
-                  timestampLabel="发布"
-                />
-              ),
-            )}
-          </div>
-        ) : (
-          <Empty className="flex-1 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Compass />
-              </EmptyMedia>
-              <EmptyTitle>
-                {hasPublishableProjects ? "分享你的第一个作品" : "发现页还空着"}
-              </EmptyTitle>
-              <EmptyDescription>
-                {hasPublishableProjects
-                  ? "选择一个本地作品，将当前快照发布到这里。"
-                  : hasLocalProjects
-                    ? "完成一个拼豆作品后，就可以把它发布到这里。"
-                    : "先创作一个拼豆作品，再把它发布到这里。"}
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              {hasPublishableProjects ? (
-                <Button onClick={openPublishDialog}>
-                  <Upload aria-hidden="true" />
-                  选择作品
-                </Button>
-              ) : (
-                <Button asChild>
-                  <Link
-                    onClick={() =>
-                      trackEvent("project_new_clicked", {
-                        source: "discover_empty",
+      <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
+          {feedItems.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {feedItems.map((item) =>
+                item.kind === "project" ? (
+                  <ProjectCard
+                    key={`project:${item.project.id}`}
+                    onOpen={(source) =>
+                      trackEvent("discover_project_opened", {
+                        sizeId: item.project.sizeId,
+                        source,
                       })
                     }
-                    to={hasLocalProjects ? "/projects" : "/projects/new"}
-                  >
-                    <Plus aria-hidden="true" />
-                    {hasLocalProjects ? "继续创作" : "开始拼豆"}
-                  </Link>
-                </Button>
+                    openLabel="查看"
+                    project={item.project}
+                    route="/discover/$projectId"
+                    snapshot={item.project.snapshot}
+                    timestamp={item.project.publishedAt}
+                    timestampLabel="发布"
+                  />
+                ) : (
+                  <CollectionCard
+                    key={`collection:${item.collection.id}`}
+                    onOpen={(source) =>
+                      trackEvent("discover_collection_opened", {
+                        projectCount: item.collection.projectCount,
+                        source,
+                      })
+                    }
+                    collection={item.collection}
+                    route="/discover/collections/$collectionId"
+                    timestamp={item.collection.publishedAt}
+                    timestampLabel="发布"
+                  />
+                ),
               )}
-            </EmptyContent>
-          </Empty>
-        )}
-      </div>
+            </div>
+          ) : (
+            <Empty className="min-h-64 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Compass />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {hasPublishableProjects
+                    ? "分享你的第一个作品"
+                    : "发现页还空着"}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {hasPublishableProjects
+                    ? "选择一个本地作品，将当前快照发布到这里。"
+                    : hasLocalProjects
+                      ? "完成一个拼豆作品后，就可以把它发布到这里。"
+                      : "先创作一个拼豆作品，再把它发布到这里。"}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                {hasPublishableProjects ? (
+                  <Button onClick={openPublishDialog}>
+                    <Upload aria-hidden="true" />
+                    选择作品
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link
+                      onClick={() =>
+                        trackEvent("project_new_clicked", {
+                          source: "discover_empty",
+                        })
+                      }
+                      to={hasLocalProjects ? "/projects" : "/projects/new"}
+                    >
+                      <Plus aria-hidden="true" />
+                      {hasLocalProjects ? "继续创作" : "开始拼豆"}
+                    </Link>
+                  </Button>
+                )}
+              </EmptyContent>
+            </Empty>
+          )}
+        </div>
+      </ScrollArea>
 
       {isPublishDialogOpen ? (
         <PublishProjectDialog

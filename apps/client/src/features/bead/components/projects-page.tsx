@@ -15,6 +15,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -53,6 +54,7 @@ import {
   mergeProjectsIntoCollection,
 } from "@/features/collections/storage/collection-commands";
 import { NativeBackAlertDialog } from "@/features/native/native-back-overlays";
+import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
 
 export function ProjectsPage() {
@@ -346,73 +348,74 @@ export function ProjectsPage() {
   );
 
   return (
-    <main
-      className={
-        isMobile && selectMode && selectedCount > 0
-          ? "flex min-h-full bg-background px-4 pt-6 pb-36 md:px-8"
-          : "flex min-h-full bg-background px-4 py-6 md:px-8"
-      }
-    >
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
-        <div className="flex flex-1 flex-col gap-4">
-          <header className="flex flex-wrap items-center gap-2 border-b pb-5 md:justify-between">
-            {hasLibrary ? (
-              selectMode ? (
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                  <h1 className="font-semibold text-lg tracking-tight">
-                    选择作品
-                  </h1>
-                  <Button
-                    onClick={exitSelectMode}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <X aria-hidden="true" />
-                    取消
-                  </Button>
-                </div>
-              ) : (
-                <ProjectsToolbar
-                  onSelectModeChange={(enabled) => {
-                    if (enabled) {
-                      enterSelectMode();
-                    } else {
-                      exitSelectMode();
-                    }
-                  }}
-                  onSizeFilterChange={handleSizeFilterChange}
-                  onSortChange={handleSortChange}
-                  onTitleFilterChange={handleTitleFilterChange}
-                  selectMode={selectMode}
-                  sizeFilter={selectedSizes}
-                  sizeOptions={sizeOptions}
-                  sort={sort}
-                  titleFilter={titleFilter}
-                />
-              )
-            ) : (
-              <h1 className="font-semibold text-lg tracking-tight">作品</h1>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <Button asChild>
-                <Link
-                  onClick={() => trackEvent("project_new_clicked")}
-                  to="/projects/new"
-                >
-                  <Plus aria-hidden="true" />
-                  新建
-                </Link>
+    <main className="flex h-full min-h-0 flex-col bg-background">
+      <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
+        {hasLibrary ? (
+          selectMode ? (
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <h1 className="font-semibold text-lg tracking-tight">选择作品</h1>
+              <Button
+                onClick={exitSelectMode}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <X aria-hidden="true" />
+                取消
               </Button>
             </div>
-          </header>
+          ) : (
+            <ProjectsToolbar
+              onSelectModeChange={(enabled) => {
+                if (enabled) {
+                  enterSelectMode();
+                } else {
+                  exitSelectMode();
+                }
+              }}
+              onSizeFilterChange={handleSizeFilterChange}
+              onSortChange={handleSortChange}
+              onTitleFilterChange={handleTitleFilterChange}
+              selectMode={selectMode}
+              sizeFilter={selectedSizes}
+              sizeOptions={sizeOptions}
+              sort={sort}
+              titleFilter={titleFilter}
+            />
+          )
+        ) : (
+          <h1 className="font-semibold text-lg tracking-tight">作品</h1>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          <Button asChild>
+            <Link
+              onClick={() => trackEvent("project_new_clicked")}
+              to="/projects/new"
+            >
+              <Plus aria-hidden="true" />
+              新建
+            </Link>
+          </Button>
+        </div>
+      </header>
 
-          {!isMobile && batchActions ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-2 shadow-xs">
-              {batchActions}
-            </div>
-          ) : null}
+      {!isMobile && batchActions ? (
+        <div className="mx-auto w-full max-w-5xl shrink-0 px-4 pt-4 md:px-8">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-2 shadow-xs">
+            {batchActions}
+          </div>
+        </div>
+      ) : null}
 
+      <ScrollArea
+        className={
+          isMobile && selectMode && selectedCount > 0
+            ? "min-h-0 flex-1 pb-28"
+            : "min-h-0 flex-1"
+        }
+        id={TAB_CONTENT_ID}
+      >
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
           {hasLibrary ? (
             feedItems.length > 0 ? (
               <LibraryDndGrid
@@ -544,7 +547,7 @@ export function ProjectsPage() {
                 }}
               />
             ) : (
-              <Empty className="flex-1 border">
+              <Empty className="min-h-64 border">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     <Search />
@@ -564,7 +567,7 @@ export function ProjectsPage() {
               </Empty>
             )
           ) : (
-            <Empty className="flex-1 border">
+            <Empty className="min-h-64 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <Grid2x2 />
@@ -590,7 +593,7 @@ export function ProjectsPage() {
             </Empty>
           )}
         </div>
-      </div>
+      </ScrollArea>
 
       {isMobile && batchActions ? (
         <div className="fixed inset-x-0 bottom-16 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
