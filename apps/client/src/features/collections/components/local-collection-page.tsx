@@ -7,6 +7,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { cn } from "@bead/ui/lib/utils";
 import {
   closestCenter,
@@ -145,8 +146,8 @@ export function LocalCollectionPage({
         />
       </header>
 
-      <section className="min-h-0 flex-1 overflow-auto px-4 py-6 md:px-8">
-        <div className="mx-auto w-full max-w-5xl">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
           {orderedProjects.length > 0 ? (
             <DndContext
               collisionDetection={closestCenter}
@@ -207,7 +208,7 @@ export function LocalCollectionPage({
             </Empty>
           )}
         </div>
-      </section>
+      </ScrollArea>
 
       {isAddOpen ? (
         <AddProjectsToCollectionDialog

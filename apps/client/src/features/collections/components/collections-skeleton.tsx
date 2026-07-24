@@ -1,3 +1,4 @@
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { ProjectCardSkeleton } from "@/features/bead/components/project-card";
 
@@ -25,13 +26,13 @@ export function CollectionDetailSkeleton({
           </>
         )}
       </header>
-      <section className="min-h-0 flex-1 overflow-hidden px-4 py-6 md:px-8">
-        <div className="mx-auto grid w-full max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
           {skeletonItems.map((item) => (
             <ProjectCardSkeleton key={item} showActions={!discover} />
           ))}
         </div>
-      </section>
+      </ScrollArea>
     </main>
   );
 }

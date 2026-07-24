@@ -1,3 +1,4 @@
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { Link, Outlet } from "@tanstack/react-router";
 import { Compass, Grid2x2, type LucideIcon, Settings } from "lucide-react";
@@ -15,9 +16,9 @@ export function TabLayout() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {isMobile ? null : <DesktopTabHeader />}
-      <div className="min-h-0 flex-1 overflow-auto" id={TAB_CONTENT_ID}>
+      <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
         <Outlet />
-      </div>
+      </ScrollArea>
       {isMobile ? <MobileTabNavigation /> : null}
     </div>
   );

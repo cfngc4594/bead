@@ -8,6 +8,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, FolderOpen, LibraryBig, LoaderCircle } from "lucide-react";
 import { useState } from "react";
@@ -74,8 +75,8 @@ export function DiscoverCollectionPage({
         </Button>
       </header>
 
-      <section className="min-h-0 flex-1 overflow-auto px-4 py-6 md:px-8">
-        <div className="mx-auto w-full max-w-5xl">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {collection.projects.map((project) => (
               <ProjectCard
@@ -96,7 +97,7 @@ export function DiscoverCollectionPage({
             ))}
           </div>
         </div>
-      </section>
+      </ScrollArea>
     </main>
   );
 }
