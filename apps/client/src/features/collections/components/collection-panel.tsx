@@ -1,4 +1,3 @@
-import { Button } from "@bead/ui/components/button";
 import {
   SheetContent,
   SheetDescription,
@@ -7,6 +6,7 @@ import {
 } from "@bead/ui/components/sheet";
 import { cn } from "@bead/ui/lib/utils";
 import {
+  type CollisionDetection,
   closestCenter,
   DndContext,
   type DragEndEvent,
@@ -14,6 +14,7 @@ import {
   type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
@@ -27,8 +28,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Link } from "@tanstack/react-router";
-import { FolderOpen, GripVertical, X } from "lucide-react";
-import { type ButtonHTMLAttributes, useEffect, useState } from "react";
+import { FolderOpen, GripVertical } from "lucide-react";
+import { type ButtonHTMLAttributes, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
@@ -60,6 +61,7 @@ export function CollectionPanel({
 }) {
   const [orderedProjects, setOrderedProjects] = useState(projects);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -80,6 +82,24 @@ export function CollectionPanel({
   useEffect(() => {
     setOrderedProjects(projects);
   }, [projects]);
+
+  const collisionDetection: CollisionDetection = (args) => {
+    const { pointerCoordinates } = args;
+    const rect = panelRef.current?.getBoundingClientRect();
+
+    if (pointerCoordinates && rect) {
+      const { x, y } = pointerCoordinates;
+      const outside =
+        x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
+
+      if (outside) {
+        return [];
+      }
+    }
+
+    const pointerHits = pointerWithin(args);
+    return pointerHits.length > 0 ? pointerHits : closestCenter(args);
+  };
 
   async function removeProject(projectId: string) {
     try {
@@ -109,14 +129,22 @@ export function CollectionPanel({
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+    const projectId = String(active.id);
     setActiveProjectId(null);
 
-    if (!over || active.id === over.id) {
+    // Dropped outside the panel → ungroup. On another member → reorder. Else no-op.
+    if (!over) {
+      await removeProject(projectId);
       return;
     }
 
-    const oldIndex = projectIds.indexOf(String(active.id));
-    const newIndex = projectIds.indexOf(String(over.id));
+    const overProjectId = String(over.id);
+    if (overProjectId === projectId || !projectIds.includes(overProjectId)) {
+      return;
+    }
+
+    const oldIndex = projectIds.indexOf(projectId);
+    const newIndex = projectIds.indexOf(overProjectId);
 
     if (oldIndex < 0 || newIndex < 0) {
       return;
@@ -142,74 +170,70 @@ export function CollectionPanel({
   return (
     <NativeBackSheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className="w-full gap-0 sm:max-w-md" side="right">
-        <SheetHeader className="border-b">
-          <div className="flex items-start gap-2 pr-8">
-            <div className="min-w-0 flex-1">
-              <SheetTitle className="truncate">{collection.title}</SheetTitle>
-              <SheetDescription>
-                {orderedProjects.length} 个作品 · 拖动手柄排序，点移除回到作品库
-              </SheetDescription>
+        <div className="flex min-h-0 flex-1 flex-col" ref={panelRef}>
+          <SheetHeader className="border-b">
+            <div className="flex items-start gap-2 pr-8">
+              <div className="min-w-0 flex-1">
+                <SheetTitle className="truncate">{collection.title}</SheetTitle>
+                <SheetDescription>
+                  {orderedProjects.length} 个作品 ·
+                  拖动手柄排序，拖出面板即可移回作品库
+                </SheetDescription>
+              </div>
+              <LocalCollectionActions
+                collection={collection}
+                onDeleted={() => onOpenChange(false)}
+                projects={orderedProjects}
+              />
             </div>
-            <LocalCollectionActions
-              collection={collection}
-              onDeleted={() => onOpenChange(false)}
-              projects={orderedProjects}
-            />
-          </div>
-        </SheetHeader>
+          </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4">
-          {orderedProjects.length > 0 ? (
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragCancel={handleDragCancel}
-              onDragEnd={(event) => void handleDragEnd(event)}
-              onDragStart={handleDragStart}
-              sensors={sensors}
-            >
-              <SortableContext
-                items={projectIds}
-                strategy={verticalListSortingStrategy}
+          <div className="min-h-0 flex-1 overflow-auto p-4">
+            {orderedProjects.length > 0 ? (
+              <DndContext
+                collisionDetection={collisionDetection}
+                onDragCancel={handleDragCancel}
+                onDragEnd={(event) => void handleDragEnd(event)}
+                onDragStart={handleDragStart}
+                sensors={sensors}
               >
-                <ul className="grid gap-3">
-                  {orderedProjects.map((project) => (
-                    <SortableCollectionProject
-                      key={project.id}
-                      onRemove={() => void removeProject(project.id)}
-                      project={project}
-                    />
-                  ))}
-                </ul>
-              </SortableContext>
+                <SortableContext
+                  items={projectIds}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="grid gap-3">
+                    {orderedProjects.map((project) => (
+                      <SortableCollectionProject
+                        key={project.id}
+                        project={project}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
 
-              <DragOverlay dropAnimation={null}>
-                {activeProject ? (
-                  <CollectionProjectRow
-                    className="cursor-grabbing shadow-lg"
-                    project={activeProject}
-                  />
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          ) : (
-            <div className="grid place-items-center gap-2 py-16 text-muted-foreground">
-              <FolderOpen className="size-8" strokeWidth={1.5} />
-              <p className="text-sm">合集是空的</p>
-            </div>
-          )}
+                <DragOverlay dropAnimation={null}>
+                  {activeProject ? (
+                    <CollectionProjectRow
+                      className="cursor-grabbing shadow-lg"
+                      project={activeProject}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            ) : (
+              <div className="grid place-items-center gap-2 py-16 text-muted-foreground">
+                <FolderOpen className="size-8" strokeWidth={1.5} />
+                <p className="text-sm">合集是空的</p>
+              </div>
+            )}
+          </div>
         </div>
       </SheetContent>
     </NativeBackSheet>
   );
 }
 
-function SortableCollectionProject({
-  onRemove,
-  project,
-}: {
-  onRemove: () => void;
-  project: PanelProject;
-}) {
+function SortableCollectionProject({ project }: { project: PanelProject }) {
   const {
     attributes,
     listeners,
@@ -230,7 +254,6 @@ function SortableCollectionProject({
     >
       <CollectionProjectRow
         dragHandleProps={{ ...attributes, ...listeners }}
-        onRemove={onRemove}
         project={project}
       />
     </li>
@@ -240,12 +263,10 @@ function SortableCollectionProject({
 function CollectionProjectRow({
   className,
   dragHandleProps,
-  onRemove,
   project,
 }: {
   className?: string;
   dragHandleProps?: ButtonHTMLAttributes<HTMLButtonElement>;
-  onRemove?: () => void;
   project: PanelProject;
 }) {
   const size = getCanvasSize(project.sizeId);
@@ -259,7 +280,7 @@ function CollectionProjectRow({
       )}
     >
       <button
-        aria-label={`拖动排序 ${project.title}`}
+        aria-label={`拖动 ${project.title}`}
         className="flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
         type="button"
         {...dragHandleProps}
@@ -285,18 +306,6 @@ function CollectionProjectRow({
         <p className="truncate font-medium text-sm">{project.title}</p>
         <p className="text-muted-foreground text-xs">{size.title}</p>
       </div>
-
-      {onRemove ? (
-        <Button
-          aria-label="移出合集"
-          onClick={onRemove}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <X />
-        </Button>
-      ) : null}
     </div>
   );
 }

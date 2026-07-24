@@ -9,7 +9,7 @@ import {
 } from "@bead/ui/components/empty";
 import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { CheckSquare, Grid2x2, Layers, Plus, Search, X } from "lucide-react";
+import { Grid2x2, Plus, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ProjectActions } from "@/features/bead/components/project-actions";
@@ -25,7 +25,6 @@ import { LocalCollectionActions } from "@/features/collections/components/local-
 import { useLibraryFeed } from "@/features/collections/hooks/use-library-feed";
 import {
   addProjectToCollection,
-  createLocalCollection,
   mergeProjectsIntoCollection,
 } from "@/features/collections/storage/collection-commands";
 import { trackEvent } from "@/lib/analytics";
@@ -34,10 +33,6 @@ export function ProjectsPage() {
   const [titleFilter, setTitleFilter] = useState("");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [openCollectionId, setOpenCollectionId] = useState<string | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
-    () => new Set(),
-  );
   const hasTrackedTitleFilterRef = useRef(false);
   const { collections, feedItems, hasLibrary, projectsById, sizeOptions } =
     useLibraryFeed({
@@ -132,42 +127,6 @@ export function ProjectsPage() {
     }
   }
 
-  function toggleProjectSelected(projectId: string) {
-    setSelectedProjectIds((current) => {
-      const next = new Set(current);
-      if (next.has(projectId)) {
-        next.delete(projectId);
-      } else {
-        next.add(projectId);
-      }
-      return next;
-    });
-  }
-
-  async function createFromSelection() {
-    if (selectedProjectIds.size < 2) {
-      toast.error("至少选择两个作品");
-      return;
-    }
-
-    try {
-      const collection = await createLocalCollection({
-        projectIds: [...selectedProjectIds],
-      });
-      trackEvent("collection_created", {
-        projectCount: selectedProjectIds.size,
-        source: "multi_select",
-      });
-      toast.success("合集已创建");
-      setIsSelecting(false);
-      setSelectedProjectIds(new Set());
-      setOpenCollectionId(collection.id);
-    } catch (error) {
-      console.error("Unable to create collection", error);
-      toast.error("创建合集失败");
-    }
-  }
-
   return (
     <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
@@ -185,25 +144,6 @@ export function ProjectsPage() {
               <h1 className="font-semibold text-lg tracking-tight">作品</h1>
             )}
             <div className="ml-auto flex items-center gap-2">
-              {hasLibrary ? (
-                <Button
-                  aria-label={isSelecting ? "取消选择" : "选择作品组成合集"}
-                  onClick={() => {
-                    setIsSelecting((current) => !current);
-                    setSelectedProjectIds(new Set());
-                  }}
-                  variant={isSelecting ? "secondary" : "outline"}
-                >
-                  {isSelecting ? (
-                    <X aria-hidden="true" />
-                  ) : (
-                    <CheckSquare aria-hidden="true" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {isSelecting ? "取消" : "选择"}
-                  </span>
-                </Button>
-              ) : null}
               <Button asChild>
                 <Link
                   onClick={() => trackEvent("project_new_clicked")}
@@ -216,26 +156,9 @@ export function ProjectsPage() {
             </div>
           </header>
 
-          {isSelecting && selectedProjectIds.size > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2">
-              <p className="min-w-0 flex-1 text-sm">
-                已选 {selectedProjectIds.size} 个作品
-              </p>
-              <Button
-                disabled={selectedProjectIds.size < 2}
-                onClick={() => void createFromSelection()}
-                size="sm"
-              >
-                <Layers aria-hidden="true" />
-                组成合集
-              </Button>
-            </div>
-          ) : null}
-
           {hasLibrary ? (
             feedItems.length > 0 ? (
               <LibraryDndGrid
-                disabled={isSelecting}
                 items={feedItems}
                 onAddProjectToCollection={(projectId, collectionId) =>
                   void handleAddProjectToCollection(projectId, collectionId)
@@ -285,37 +208,8 @@ export function ProjectsPage() {
                       isOver && "ring-2 ring-primary/40",
                     )}
                   >
-                    {isSelecting ? (
-                      <button
-                        aria-label={`选择 ${item.project.title}`}
-                        aria-pressed={selectedProjectIds.has(item.project.id)}
-                        className={cn(
-                          "absolute inset-0 z-10 rounded-xl border-2 border-transparent bg-transparent",
-                          selectedProjectIds.has(item.project.id) &&
-                            "border-primary bg-primary/5",
-                        )}
-                        onClick={() => toggleProjectSelected(item.project.id)}
-                        type="button"
-                      >
-                        <span
-                          className={cn(
-                            "absolute top-2 left-2 flex size-7 items-center justify-center rounded-md border bg-background/90 shadow-xs",
-                            selectedProjectIds.has(item.project.id) &&
-                              "border-primary bg-primary text-primary-foreground",
-                          )}
-                        >
-                          {selectedProjectIds.has(item.project.id) ? (
-                            <CheckSquare className="size-4" />
-                          ) : null}
-                        </span>
-                      </button>
-                    ) : null}
                     <ProjectCard
-                      actions={
-                        isSelecting ? null : (
-                          <ProjectActions project={item.project} />
-                        )
-                      }
+                      actions={<ProjectActions project={item.project} />}
                       onOpen={(source) =>
                         trackEvent("project_opened", {
                           sizeId: item.project.sizeId,
