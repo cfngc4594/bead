@@ -60,7 +60,7 @@ export function DiscoverPage() {
             </Button>
             <Button onClick={openPublishDialog}>
               <Upload aria-hidden="true" />
-              发布作品
+              发布
             </Button>
           </div>
         </header>

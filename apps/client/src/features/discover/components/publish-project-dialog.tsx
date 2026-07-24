@@ -185,7 +185,7 @@ export function PublishProjectDialog({
               ? "正在发布"
               : selectedProjectIds.size > 0
                 ? `发布 ${selectedProjectIds.size} 个作品`
-                : "发布作品"}
+                : "发布"}
           </Button>
         </DialogFooter>
       </DialogContent>
