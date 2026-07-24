@@ -82,7 +82,7 @@ export function DiscoverProjectViewer({
       toast.success("已添加到作品库");
     } catch (error) {
       console.error("Unable to add discover project", error);
-      toast.error("添加到作品失败");
+      toast.error("添加到作品库失败");
     } finally {
       setIsAdding(false);
     }
@@ -141,7 +141,7 @@ export function DiscoverProjectViewer({
         />
 
         <Button
-          aria-label="添加到作品"
+          aria-label="添加到作品库"
           disabled={isAdding}
           onClick={() => void handleAddToProjects()}
         >
@@ -152,7 +152,7 @@ export function DiscoverProjectViewer({
           )}
           <span className="sm:hidden">{isAdding ? "添加中" : "添加"}</span>
           <span className="hidden sm:inline">
-            {isAdding ? "正在添加" : "添加到作品"}
+            {isAdding ? "正在添加" : "添加到作品库"}
           </span>
         </Button>
       </header>

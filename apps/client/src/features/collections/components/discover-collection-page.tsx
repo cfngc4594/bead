@@ -69,7 +69,7 @@ export function DiscoverCollectionPage({
             <LibraryBig />
           )}
           <span className="hidden sm:inline">
-            {isImporting ? "正在添加" : "添加到作品"}
+            {isImporting ? "正在添加" : "添加到作品库"}
           </span>
           <span className="sm:hidden">{isImporting ? "添加中" : "添加"}</span>
         </Button>

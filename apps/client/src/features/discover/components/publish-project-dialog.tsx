@@ -9,14 +9,12 @@ import {
 } from "@bead/ui/components/dialog";
 import {
   Empty,
-  EmptyContent,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
-import { Link } from "@tanstack/react-router";
-import { FolderOpen, LoaderCircle, Plus, Upload } from "lucide-react";
+import { FolderOpen, LoaderCircle, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SelectableProjectCard } from "@/features/bead/components/selectable-project-card";
@@ -138,21 +136,6 @@ export function PublishProjectDialog({
               </EmptyMedia>
               <EmptyTitle>暂无可发布的作品</EmptyTitle>
             </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link
-                  onClick={() =>
-                    trackEvent("project_new_clicked", {
-                      source: "publish_dialog",
-                    })
-                  }
-                  to={projects.length > 0 ? "/projects" : "/projects/new"}
-                >
-                  <Plus aria-hidden="true" />
-                  {projects.length > 0 ? "继续创作" : "新建作品"}
-                </Link>
-              </Button>
-            </EmptyContent>
           </Empty>
         )}
 
