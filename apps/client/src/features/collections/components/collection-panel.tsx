@@ -44,7 +44,6 @@ import { toast } from "sonner";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
 import type { Project } from "@/features/bead/storage/projects";
-import { LocalCollectionActions } from "@/features/collections/components/local-collection-actions";
 import { useLibraryDndSensors } from "@/features/collections/hooks/use-library-dnd-sensors";
 import {
   removeProjectFromCollection,
@@ -279,19 +278,10 @@ export function CollectionPanel({
       Description={isMobile ? DrawerDescription : SheetDescription}
       Header={isMobile ? DrawerHeader : SheetHeader}
       Title={isMobile ? DrawerTitle : SheetTitle}
-      actions={
-        <LocalCollectionActions
-          collection={collection}
-          onDeleted={() => onOpenChange(false)}
-          projects={orderedProjects}
-        />
-      }
       description={
         isDragging && isOutsidePanel
           ? "松开即可移回作品库"
-          : isMobile
-            ? `${orderedProjects.length} 个作品 · 拖动手柄排序，拖到标题栏上方可移出`
-            : `${orderedProjects.length} 个作品 · 拖动手柄排序，拖出面板即可移回作品库`
+          : `${orderedProjects.length} 个作品`
       }
       isDimmed={isDragging && isOutsidePanel}
       isUngroupReady={isDragging && isOutsidePanel}
@@ -392,7 +382,6 @@ function CollectionPanelFrame({
   Description,
   Header,
   Title,
-  actions,
   children,
   description,
   isDimmed,
@@ -404,7 +393,6 @@ function CollectionPanelFrame({
   Description: ComponentType<{ children?: ReactNode }>;
   Header: ComponentType<{ children?: ReactNode; className?: string }>;
   Title: ComponentType<{ children?: ReactNode; className?: string }>;
-  actions: ReactNode;
   children: ReactNode;
   description: string;
   isDimmed: boolean;
@@ -427,12 +415,9 @@ function CollectionPanelFrame({
           isUngroupReady && "border-primary bg-primary/5",
         )}
       >
-        <div className="flex items-start gap-2 pr-8">
-          <div className="min-w-0 flex-1">
-            <Title className="truncate">{title}</Title>
-            <Description>{description}</Description>
-          </div>
-          {actions}
+        <div className="min-w-0 pr-8">
+          <Title className="truncate">{title}</Title>
+          <Description>{description}</Description>
         </div>
       </Header>
 
