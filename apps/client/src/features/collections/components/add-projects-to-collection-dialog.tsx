@@ -15,7 +15,6 @@ import {
 } from "@bead/ui/components/drawer";
 import {
   Empty,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -151,7 +150,6 @@ export function AddProjectsToCollectionDialog({
             <FolderOpen />
           </EmptyMedia>
           <EmptyTitle>没有可添加的作品</EmptyTitle>
-          <EmptyDescription>作品库中暂无未入集的作品可添加。</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -187,7 +185,9 @@ export function AddProjectsToCollectionDialog({
         <DrawerContent className="max-h-[85vh] gap-0">
           <DrawerHeader className="text-left">
             <DrawerTitle>添加作品</DrawerTitle>
-            <DrawerDescription>选择要加入此合集的作品。</DrawerDescription>
+            <DrawerDescription className="sr-only">
+              选择要加入此合集的作品
+            </DrawerDescription>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4">{body}</div>
           <DrawerFooter className="flex-row justify-end gap-2">
@@ -203,7 +203,9 @@ export function AddProjectsToCollectionDialog({
       <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>添加作品</DialogTitle>
-          <DialogDescription>选择要加入此合集的作品。</DialogDescription>
+          <DialogDescription className="sr-only">
+            选择要加入此合集的作品
+          </DialogDescription>
         </DialogHeader>
         {body}
         <DialogFooter>{footer}</DialogFooter>

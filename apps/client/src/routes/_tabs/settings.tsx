@@ -15,19 +15,16 @@ export const Route = createFileRoute("/_tabs/settings")({
 
 const themeOptions = [
   {
-    description: "使用设备当前的外观偏好",
     icon: Monitor,
     label: "跟随系统",
     value: "system",
   },
   {
-    description: "白天或明亮环境下更清爽",
     icon: Sun,
     label: "浅色",
     value: "light",
   },
   {
-    description: "夜间或弱光环境下更柔和",
     icon: Moon,
     label: "深色",
     value: "dark",
@@ -55,9 +52,9 @@ function SettingsPage() {
               onValueChange={setTheme}
               value={theme}
             >
-              {themeOptions.map(({ description, icon: Icon, label, value }) => (
+              {themeOptions.map(({ icon: Icon, label, value }) => (
                 <Label
-                  className="flex min-h-16 cursor-pointer items-center gap-3 rounded-lg border bg-background px-3 py-3 transition-colors hover:bg-muted/60 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-muted"
+                  className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border bg-background px-3 py-3 transition-colors hover:bg-muted/60 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-muted"
                   htmlFor={`theme-${value}`}
                   key={value}
                 >
@@ -67,12 +64,7 @@ function SettingsPage() {
                     className="size-4 shrink-0 text-muted-foreground"
                     strokeWidth={1.8}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm">{label}</span>
-                    <span className="block text-muted-foreground text-xs leading-5">
-                      {description}
-                    </span>
-                  </span>
+                  <span className="min-w-0 flex-1 text-sm">{label}</span>
                 </Label>
               ))}
             </RadioGroup>

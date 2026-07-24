@@ -36,10 +36,7 @@ export function DesktopEditorSidebar({
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
               <Rotate3D aria-hidden="true" className="size-4" />
             </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium">3D 预览</p>
-              <p className="text-xs text-muted-foreground">烫法与材质设置</p>
-            </div>
+            <p className="min-w-0 text-sm font-medium">3D 预览</p>
           </div>
           <ScrollArea className="min-h-0 flex-1">
             <ModelPreviewControls

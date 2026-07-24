@@ -154,7 +154,9 @@ export function JoinCollectionDialog({
         <DrawerContent className="max-h-[85vh] gap-0">
           <DrawerHeader className="text-left">
             <DrawerTitle>加入合集</DrawerTitle>
-            <DrawerDescription>选择要加入的合集。</DrawerDescription>
+            <DrawerDescription className="sr-only">
+              选择要加入的合集
+            </DrawerDescription>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-4">{body}</div>
         </DrawerContent>
@@ -167,7 +169,9 @@ export function JoinCollectionDialog({
       <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>加入合集</DialogTitle>
-          <DialogDescription>选择要加入的合集。</DialogDescription>
+          <DialogDescription className="sr-only">
+            选择要加入的合集
+          </DialogDescription>
         </DialogHeader>
         {body}
         <div className="flex justify-end">

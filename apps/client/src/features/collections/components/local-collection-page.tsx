@@ -200,7 +200,6 @@ export function LocalCollectionPage({
                 <FolderOpen />
               </EmptyMedia>
               <EmptyTitle>合集是空的</EmptyTitle>
-              <EmptyDescription>添加作品到这个合集。</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button onClick={() => setIsAddOpen(true)} type="button">

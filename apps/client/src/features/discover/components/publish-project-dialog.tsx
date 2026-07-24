@@ -109,9 +109,7 @@ export function PublishProjectDialog({
       <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>发布到发现</DialogTitle>
-          <DialogDescription>
-            选择一个或多个作品。每次发布都会创建一份独立快照。
-          </DialogDescription>
+          <DialogDescription>每次发布都会创建一份独立快照。</DialogDescription>
         </DialogHeader>
 
         {publishableProjects.length > 0 ? (
