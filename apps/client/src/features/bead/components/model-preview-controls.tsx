@@ -162,7 +162,7 @@ export function ModelPreviewControls({
               桌面宠物
             </h2>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              将当前 3D 效果显示为可拖动的 Android 悬浮宠物。
+              将当前 3D 效果显示为可拖动的 Android 悬浮宠物
             </p>
           </div>
           <div
@@ -205,7 +205,7 @@ export function ModelPreviewControls({
           </div>
           {!pet.canStart ? (
             <p className="text-xs text-muted-foreground">
-              画布中至少需要一颗豆子。
+              画布中至少需要一颗豆子
             </p>
           ) : null}
         </section>

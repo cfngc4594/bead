@@ -148,10 +148,10 @@ export function DiscoverPage() {
               </EmptyTitle>
               <EmptyDescription>
                 {hasPublishableProjects
-                  ? "选择一个本地作品，将当前快照发布到这里。"
+                  ? "选择一个本地作品，将当前快照发布到这里"
                   : hasLocalProjects
-                    ? "完成一个拼豆作品后，就可以把它发布到这里。"
-                    : "先创作一个拼豆作品，再把它发布到这里。"}
+                    ? "完成一个拼豆作品后，就可以把它发布到这里"
+                    : "先创作一个拼豆作品，再把它发布到这里"}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>

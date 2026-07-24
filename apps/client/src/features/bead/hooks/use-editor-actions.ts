@@ -202,7 +202,7 @@ export function useEditorActions({
       toast.error(
         error instanceof BeadTemplateImportError
           ? error.message
-          : "导入模板失败。",
+          : "导入模板失败",
       );
     }
   }

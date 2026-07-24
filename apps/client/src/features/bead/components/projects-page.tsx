@@ -485,7 +485,7 @@ export function ProjectsPage() {
               </EmptyMedia>
               <EmptyTitle>还没有拼豆作品</EmptyTitle>
               <EmptyDescription>
-                创建作品后，可用「选择」合并多个作品为合集。
+                创建作品后，可用「选择」合并多个作品为合集
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -535,7 +535,7 @@ export function ProjectsPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>删除 {selectedCount} 个作品？</AlertDialogTitle>
-              <AlertDialogDescription>删除后无法恢复。</AlertDialogDescription>
+              <AlertDialogDescription>删除后无法恢复</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isBatchBusy}>取消</AlertDialogCancel>

@@ -25,27 +25,27 @@ export function parseBeadTemplateFile({
   try {
     data = JSON.parse(text);
   } catch {
-    throw new BeadTemplateImportError("文件不是有效的 JSON。");
+    throw new BeadTemplateImportError("文件不是有效的 JSON");
   }
 
   const result = beadTemplateSchema.safeParse(data);
 
   if (!result.success) {
-    throw new BeadTemplateImportError("文件不是有效的拼豆模板。");
+    throw new BeadTemplateImportError("文件不是有效的拼豆模板");
   }
 
   const template = result.data;
 
   if (template.size.rows !== size.rows || template.size.cols !== size.cols) {
     throw new BeadTemplateImportError(
-      `模板尺寸是 ${template.size.rows}x${template.size.cols}，请切换到 ${template.size.rows}x${template.size.cols} 画布后导入。`,
+      `模板尺寸是 ${template.size.rows}x${template.size.cols}，请切换到 ${template.size.rows}x${template.size.cols} 画布后导入`,
     );
   }
 
   const cellCount = size.rows * size.cols;
 
   if (template.beads.length !== cellCount) {
-    throw new BeadTemplateImportError("模板格子数量和当前画布不匹配。");
+    throw new BeadTemplateImportError("模板格子数量和当前画布不匹配");
   }
 
   return template.beads.map(normalizeBead);
@@ -65,7 +65,7 @@ function normalizeBead(
   }
 
   if (bead.hex.toLowerCase() !== color.hex.toLowerCase()) {
-    throw new BeadTemplateImportError(`豆色色号 ${bead.code} 的颜色值不匹配。`);
+    throw new BeadTemplateImportError(`豆色色号 ${bead.code} 的颜色值不匹配`);
   }
 
   return {

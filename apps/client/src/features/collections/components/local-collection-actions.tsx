@@ -168,7 +168,7 @@ export function LocalCollectionActions({
             <AlertDialogHeader>
               <AlertDialogTitle>删除合集？</AlertDialogTitle>
               <AlertDialogDescription>
-                只会删除「{collection.title}」的分组，合集中的作品仍会保留。
+                只会删除「{collection.title}」的分组，合集中的作品仍会保留
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

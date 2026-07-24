@@ -187,7 +187,7 @@ export function ProjectContextMenu({
             <AlertDialogHeader>
               <AlertDialogTitle>删除作品？</AlertDialogTitle>
               <AlertDialogDescription>
-                删除「{project.title}」后无法恢复。
+                删除「{project.title}」后无法恢复
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -85,7 +85,7 @@ export function BeadModelPreview({
           </EmptyHeader>
           <EmptyContent>
             <EmptyDescription>
-              铺好颜色后，这里会显示所选的 3D 烫豆效果。
+              铺好颜色后，这里会显示所选的 3D 烫豆效果
             </EmptyDescription>
           </EmptyContent>
         </Empty>
