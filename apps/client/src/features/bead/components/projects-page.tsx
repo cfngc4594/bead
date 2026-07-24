@@ -25,11 +25,10 @@ import {
   Grid2x2,
   LoaderCircle,
   Plus,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ProjectActions } from "@/features/bead/components/project-actions";
 import { ProjectCard } from "@/features/bead/components/project-card";
@@ -44,10 +43,7 @@ import { CollectionContextMenu } from "@/features/collections/components/collect
 import { JoinCollectionDialog } from "@/features/collections/components/join-collection-dialog";
 import { LibraryDndGrid } from "@/features/collections/components/library-dnd-grid";
 import { LocalCollectionActions } from "@/features/collections/components/local-collection-actions";
-import {
-  type LibrarySort,
-  useLibraryFeed,
-} from "@/features/collections/hooks/use-library-feed";
+import { useLibraryFeed } from "@/features/collections/hooks/use-library-feed";
 import {
   addProjectToCollection,
   createLocalCollection,
@@ -60,9 +56,6 @@ import { trackEvent } from "@/lib/analytics";
 export function ProjectsPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [titleFilter, setTitleFilter] = useState("");
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [sort, setSort] = useState<LibrarySort>("updatedAt");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
     () => new Set(),
@@ -70,17 +63,12 @@ export function ProjectsPage() {
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isBatchBusy, setIsBatchBusy] = useState(false);
-  const hasTrackedTitleFilterRef = useRef(false);
-  const { feedItems, hasLibrary, sizeOptions } = useLibraryFeed({
-    selectedSizes,
-    sort,
-    titleFilter,
-  });
+  const { feedItems, hasLibrary } = useLibraryFeed();
 
   const selectableProjectIds = useMemo(
     () =>
       feedItems
-        .filter((item) => item.kind === "project" && !item.collectionId)
+        .filter((item) => item.kind === "project")
         .map((item) => item.id),
     [feedItems],
   );
@@ -89,50 +77,6 @@ export function ProjectsPage() {
   const allSelectableSelected =
     selectableProjectIds.length > 0 &&
     selectableProjectIds.every((id) => selectedProjectIds.has(id));
-
-  function handleTitleFilterChange(nextTitleFilter: string) {
-    if (
-      nextTitleFilter.trim().length > 0 &&
-      !hasTrackedTitleFilterRef.current
-    ) {
-      trackEvent("project_filter_used", { filterType: "title" });
-      hasTrackedTitleFilterRef.current = true;
-    }
-
-    if (nextTitleFilter.trim().length === 0) {
-      hasTrackedTitleFilterRef.current = false;
-    }
-
-    setTitleFilter(nextTitleFilter);
-  }
-
-  function handleSizeFilterChange(nextSizeFilter: string[]) {
-    trackEvent(
-      nextSizeFilter.length > 0
-        ? "project_filter_used"
-        : "project_filter_reset",
-      {
-        filterType: "size",
-        sizeFilterCount: nextSizeFilter.length,
-      },
-    );
-    setSelectedSizes(nextSizeFilter);
-  }
-
-  function handleSortChange(nextSort: LibrarySort) {
-    trackEvent("library_sort_changed", { sort: nextSort });
-    setSort(nextSort);
-  }
-
-  function resetFilters() {
-    trackEvent("project_filter_reset", {
-      hadTitleFilter: titleFilter.trim().length > 0,
-      sizeFilterCount: selectedSizes.length,
-    });
-    setTitleFilter("");
-    setSelectedSizes([]);
-    hasTrackedTitleFilterRef.current = false;
-  }
 
   function enterSelectMode(seedProjectId?: string) {
     setSelectMode(true);
@@ -373,14 +317,7 @@ export function ProjectsPage() {
                   exitSelectMode();
                 }
               }}
-              onSizeFilterChange={handleSizeFilterChange}
-              onSortChange={handleSortChange}
-              onTitleFilterChange={handleTitleFilterChange}
               selectMode={selectMode}
-              sizeFilter={selectedSizes}
-              sizeOptions={sizeOptions}
-              sort={sort}
-              titleFilter={titleFilter}
             />
           )
         ) : (
@@ -417,155 +354,123 @@ export function ProjectsPage() {
       >
         <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8">
           {hasLibrary ? (
-            feedItems.length > 0 ? (
-              <LibraryDndGrid
-                disabled={selectMode}
-                items={feedItems}
-                onAddProjectToCollection={(projectId, collectionId) =>
-                  void handleAddProjectToCollection(projectId, collectionId)
+            <LibraryDndGrid
+              disabled={selectMode}
+              items={feedItems}
+              onAddProjectToCollection={(projectId, collectionId) =>
+                void handleAddProjectToCollection(projectId, collectionId)
+              }
+              onLongPressProject={(projectId) => {
+                if (selectMode) {
+                  toggleProjectSelection(projectId);
+                  return;
                 }
-                onLongPressProject={(projectId) => {
-                  if (selectMode) {
-                    toggleProjectSelection(projectId);
-                    return;
-                  }
 
-                  // Only ungrouped projects enter multi-select via long-press.
-                  const item = feedItems.find(
-                    (entry) =>
-                      entry.kind === "project" && entry.id === projectId,
-                  );
-                  if (item?.kind === "project" && item.collectionId == null) {
-                    enterSelectMode(projectId);
-                  }
-                }}
-                onMergeProjects={(sourceProjectId, targetProjectId) =>
-                  void handleMergeProjects(sourceProjectId, targetProjectId)
-                }
-                overlay={(project) => (
-                  <ProjectCard
-                    openLabel="打开"
-                    onOpen={() => undefined}
-                    project={project}
-                    route="/projects/$projectId"
-                    snapshot={project.snapshots[project.currentIndex]}
-                    timestamp={project.updatedAt}
-                    timestampLabel="更新"
-                  />
-                )}
-                renderCollection={(item, { dropHint, isOver }) => (
-                  <CollectionContextMenu
-                    collection={item.collection}
-                    disabled={selectMode}
-                    projects={item.projects}
-                  >
-                    <div>
-                      <CollectionCard
-                        actions={
-                          selectMode ? undefined : (
-                            <LocalCollectionActions
-                              collection={item.collection}
-                              projects={item.projects}
-                            />
-                          )
-                        }
-                        collection={toCollectionCardModel(
-                          item.collection,
-                          item.projects,
-                        )}
-                        dropHint={dropHint}
-                        dropTarget={isOver}
-                        onActivate={() => {
-                          if (selectMode) {
-                            return;
-                          }
-
-                          void navigate({
-                            to: "/projects/collections/$collectionId",
-                            params: { collectionId: item.collection.id },
-                          });
-                        }}
-                        onOpen={(source) => {
-                          if (selectMode) {
-                            return;
-                          }
-
-                          trackEvent("collection_opened", {
-                            projectCount: item.collection.projectIds.length,
-                            source,
-                          });
-                        }}
-                        timestamp={item.collection.updatedAt}
-                        timestampLabel="更新"
-                      />
-                    </div>
-                  </CollectionContextMenu>
-                )}
-                renderProject={(item, { dropHint, isOver }) => {
-                  const isGroupedResult = item.collectionId != null;
-                  const card = (
-                    <ProjectCard
+                enterSelectMode(projectId);
+              }}
+              onMergeProjects={(sourceProjectId, targetProjectId) =>
+                void handleMergeProjects(sourceProjectId, targetProjectId)
+              }
+              overlay={(project) => (
+                <ProjectCard
+                  openLabel="打开"
+                  onOpen={() => undefined}
+                  project={project}
+                  route="/projects/$projectId"
+                  snapshot={project.snapshots[project.currentIndex]}
+                  timestamp={project.updatedAt}
+                  timestampLabel="更新"
+                />
+              )}
+              renderCollection={(item, { dropHint, isOver }) => (
+                <CollectionContextMenu
+                  collection={item.collection}
+                  disabled={selectMode}
+                  projects={item.projects}
+                >
+                  <div>
+                    <CollectionCard
                       actions={
-                        selectMode || isGroupedResult ? undefined : (
-                          <ProjectActions project={item.project} />
+                        selectMode ? undefined : (
+                          <LocalCollectionActions
+                            collection={item.collection}
+                            projects={item.projects}
+                          />
                         )
                       }
-                      collectionTitle={item.collectionTitle}
+                      collection={toCollectionCardModel(
+                        item.collection,
+                        item.projects,
+                      )}
                       dropHint={dropHint}
                       dropTarget={isOver}
-                      onOpen={(source) =>
-                        trackEvent("project_opened", {
-                          sizeId: item.project.sizeId,
+                      onActivate={() => {
+                        if (selectMode) {
+                          return;
+                        }
+
+                        void navigate({
+                          to: "/projects/collections/$collectionId",
+                          params: { collectionId: item.collection.id },
+                        });
+                      }}
+                      onOpen={(source) => {
+                        if (selectMode) {
+                          return;
+                        }
+
+                        trackEvent("collection_opened", {
+                          projectCount: item.collection.projectIds.length,
                           source,
-                        })
-                      }
-                      onSelectToggle={() =>
-                        toggleProjectSelection(item.project.id)
-                      }
-                      openLabel="打开"
-                      project={item.project}
-                      route="/projects/$projectId"
-                      selectMode={selectMode && !isGroupedResult}
-                      selected={selectedProjectIds.has(item.project.id)}
-                      snapshot={
-                        item.project.snapshots[item.project.currentIndex]
-                      }
-                      timestamp={item.project.updatedAt}
+                        });
+                      }}
+                      timestamp={item.collection.updatedAt}
                       timestampLabel="更新"
                     />
-                  );
+                  </div>
+                </CollectionContextMenu>
+              )}
+              renderProject={(item, { dropHint, isOver }) => {
+                const card = (
+                  <ProjectCard
+                    actions={
+                      selectMode ? undefined : (
+                        <ProjectActions project={item.project} />
+                      )
+                    }
+                    dropHint={dropHint}
+                    dropTarget={isOver}
+                    onOpen={(source) =>
+                      trackEvent("project_opened", {
+                        sizeId: item.project.sizeId,
+                        source,
+                      })
+                    }
+                    onSelectToggle={() =>
+                      toggleProjectSelection(item.project.id)
+                    }
+                    openLabel="打开"
+                    project={item.project}
+                    route="/projects/$projectId"
+                    selectMode={selectMode}
+                    selected={selectedProjectIds.has(item.project.id)}
+                    snapshot={item.project.snapshots[item.project.currentIndex]}
+                    timestamp={item.project.updatedAt}
+                    timestampLabel="更新"
+                  />
+                );
 
-                  if (selectMode || isGroupedResult) {
-                    return card;
-                  }
+                if (selectMode) {
+                  return card;
+                }
 
-                  return (
-                    <ProjectContextMenu project={item.project}>
-                      <div>{card}</div>
-                    </ProjectContextMenu>
-                  );
-                }}
-              />
-            ) : (
-              <Empty className="min-h-64 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <Search />
-                  </EmptyMedia>
-                  <EmptyTitle>没有匹配的内容</EmptyTitle>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button
-                    onClick={resetFilters}
-                    type="button"
-                    variant="outline"
-                  >
-                    <X aria-hidden="true" />
-                    重置筛选
-                  </Button>
-                </EmptyContent>
-              </Empty>
-            )
+                return (
+                  <ProjectContextMenu project={item.project}>
+                    <div>{card}</div>
+                  </ProjectContextMenu>
+                );
+              }}
+            />
           ) : (
             <Empty className="min-h-64 border">
               <EmptyHeader>
