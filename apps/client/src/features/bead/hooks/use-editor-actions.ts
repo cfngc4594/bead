@@ -222,7 +222,7 @@ export function useEditorActions({
       resetSelection();
       commitBeads(generatedBeads);
       trackEvent("image_import_succeeded", getCanvasSizeProperties());
-      toast.success("图片已生成豆图");
+      toast.success("已生成豆图");
     } catch (error) {
       console.error("Unable to generate bead image", error);
       trackEvent("image_import_failed", getCanvasSizeProperties());

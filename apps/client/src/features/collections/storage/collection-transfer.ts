@@ -85,7 +85,7 @@ export async function createPublishCollectionInput(
 
 export function getCollectionPublishIssue(projects: PublishableProject[]) {
   if (projects.length === 0) {
-    return "合集为空";
+    return "合集内暂无作品";
   }
 
   if (projects.length > MAX_DISCOVER_PROJECTS_PER_PUBLISH) {

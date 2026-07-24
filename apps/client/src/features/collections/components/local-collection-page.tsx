@@ -284,7 +284,7 @@ export function LocalCollectionNotFound() {
             <EmptyMedia variant="icon">
               <FolderOpen />
             </EmptyMedia>
-            <EmptyTitle>找不到合集</EmptyTitle>
+            <EmptyTitle>合集不存在</EmptyTitle>
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

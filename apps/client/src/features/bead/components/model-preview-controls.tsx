@@ -196,13 +196,13 @@ export function ModelPreviewControls({
                 variant="outline"
               >
                 <Square aria-hidden="true" />
-                取消桌宠
+                关闭桌宠
               </Button>
             ) : null}
           </div>
           {!pet.canStart ? (
             <p className="text-xs text-muted-foreground">
-              需要至少一颗豆子
+              请先铺上豆子
             </p>
           ) : null}
         </section>

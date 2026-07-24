@@ -21,7 +21,7 @@ export function DiscoverError() {
             <EmptyMedia variant="icon">
               <WifiOff />
             </EmptyMedia>
-            <EmptyTitle>无法加载</EmptyTitle>
+            <EmptyTitle>加载失败</EmptyTitle>
             <EmptyDescription>检查网络连接</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -45,7 +45,7 @@ export function DiscoverProjectNotFound() {
             <EmptyMedia variant="icon">
               <SearchX />
             </EmptyMedia>
-            <EmptyTitle>找不到作品</EmptyTitle>
+            <EmptyTitle>作品不存在</EmptyTitle>
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

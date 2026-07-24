@@ -79,7 +79,7 @@ export function LocalCollectionActions({
       const input = await createPublishCollectionInput(collection.id);
       await publishMutation.mutateAsync(input);
       trackEvent("collection_published", { projectCount: projects.length });
-      toast.success("合集已发布到发现");
+      toast.success("已发布");
     } catch (error) {
       console.error("Unable to publish bead collection", error);
       toast.error(error instanceof Error ? error.message : "发布合集失败");
@@ -133,7 +133,7 @@ export function LocalCollectionActions({
             ) : (
               <Share2 />
             )}
-            {publishMutation.isPending ? "正在发布" : "发布到发现"}
+            {publishMutation.isPending ? "正在发布" : "发布"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -168,7 +168,7 @@ export function LocalCollectionActions({
             <AlertDialogHeader>
               <AlertDialogTitle>删除合集？</AlertDialogTitle>
               <AlertDialogDescription>
-                作品会保留在作品库
+                作品将保留
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

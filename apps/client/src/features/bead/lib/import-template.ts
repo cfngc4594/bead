@@ -25,20 +25,20 @@ export function parseBeadTemplateFile({
   try {
     data = JSON.parse(text);
   } catch {
-    throw new BeadTemplateImportError("无法识别此文件");
+    throw new BeadTemplateImportError("无法打开此文件");
   }
 
   const result = beadTemplateSchema.safeParse(data);
 
   if (!result.success) {
-    throw new BeadTemplateImportError("不是拼豆模板");
+    throw new BeadTemplateImportError("不是有效的拼豆模板");
   }
 
   const template = result.data;
 
   if (template.size.rows !== size.rows || template.size.cols !== size.cols) {
     throw new BeadTemplateImportError(
-      `画布尺寸需为 ${template.size.rows}x${template.size.cols}`,
+      `请使用 ${template.size.rows}x${template.size.cols} 画布`,
     );
   }
 

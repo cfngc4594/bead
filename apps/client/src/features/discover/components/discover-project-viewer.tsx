@@ -79,7 +79,7 @@ export function DiscoverProjectViewer({
       trackEvent("project_added_from_discover", {
         sizeId: project.sizeId,
       });
-      toast.success("已添加到作品");
+      toast.success("已添加到作品库");
     } catch (error) {
       console.error("Unable to add discover project", error);
       toast.error("添加到作品失败");

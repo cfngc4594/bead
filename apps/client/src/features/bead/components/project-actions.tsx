@@ -115,7 +115,7 @@ export function ProjectActions({
         sizeId: project.sizeId,
         source: "project_actions",
       });
-      toast.success("作品已发布到发现");
+      toast.success("已发布");
     } catch (error) {
       console.error("Unable to publish bead project", error);
       toast.error("发布作品失败");
@@ -203,7 +203,7 @@ export function ProjectActions({
             ) : (
               <Share2 />
             )}
-            {publishMutation.isPending ? "正在发布" : "发布到发现"}
+            {publishMutation.isPending ? "正在发布" : "发布"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -91,7 +91,7 @@ export function BeadModelPreview({
         <ModelPreviewStatus
           compact
           error
-          label="纹理不可用"
+          label="纹理加载失败"
         />
       ) : null}
     </section>

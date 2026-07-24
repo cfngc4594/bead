@@ -59,7 +59,7 @@ export function usePet() {
         const permission = await Pet.requestPermission();
 
         if (!permission.permissionGranted) {
-          toast.info("需要悬浮窗权限");
+          toast.info("请开启悬浮窗权限");
           await refresh();
           return;
         }

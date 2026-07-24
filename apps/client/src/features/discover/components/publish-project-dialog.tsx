@@ -93,7 +93,7 @@ export function PublishProjectDialog({
       });
       toast.success(
         selectedProjects.length === 1
-          ? "作品已发布到发现"
+          ? "已发布"
           : `已发布 ${selectedProjects.length} 个作品`,
       );
       onOpenChange(false);
@@ -107,7 +107,7 @@ export function PublishProjectDialog({
     <NativeBackDialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>发布到发现</DialogTitle>
+          <DialogTitle>发布</DialogTitle>
           <DialogDescription className="sr-only">
             选择要发布的作品
           </DialogDescription>
@@ -136,7 +136,7 @@ export function PublishProjectDialog({
               <EmptyMedia variant="icon">
                 <FolderOpen />
               </EmptyMedia>
-              <EmptyTitle>暂无可发布作品</EmptyTitle>
+              <EmptyTitle>暂无可发布的作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

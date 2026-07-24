@@ -37,7 +37,7 @@ export function DiscoverCollectionPage({
       trackEvent("collection_added_from_discover", {
         projectCount: collection.projects.length,
       });
-      toast.success(`已添加合集和 ${collection.projects.length} 个作品`);
+      toast.success("已添加");
       await navigate({ to: "/projects" });
     } catch (error) {
       console.error("Unable to import discover collection", error);
@@ -111,7 +111,7 @@ export function DiscoverCollectionNotFound() {
             <EmptyMedia variant="icon">
               <FolderOpen />
             </EmptyMedia>
-            <EmptyTitle>找不到合集</EmptyTitle>
+            <EmptyTitle>合集不存在</EmptyTitle>
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

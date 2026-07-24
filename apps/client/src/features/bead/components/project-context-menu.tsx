@@ -98,7 +98,7 @@ export function ProjectContextMenu({
         sizeId: project.sizeId,
         source: "context_menu",
       });
-      toast.success("作品已发布到发现");
+      toast.success("已发布");
     } catch (error) {
       console.error("Unable to publish bead project", error);
       toast.error("发布作品失败");
@@ -153,7 +153,7 @@ export function ProjectContextMenu({
             ) : (
               <Share2 />
             )}
-            {publishMutation.isPending ? "正在发布" : "发布到发现"}
+            {publishMutation.isPending ? "正在发布" : "发布"}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
