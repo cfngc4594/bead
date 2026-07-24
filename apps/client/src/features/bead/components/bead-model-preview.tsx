@@ -79,7 +79,7 @@ export function BeadModelPreview({
             <EmptyMedia variant="icon">
               <CircleDot />
             </EmptyMedia>
-            <EmptyTitle>画布是空的</EmptyTitle>
+            <EmptyTitle>暂无预览</EmptyTitle>
           </EmptyHeader>
         </Empty>
       )}

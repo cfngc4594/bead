@@ -482,7 +482,7 @@ export function ProjectsPage() {
               <EmptyMedia variant="icon">
                 <Grid2x2 />
               </EmptyMedia>
-              <EmptyTitle>还没有作品</EmptyTitle>
+              <EmptyTitle>暂无作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

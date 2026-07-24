@@ -139,7 +139,7 @@ export function JoinCollectionDialog({
           <EmptyMedia variant="icon">
             <FolderOpen />
           </EmptyMedia>
-          <EmptyTitle>还没有合集</EmptyTitle>
+          <EmptyTitle>暂无合集</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );

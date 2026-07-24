@@ -111,7 +111,7 @@ export function DiscoverCollectionNotFound() {
             <EmptyMedia variant="icon">
               <FolderOpen />
             </EmptyMedia>
-            <EmptyTitle>合集不存在</EmptyTitle>
+            <EmptyTitle>找不到合集</EmptyTitle>
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

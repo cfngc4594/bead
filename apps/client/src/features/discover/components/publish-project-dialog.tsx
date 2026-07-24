@@ -136,7 +136,7 @@ export function PublishProjectDialog({
               <EmptyMedia variant="icon">
                 <FolderOpen />
               </EmptyMedia>
-              <EmptyTitle>没有可发布的作品</EmptyTitle>
+              <EmptyTitle>暂无可发布作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

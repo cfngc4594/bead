@@ -142,7 +142,7 @@ export function DiscoverPage() {
               <EmptyMedia variant="icon">
                 <Compass />
               </EmptyMedia>
-              <EmptyTitle>还没有作品</EmptyTitle>
+              <EmptyTitle>暂无作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               {hasPublishableProjects ? (

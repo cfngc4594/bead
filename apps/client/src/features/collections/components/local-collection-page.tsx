@@ -199,7 +199,7 @@ export function LocalCollectionPage({
               <EmptyMedia variant="icon">
                 <FolderOpen />
               </EmptyMedia>
-              <EmptyTitle>合集是空的</EmptyTitle>
+              <EmptyTitle>暂无作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button onClick={() => setIsAddOpen(true)} type="button">
@@ -284,7 +284,7 @@ export function LocalCollectionNotFound() {
             <EmptyMedia variant="icon">
               <FolderOpen />
             </EmptyMedia>
-            <EmptyTitle>合集不存在</EmptyTitle>
+            <EmptyTitle>找不到合集</EmptyTitle>
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

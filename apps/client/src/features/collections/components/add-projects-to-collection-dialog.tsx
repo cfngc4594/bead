@@ -149,7 +149,7 @@ export function AddProjectsToCollectionDialog({
           <EmptyMedia variant="icon">
             <FolderOpen />
           </EmptyMedia>
-          <EmptyTitle>没有可添加的作品</EmptyTitle>
+          <EmptyTitle>暂无可添加作品</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );
