@@ -8,13 +8,17 @@ describe("getCollectionPublishIssue", () => {
     expect(getCollectionPublishIssue([createProject()])).toBeNull();
   });
 
-  test("rejects empty collections and blank projects", () => {
+  test("rejects empty collections", () => {
     expect(getCollectionPublishIssue([])).toBe("合集为空，添加作品后才能发布");
+  });
+
+  test("allows blank projects as placeholders", () => {
     expect(
       getCollectionPublishIssue([
         createProject({ snapshots: [{ cells: [] }] }),
+        createProject({ id: "project-2" }),
       ]),
-    ).toBe("合集包含空白作品，完成后才能发布");
+    ).toBeNull();
   });
 
   test("rejects collections over the publish limit", () => {

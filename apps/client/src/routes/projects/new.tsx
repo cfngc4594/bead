@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
+import { createFileRoute } from "@tanstack/react-router";
 import { canvasSizes } from "@/config/canvas-sizes";
 import { SizePicker } from "@/features/bead/components/size-picker";
 import { preloadProjectsCollection } from "@/features/bead/storage/projects";

@@ -5,7 +5,6 @@ import {
 } from "@bead/core/discover";
 import {
   buildProjectFromSnapshot,
-  getFilledCount,
   type Project,
   projectsCollection,
 } from "@/features/bead/storage/projects";
@@ -91,10 +90,6 @@ export function getCollectionPublishIssue(projects: PublishableProject[]) {
 
   if (projects.length > MAX_DISCOVER_PROJECTS_PER_PUBLISH) {
     return `每个合集最多发布 ${MAX_DISCOVER_PROJECTS_PER_PUBLISH} 个作品`;
-  }
-
-  if (projects.some((project) => getFilledCount(project) === 0)) {
-    return "合集包含空白作品，完成后才能发布";
   }
 
   return null;
