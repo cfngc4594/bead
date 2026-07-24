@@ -1,22 +1,15 @@
 import { Button } from "@bead/ui/components/button";
 import {
   Empty,
-  EmptyContent,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
-import { useLiveQuery } from "@tanstack/react-db";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { Compass, Plus, Upload } from "lucide-react";
+import { Compass, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ProjectCard } from "@/features/bead/components/project-card";
-import {
-  getFilledCount,
-  projectsCollection,
-} from "@/features/bead/storage/projects";
 import { CollectionCard } from "@/features/collections/components/collection-card";
 import {
   discoverCollectionsQueryOptions,
@@ -33,18 +26,6 @@ export function DiscoverPage() {
   );
   const { data: discoverCollections } = useSuspenseQuery(
     discoverCollectionsQueryOptions,
-  );
-  const { data: localProjects = [] } = useLiveQuery(
-    (query) =>
-      query.from({ project: projectsCollection }).select(({ project }) => ({
-        snapshots: project.snapshots,
-        currentIndex: project.currentIndex,
-      })),
-    [],
-  );
-  const hasLocalProjects = localProjects.length > 0;
-  const hasPublishableProjects = localProjects.some(
-    (project) => getFilledCount(project) > 0,
   );
   const feedItems = useMemo(() => {
     const items: Array<
@@ -75,10 +56,6 @@ export function DiscoverPage() {
     return items;
   }, [discoverCollections, discoverProjects]);
 
-  function openPublishDialog() {
-    setIsPublishDialogOpen(true);
-  }
-
   return (
     <main
       aria-label="发现"
@@ -87,7 +64,7 @@ export function DiscoverPage() {
       <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-2 border-b px-4 pt-6 pb-5 md:justify-between md:px-8">
         <h1 className="font-semibold text-lg tracking-tight">发现</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={openPublishDialog}>
+          <Button onClick={() => setIsPublishDialogOpen(true)}>
             <Upload aria-hidden="true" />
             发布
           </Button>
@@ -142,30 +119,8 @@ export function DiscoverPage() {
               <EmptyMedia variant="icon">
                 <Compass />
               </EmptyMedia>
-              <EmptyTitle>暂无作品</EmptyTitle>
+              <EmptyTitle>暂无内容</EmptyTitle>
             </EmptyHeader>
-            <EmptyContent>
-              {hasPublishableProjects ? (
-                <Button onClick={openPublishDialog}>
-                  <Upload aria-hidden="true" />
-                  选择作品
-                </Button>
-              ) : (
-                <Button asChild>
-                  <Link
-                    onClick={() =>
-                      trackEvent("project_new_clicked", {
-                        source: "discover_empty",
-                      })
-                    }
-                    to={hasLocalProjects ? "/projects" : "/projects/new"}
-                  >
-                    <Plus aria-hidden="true" />
-                    {hasLocalProjects ? "继续创作" : "开始拼豆"}
-                  </Link>
-                </Button>
-              )}
-            </EmptyContent>
           </Empty>
         </div>
       )}
