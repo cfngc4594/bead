@@ -495,6 +495,9 @@ function CollectionProjectRow({
       <button
         aria-label={`拖动 ${project.title}`}
         className="flex size-8 shrink-0 cursor-grab touch-none select-none items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-3 focus-visible:ring-ring/50"
+        // Vaul must ignore gestures that start on the sort handle, otherwise the
+        // bottom drawer drags/resizes along with the dnd-kit item drag.
+        data-vaul-no-drag
         type="button"
         {...dragHandleProps}
       >
