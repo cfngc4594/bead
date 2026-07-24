@@ -1,5 +1,6 @@
 import { AlertDialog as AlertDialogRoot } from "@bead/ui/components/alert-dialog";
 import { Dialog as DialogRoot } from "@bead/ui/components/dialog";
+import { Drawer as DrawerRoot } from "@bead/ui/components/drawer";
 import { DropdownMenu as DropdownMenuRoot } from "@bead/ui/components/dropdown-menu";
 import { Popover as PopoverRoot } from "@bead/ui/components/popover";
 import { Sheet as SheetRoot } from "@bead/ui/components/sheet";
@@ -25,6 +26,21 @@ export function NativeBackSheet({
   });
 
   return <SheetRoot {...props} {...openProps} />;
+}
+
+export function NativeBackDrawer({
+  defaultOpen,
+  onOpenChange,
+  open,
+  ...props
+}: ComponentProps<typeof DrawerRoot>) {
+  const openProps = useNativeBackOpen({
+    defaultOpen,
+    onOpenChange,
+    open,
+  });
+
+  return <DrawerRoot {...props} {...openProps} />;
 }
 
 export function NativeBackDialog({

@@ -70,11 +70,11 @@ export function LibraryDndGrid<TProject, TCollection>({
       LibraryFeedItem<TProject, TCollection>,
       { kind: "collection" }
     >,
-    state: { isOver: boolean },
+    state: { dropHint: boolean; isOver: boolean },
   ) => ReactNode;
   renderProject: (
     item: Extract<LibraryFeedItem<TProject, TCollection>, { kind: "project" }>,
-    state: { isDragging: boolean; isOver: boolean },
+    state: { dropHint: boolean; isDragging: boolean; isOver: boolean },
   ) => ReactNode;
 }) {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -86,6 +86,7 @@ export function LibraryDndGrid<TProject, TCollection>({
       activationConstraint: { delay: 180, tolerance: 8 },
     }),
   );
+  const isDraggingProject = activeProjectId !== null;
   const activeProject = activeProjectId
     ? items.find(
         (item): item is Extract<typeof item, { kind: "project" }> =>
@@ -137,6 +138,7 @@ export function LibraryDndGrid<TProject, TCollection>({
           item.kind === "project" ? (
             <LibraryProjectItem
               disabled={disabled}
+              dropHint={isDraggingProject && item.id !== activeProjectId}
               key={`project:${item.id}`}
               projectId={item.id}
             >
@@ -146,6 +148,7 @@ export function LibraryDndGrid<TProject, TCollection>({
             <LibraryCollectionItem
               collectionId={item.id}
               disabled={disabled}
+              dropHint={isDraggingProject}
               key={`collection:${item.id}`}
             >
               {(state) => renderCollection(item, state)}
@@ -168,10 +171,16 @@ export function LibraryDndGrid<TProject, TCollection>({
 function LibraryProjectItem({
   children,
   disabled,
+  dropHint,
   projectId,
 }: {
-  children: (state: { isDragging: boolean; isOver: boolean }) => ReactNode;
+  children: (state: {
+    dropHint: boolean;
+    isDragging: boolean;
+    isOver: boolean;
+  }) => ReactNode;
   disabled: boolean;
+  dropHint: boolean;
   projectId: string;
 }) {
   const id = projectDragId(projectId);
@@ -199,7 +208,11 @@ function LibraryProjectItem({
       {...attributes}
       {...listeners}
     >
-      {children({ isDragging, isOver: isOver && !isDragging })}
+      {children({
+        dropHint,
+        isDragging,
+        isOver: isOver && !isDragging,
+      })}
     </motion.div>
   );
 }
@@ -208,10 +221,12 @@ function LibraryCollectionItem({
   children,
   collectionId,
   disabled,
+  dropHint,
 }: {
-  children: (state: { isOver: boolean }) => ReactNode;
+  children: (state: { dropHint: boolean; isOver: boolean }) => ReactNode;
   collectionId: string;
   disabled: boolean;
+  dropHint: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: collectionDragId(collectionId),
@@ -225,7 +240,7 @@ function LibraryCollectionItem({
       ref={setNodeRef}
       transition={{ type: "spring", stiffness: 420, damping: 36 }}
     >
-      {children({ isOver })}
+      {children({ dropHint, isOver })}
     </motion.div>
   );
 }

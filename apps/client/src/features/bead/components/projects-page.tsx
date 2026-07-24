@@ -7,7 +7,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
-import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { Grid2x2, Plus, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
@@ -177,7 +176,7 @@ export function ProjectsPage() {
                     timestampLabel="更新"
                   />
                 )}
-                renderCollection={(item, { isOver }) => (
+                renderCollection={(item, { dropHint, isOver }) => (
                   <CollectionCard
                     actions={
                       <LocalCollectionActions
@@ -189,6 +188,7 @@ export function ProjectsPage() {
                       item.collection,
                       item.projects,
                     )}
+                    dropHint={dropHint}
                     dropTarget={isOver}
                     onActivate={() => setOpenCollectionId(item.collection.id)}
                     onOpen={(source) =>
@@ -201,31 +201,24 @@ export function ProjectsPage() {
                     timestampLabel="更新"
                   />
                 )}
-                renderProject={(item, { isOver }) => (
-                  <div
-                    className={cn(
-                      "relative rounded-xl",
-                      isOver && "ring-2 ring-primary/40",
-                    )}
-                  >
-                    <ProjectCard
-                      actions={<ProjectActions project={item.project} />}
-                      onOpen={(source) =>
-                        trackEvent("project_opened", {
-                          sizeId: item.project.sizeId,
-                          source,
-                        })
-                      }
-                      openLabel="打开"
-                      project={item.project}
-                      route="/projects/$projectId"
-                      snapshot={
-                        item.project.snapshots[item.project.currentIndex]
-                      }
-                      timestamp={item.project.updatedAt}
-                      timestampLabel="更新"
-                    />
-                  </div>
+                renderProject={(item, { dropHint, isOver }) => (
+                  <ProjectCard
+                    actions={<ProjectActions project={item.project} />}
+                    dropHint={dropHint}
+                    dropTarget={isOver}
+                    onOpen={(source) =>
+                      trackEvent("project_opened", {
+                        sizeId: item.project.sizeId,
+                        source,
+                      })
+                    }
+                    openLabel="打开"
+                    project={item.project}
+                    route="/projects/$projectId"
+                    snapshot={item.project.snapshots[item.project.currentIndex]}
+                    timestamp={item.project.updatedAt}
+                    timestampLabel="更新"
+                  />
                 )}
               />
             ) : (

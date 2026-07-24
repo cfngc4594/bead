@@ -28,6 +28,7 @@ type CollectionCardRoute = "/discover/collections/$collectionId";
 type CollectionCardBaseProps = {
   actions?: ReactNode;
   collection: CollectionCardModel;
+  dropHint?: boolean;
   dropTarget?: boolean;
   onOpen?: (source: "preview" | "title") => void;
   timestamp: number;
@@ -72,6 +73,7 @@ export function toCollectionCardModel(
 export function CollectionCard({
   actions,
   collection,
+  dropHint = false,
   dropTarget = false,
   onActivate,
   onOpen,
@@ -100,11 +102,20 @@ export function CollectionCard({
   return (
     <article
       className={cn(
-        "group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50",
-        dropTarget && "border-primary ring-2 ring-primary/30",
+        "group relative overflow-hidden rounded-xl border bg-card shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/50",
+        dropHint && !dropTarget && "border-primary/35",
+        dropTarget &&
+          "scale-[1.02] border-primary shadow-md ring-2 ring-primary/35",
       )}
       data-collection-id={collection.id}
     >
+      {dropTarget ? (
+        <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex justify-center">
+          <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground text-xs shadow-sm">
+            加入合集
+          </span>
+        </div>
+      ) : null}
       {onActivate ? (
         <button
           aria-label={`打开合集 ${collection.title}`}

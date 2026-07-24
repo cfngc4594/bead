@@ -1,5 +1,6 @@
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { Skeleton } from "@bead/ui/components/skeleton";
+import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { getCanvasSize } from "@/config/canvas-sizes";
@@ -13,6 +14,8 @@ type ProjectCardRoute = "/discover/$projectId" | "/projects/$projectId";
 
 export function ProjectCard({
   actions,
+  dropHint = false,
+  dropTarget = false,
   openLabel,
   onOpen,
   project,
@@ -22,6 +25,8 @@ export function ProjectCard({
   timestampLabel,
 }: {
   actions?: ReactNode;
+  dropHint?: boolean;
+  dropTarget?: boolean;
   openLabel: string;
   onOpen: (source: "preview" | "title") => void;
   project: ProjectCardProject;
@@ -33,7 +38,22 @@ export function ProjectCard({
   const size = getCanvasSize(project.sizeId);
 
   return (
-    <article className="group overflow-hidden rounded-xl border bg-card shadow-xs transition-colors hover:border-primary/50">
+    <article
+      className={cn(
+        "group relative overflow-hidden rounded-xl border bg-card shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/50",
+        dropHint && !dropTarget && "border-primary/35",
+        dropTarget &&
+          "scale-[1.02] border-primary shadow-md ring-2 ring-primary/35",
+      )}
+    >
+      {dropTarget ? (
+        <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex justify-center">
+          <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground text-xs shadow-sm">
+            合并为合集
+          </span>
+        </div>
+      ) : null}
+
       <Link
         aria-label={`${openLabel} ${project.title}`}
         className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
