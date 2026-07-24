@@ -24,11 +24,11 @@ import { cn } from "@bead/ui/lib/utils";
 import { FolderOpen, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ProjectPreview } from "@/features/bead/components/project-preview";
 import { getCanvasSize } from "@/config/canvas-sizes";
+import { ProjectPreview } from "@/features/bead/components/project-preview";
+import { projectsCollection } from "@/features/bead/storage/projects";
 import { useLocalCollections } from "@/features/collections/hooks/use-local-collections";
 import { addProjectsToCollection } from "@/features/collections/storage/collection-commands";
-import { projectsCollection } from "@/features/bead/storage/projects";
 import {
   NativeBackDialog,
   NativeBackDrawer,
@@ -116,9 +116,7 @@ export function JoinCollectionDialog({
                   onClick={() => void handleJoin(collection.id)}
                   type="button"
                 >
-                  <CollectionPickerPreview
-                    projectIds={collection.projectIds}
-                  />
+                  <CollectionPickerPreview projectIds={collection.projectIds} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-sm">
                       {collection.title}

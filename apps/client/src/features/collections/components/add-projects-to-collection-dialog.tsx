@@ -151,9 +151,7 @@ export function AddProjectsToCollectionDialog({
             <FolderOpen />
           </EmptyMedia>
           <EmptyTitle>没有可添加的作品</EmptyTitle>
-          <EmptyDescription>
-            作品库中暂无未入集的作品可添加。
-          </EmptyDescription>
+          <EmptyDescription>作品库中暂无未入集的作品可添加。</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );

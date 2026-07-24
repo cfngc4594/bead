@@ -16,10 +16,7 @@ import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/projects/collections/$collectionId")({
   loader: async ({ params: { collectionId } }) => {
-    await Promise.all([
-      preloadProjectsCollection(),
-      preloadLocalCollections(),
-    ]);
+    await Promise.all([preloadProjectsCollection(), preloadLocalCollections()]);
 
     if (!collectionsCollection.has(collectionId)) {
       throw notFound();
@@ -36,16 +33,14 @@ function LocalCollectionRoute() {
   const { collectionId } = Route.useParams();
   const { data: allProjects = [] } = useLiveQuery(
     (query) =>
-      query
-        .from({ project: projectsCollection })
-        .select(({ project }) => ({
-          id: project.id,
-          title: project.title,
-          sizeId: project.sizeId,
-          snapshots: project.snapshots,
-          currentIndex: project.currentIndex,
-          updatedAt: project.updatedAt,
-        })),
+      query.from({ project: projectsCollection }).select(({ project }) => ({
+        id: project.id,
+        title: project.title,
+        sizeId: project.sizeId,
+        snapshots: project.snapshots,
+        currentIndex: project.currentIndex,
+        updatedAt: project.updatedAt,
+      })),
     [],
   );
   const projectsById = useMemo(

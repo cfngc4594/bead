@@ -72,10 +72,7 @@ export function useLibraryFeed({
   );
 
   const collectionByProjectId = useMemo(() => {
-    const map = new Map<
-      string,
-      { id: string; title: string }
-    >();
+    const map = new Map<string, { id: string; title: string }>();
 
     for (const collection of collections) {
       for (const projectId of collection.projectIds) {
@@ -155,9 +152,7 @@ export function useLibraryFeed({
     items.sort((left, right) => {
       if (sort === "title") {
         const leftTitle =
-          left.kind === "project"
-            ? left.project.title
-            : left.collection.title;
+          left.kind === "project" ? left.project.title : left.collection.title;
         const rightTitle =
           right.kind === "project"
             ? right.project.title

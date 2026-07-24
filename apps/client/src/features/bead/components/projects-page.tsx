@@ -69,12 +69,11 @@ export function ProjectsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isBatchBusy, setIsBatchBusy] = useState(false);
   const hasTrackedTitleFilterRef = useRef(false);
-  const { feedItems, hasLibrary, sizeOptions } =
-    useLibraryFeed({
-      selectedSizes,
-      sort,
-      titleFilter,
-    });
+  const { feedItems, hasLibrary, sizeOptions } = useLibraryFeed({
+    selectedSizes,
+    sort,
+    titleFilter,
+  });
 
   const selectableProjectIds = useMemo(
     () =>
@@ -433,10 +432,7 @@ export function ProjectsPage() {
                     (entry) =>
                       entry.kind === "project" && entry.id === projectId,
                   );
-                  if (
-                    item?.kind === "project" &&
-                    item.collectionId == null
-                  ) {
+                  if (item?.kind === "project" && item.collectionId == null) {
                     enterSelectMode(projectId);
                   }
                 }}
@@ -528,7 +524,9 @@ export function ProjectsPage() {
                       route="/projects/$projectId"
                       selectMode={selectMode && !isGroupedResult}
                       selected={selectedProjectIds.has(item.project.id)}
-                      snapshot={item.project.snapshots[item.project.currentIndex]}
+                      snapshot={
+                        item.project.snapshots[item.project.currentIndex]
+                      }
                       timestamp={item.project.updatedAt}
                       timestampLabel="更新"
                     />
@@ -623,12 +621,8 @@ export function ProjectsPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                删除 {selectedCount} 个作品？
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                删除后无法恢复。
-              </AlertDialogDescription>
+              <AlertDialogTitle>删除 {selectedCount} 个作品？</AlertDialogTitle>
+              <AlertDialogDescription>删除后无法恢复。</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isBatchBusy}>取消</AlertDialogCancel>
@@ -638,9 +632,7 @@ export function ProjectsPage() {
                 type="button"
                 variant="destructive"
               >
-                {isBatchBusy ? (
-                  <LoaderCircle className="animate-spin" />
-                ) : null}
+                {isBatchBusy ? <LoaderCircle className="animate-spin" /> : null}
                 {isBatchBusy ? "正在删除" : "删除"}
               </Button>
             </AlertDialogFooter>

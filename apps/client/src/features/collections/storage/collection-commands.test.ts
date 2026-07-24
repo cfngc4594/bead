@@ -5,8 +5,8 @@ import {
   projectsCollection,
 } from "@/features/bead/storage/projects";
 import {
-  addProjectToCollection,
   addProjectsToCollection,
+  addProjectToCollection,
   createLocalCollection,
   deleteLocalCollection,
   mergeProjectsIntoCollection,

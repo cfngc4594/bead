@@ -145,7 +145,7 @@ export function LocalCollectionPage({
         />
       </header>
 
-      <section className="min-h-0 flex-1 overflow-auto scrollbar-gutter-stable px-4 py-6 md:px-8">
+      <section className="min-h-0 flex-1 overflow-auto px-4 py-6 md:px-8">
         <div className="mx-auto w-full max-w-5xl">
           {orderedProjects.length > 0 ? (
             <DndContext

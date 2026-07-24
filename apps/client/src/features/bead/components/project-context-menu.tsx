@@ -1,32 +1,4 @@
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@bead/ui/components/context-menu";
-import { useIsMobile } from "@bead/ui/hooks/use-mobile";
-import {
-  Copy,
-  Edit3,
-  FolderInput,
-  LoaderCircle,
-  Share2,
-  Trash2,
-} from "lucide-react";
-import { type ReactNode, useState } from "react";
-import { toast } from "sonner";
-import {
-  deleteProject as deleteStoredProject,
-  duplicateProject as duplicateStoredProject,
-  getFilledCount,
-  type Project,
-} from "@/features/bead/storage/projects";
-import { JoinCollectionDialog } from "@/features/collections/components/join-collection-dialog";
-import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
-import { createPublishInput } from "@/features/discover/lib/create-publish-input";
-import { NativeBackAlertDialog } from "@/features/native/native-back-overlays";
-import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -36,6 +8,13 @@ import {
 } from "@bead/ui/components/alert-dialog";
 import { Button } from "@bead/ui/components/button";
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@bead/ui/components/context-menu";
+import {
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -43,13 +22,33 @@ import {
   DialogTitle,
 } from "@bead/ui/components/dialog";
 import { Input } from "@bead/ui/components/input";
-import { NativeBackDialog } from "@/features/native/native-back-overlays";
+import { useIsMobile } from "@bead/ui/hooks/use-mobile";
+import {
+  Copy,
+  Edit3,
+  FolderInput,
+  LoaderCircle,
+  Share2,
+  Trash2,
+} from "lucide-react";
+import { type ReactNode, type SubmitEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   DEFAULT_PROJECT_TITLE,
+  deleteProject as deleteStoredProject,
+  duplicateProject as duplicateStoredProject,
+  getFilledCount,
+  type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import { JoinCollectionDialog } from "@/features/collections/components/join-collection-dialog";
+import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
+import { createPublishInput } from "@/features/discover/lib/create-publish-input";
+import {
+  NativeBackAlertDialog,
+  NativeBackDialog,
+} from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
-import { type SubmitEvent, useEffect } from "react";
 
 type ProjectContextProject = Pick<
   Project,
