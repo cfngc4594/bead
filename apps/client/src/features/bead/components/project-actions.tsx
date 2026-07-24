@@ -226,7 +226,6 @@ export function ProjectActions({
       {isDeleteOpen ? (
         <DeleteProjectDialog
           isDeleting={isDeleting}
-          project={project}
           onConfirm={handleDeleteProject}
           onOpenChange={handleDeleteOpenChange}
           open={isDeleteOpen}
@@ -310,13 +309,11 @@ function RenameProjectDialog({
 
 function DeleteProjectDialog({
   isDeleting,
-  project,
   onConfirm,
   onOpenChange,
   open,
 }: {
   isDeleting: boolean;
-  project: ProjectActionsProject;
   onConfirm: () => Promise<void>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -326,9 +323,7 @@ function DeleteProjectDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>删除作品？</AlertDialogTitle>
-          <AlertDialogDescription>
-            删除「{project.title}」后无法恢复
-          </AlertDialogDescription>
+          <AlertDialogDescription>删除后无法恢复</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>

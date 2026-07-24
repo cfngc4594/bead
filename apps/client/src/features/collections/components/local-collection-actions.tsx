@@ -96,7 +96,7 @@ export function LocalCollectionActions({
     try {
       await deleteLocalCollection(collection.id);
       trackEvent("collection_deleted", { projectCount: projects.length });
-      toast.success("合集已删除，作品仍保留在作品库中");
+      toast.success("合集已删除");
       setIsDeleteOpen(false);
       onDeleted?.();
     } catch (error) {
@@ -168,7 +168,7 @@ export function LocalCollectionActions({
             <AlertDialogHeader>
               <AlertDialogTitle>删除合集？</AlertDialogTitle>
               <AlertDialogDescription>
-                只会删除「{collection.title}」的分组，合集中的作品仍会保留
+                作品会保留在作品库
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

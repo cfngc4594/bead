@@ -10,7 +10,6 @@ import { Button } from "@bead/ui/components/button";
 import {
   Empty,
   EmptyContent,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -483,10 +482,7 @@ export function ProjectsPage() {
               <EmptyMedia variant="icon">
                 <Grid2x2 />
               </EmptyMedia>
-              <EmptyTitle>还没有拼豆作品</EmptyTitle>
-              <EmptyDescription>
-                创建作品后，可用「选择」合并多个作品为合集
-              </EmptyDescription>
+              <EmptyTitle>还没有作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

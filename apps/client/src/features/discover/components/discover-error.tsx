@@ -22,7 +22,7 @@ export function DiscoverError() {
               <WifiOff />
             </EmptyMedia>
             <EmptyTitle>暂时无法加载发现</EmptyTitle>
-            <EmptyDescription>检查网络连接后再试一次</EmptyDescription>
+            <EmptyDescription>检查网络后再试</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void router.invalidate()}>
@@ -46,7 +46,7 @@ export function DiscoverProjectNotFound() {
               <SearchX />
             </EmptyMedia>
             <EmptyTitle>作品不存在</EmptyTitle>
-            <EmptyDescription>这个作品可能已被移除</EmptyDescription>
+            <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>

@@ -1,7 +1,5 @@
 import {
   Empty,
-  EmptyContent,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -81,24 +79,19 @@ export function BeadModelPreview({
             <EmptyMedia variant="icon">
               <CircleDot />
             </EmptyMedia>
-            <EmptyTitle>画布还是空的</EmptyTitle>
+            <EmptyTitle>画布是空的</EmptyTitle>
           </EmptyHeader>
-          <EmptyContent>
-            <EmptyDescription>
-              铺好颜色后，这里会显示所选的 3D 烫豆效果
-            </EmptyDescription>
-          </EmptyContent>
         </Empty>
       )}
 
       {hasBeads && mode !== "beads" && textureStatus === "loading" ? (
-        <ModelPreviewStatus compact label="正在加载表面纹理" />
+        <ModelPreviewStatus compact label="正在加载纹理" />
       ) : null}
       {hasBeads && mode !== "beads" && textureStatus === "error" ? (
         <ModelPreviewStatus
           compact
           error
-          label="纹理加载失败，正使用基础材质"
+          label="纹理不可用"
         />
       ) : null}
     </section>

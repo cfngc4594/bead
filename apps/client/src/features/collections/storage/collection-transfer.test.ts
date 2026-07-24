@@ -9,7 +9,7 @@ describe("getCollectionPublishIssue", () => {
   });
 
   test("rejects empty collections", () => {
-    expect(getCollectionPublishIssue([])).toBe("合集为空，添加作品后才能发布");
+    expect(getCollectionPublishIssue([])).toBe("合集为空");
   });
 
   test("allows blank projects as placeholders", () => {

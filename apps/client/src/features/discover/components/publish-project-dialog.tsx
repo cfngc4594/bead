@@ -10,7 +10,6 @@ import {
 import {
   Empty,
   EmptyContent,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -109,7 +108,9 @@ export function PublishProjectDialog({
       <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>发布到发现</DialogTitle>
-          <DialogDescription>每次发布都会创建一份独立快照</DialogDescription>
+          <DialogDescription className="sr-only">
+            选择要发布的作品
+          </DialogDescription>
         </DialogHeader>
 
         {publishableProjects.length > 0 ? (
@@ -135,12 +136,7 @@ export function PublishProjectDialog({
               <EmptyMedia variant="icon">
                 <FolderOpen />
               </EmptyMedia>
-              <EmptyTitle>还没有可发布的作品</EmptyTitle>
-              <EmptyDescription>
-                {projects.length > 0
-                  ? "先继续编辑一个空白作品，再把它发布到发现"
-                  : "先完成一个拼豆作品，再把它发布到发现"}
-              </EmptyDescription>
+              <EmptyTitle>没有可发布的作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

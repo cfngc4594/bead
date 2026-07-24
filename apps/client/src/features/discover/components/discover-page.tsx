@@ -2,7 +2,6 @@ import { Button } from "@bead/ui/components/button";
 import {
   Empty,
   EmptyContent,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -143,16 +142,7 @@ export function DiscoverPage() {
               <EmptyMedia variant="icon">
                 <Compass />
               </EmptyMedia>
-              <EmptyTitle>
-                {hasPublishableProjects ? "分享你的第一个作品" : "发现页还空着"}
-              </EmptyTitle>
-              <EmptyDescription>
-                {hasPublishableProjects
-                  ? "选择一个本地作品，将当前快照发布到这里"
-                  : hasLocalProjects
-                    ? "完成一个拼豆作品后，就可以把它发布到这里"
-                    : "先创作一个拼豆作品，再把它发布到这里"}
-              </EmptyDescription>
+              <EmptyTitle>还没有作品</EmptyTitle>
             </EmptyHeader>
             <EmptyContent>
               {hasPublishableProjects ? (

@@ -124,7 +124,7 @@ export function ModelPreviewControls({
           value={Math.round(settings.lightIntensity * 100)}
         />
         <ModelSettingSlider
-          label="材质粗糙度"
+          label="磨砂"
           max={90}
           min={20}
           onChange={(value) => updateSetting("roughness", value / 100)}
@@ -133,7 +133,7 @@ export function ModelPreviewControls({
         {isPressedMode ? (
           <>
             <ModelSettingSlider
-              label="纹理强度"
+              label="纹理深浅"
               max={200}
               min={0}
               onChange={(value) =>
@@ -142,7 +142,7 @@ export function ModelPreviewControls({
               value={Math.round(settings.textureStrength * 100)}
             />
             <ModelSettingSlider
-              label="纹理大小"
+              label="纹理缩放"
               max={200}
               min={50}
               onChange={(value) => updateSetting("textureScale", value / 100)}
@@ -161,9 +161,6 @@ export function ModelPreviewControls({
             <h2 className="text-sm font-medium" id={`${layout}-pet-heading`}>
               桌面宠物
             </h2>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              将当前 3D 效果显示为可拖动的 Android 悬浮宠物
-            </p>
           </div>
           <div
             className={cn(
@@ -205,7 +202,7 @@ export function ModelPreviewControls({
           </div>
           {!pet.canStart ? (
             <p className="text-xs text-muted-foreground">
-              画布中至少需要一颗豆子
+              需要至少一颗豆子
             </p>
           ) : null}
         </section>

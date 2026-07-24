@@ -13,7 +13,6 @@ import {
 } from "@bead/ui/components/drawer";
 import {
   Empty,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -141,9 +140,6 @@ export function JoinCollectionDialog({
             <FolderOpen />
           </EmptyMedia>
           <EmptyTitle>还没有合集</EmptyTitle>
-          <EmptyDescription>
-            先用多选选择至少两个作品，再合并为合集
-          </EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
