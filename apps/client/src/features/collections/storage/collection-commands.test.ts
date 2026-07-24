@@ -6,6 +6,7 @@ import {
 } from "@/features/bead/storage/projects";
 import {
   addProjectToCollection,
+  addProjectsToCollection,
   createLocalCollection,
   deleteLocalCollection,
   mergeProjectsIntoCollection,
@@ -87,6 +88,41 @@ test("deleting a collection preserves its projects", async () => {
       await deleteLocalCollection(collection.id);
     }
     for (const projectId of [first.id, second.id]) {
+      if (projectsCollection.has(projectId)) {
+        await deleteProject(projectId);
+      }
+    }
+  }
+});
+
+test("addProjectsToCollection appends multiple projects", async () => {
+  const first = await createProject("16x16");
+  const second = await createProject("16x16");
+  const third = await createProject("16x16");
+  const fourth = await createProject("16x16");
+
+  try {
+    const collection = await createLocalCollection({
+      projectIds: [first.id, second.id],
+      title: "Bulk",
+    });
+
+    await addProjectsToCollection({
+      collectionId: collection.id,
+      projectIds: [third.id, fourth.id, third.id],
+    });
+
+    expect(collectionsCollection.get(collection.id)?.projectIds).toEqual([
+      first.id,
+      second.id,
+      third.id,
+      fourth.id,
+    ]);
+  } finally {
+    for (const collection of [...collectionsCollection.values()]) {
+      await deleteLocalCollection(collection.id);
+    }
+    for (const projectId of [first.id, second.id, third.id, fourth.id]) {
       if (projectsCollection.has(projectId)) {
         await deleteProject(projectId);
       }

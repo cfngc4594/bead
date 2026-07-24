@@ -1,3 +1,4 @@
+import { useIsMobile } from "@bead/ui/hooks/use-mobile";
 import { cn } from "@bead/ui/lib/utils";
 import {
   closestCenter,
@@ -5,16 +6,24 @@ import {
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
+  MouseSensor,
   pointerWithin,
   useDraggable,
   useDroppable,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import { type ReactNode, useState } from "react";
-import { useLibraryDndSensors } from "@/features/collections/hooks/use-library-dnd-sensors";
 
 export type LibraryFeedItem<TProject, TCollection> =
-  | { kind: "project"; id: string; project: TProject }
+  | {
+      kind: "project";
+      id: string;
+      project: TProject;
+      collectionId?: string;
+      collectionTitle?: string;
+    }
   | {
       kind: "collection";
       id: string;
@@ -53,6 +62,7 @@ export function LibraryDndGrid<TProject, TCollection>({
   items,
   onMergeProjects,
   onAddProjectToCollection,
+  onLongPressProject,
   overlay,
   renderCollection,
   renderProject,
@@ -61,6 +71,7 @@ export function LibraryDndGrid<TProject, TCollection>({
   items: Array<LibraryFeedItem<TProject, TCollection>>;
   onMergeProjects: (sourceProjectId: string, targetProjectId: string) => void;
   onAddProjectToCollection: (projectId: string, collectionId: string) => void;
+  onLongPressProject?: (projectId: string) => void;
   overlay?: (project: TProject) => ReactNode;
   renderCollection: (
     item: Extract<
@@ -74,8 +85,14 @@ export function LibraryDndGrid<TProject, TCollection>({
     state: { dropHint: boolean; isDragging: boolean; isOver: boolean },
   ) => ReactNode;
 }) {
+  const isMobile = useIsMobile();
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const sensors = useLibraryDndSensors();
+  // Desktop-only mouse drag. Mobile long-press is reserved for multi-select.
+  const mouse = useSensor(MouseSensor, {
+    activationConstraint: { distance: 8 },
+  });
+  const sensors = useSensors(mouse);
+  const dragEnabled = !disabled && !isMobile;
   const isDraggingProject = activeProjectId !== null;
   const activeProject = activeProjectId
     ? items.find(
@@ -98,7 +115,7 @@ export function LibraryDndGrid<TProject, TCollection>({
     const over = parseLibraryId(event.over?.id);
     setActiveProjectId(null);
 
-    if (!active || !over || active.kind !== "project" || disabled) {
+    if (!active || !over || active.kind !== "project" || !dragEnabled) {
       return;
     }
 
@@ -121,15 +138,25 @@ export function LibraryDndGrid<TProject, TCollection>({
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}
-      sensors={disabled ? [] : sensors}
+      sensors={dragEnabled ? sensors : []}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) =>
           item.kind === "project" ? (
             <LibraryProjectItem
-              disabled={disabled}
-              dropHint={isDraggingProject && item.id !== activeProjectId}
+              disabled={!dragEnabled || item.collectionId != null}
+              dropHint={
+                dragEnabled &&
+                item.collectionId == null &&
+                isDraggingProject &&
+                item.id !== activeProjectId
+              }
               key={`project:${item.id}`}
+              onLongPress={
+                onLongPressProject
+                  ? () => onLongPressProject(item.id)
+                  : undefined
+              }
               projectId={item.id}
             >
               {(state) => renderProject(item, state)}
@@ -137,8 +164,8 @@ export function LibraryDndGrid<TProject, TCollection>({
           ) : (
             <LibraryCollectionItem
               collectionId={item.id}
-              disabled={disabled}
-              dropHint={isDraggingProject}
+              disabled={!dragEnabled}
+              dropHint={dragEnabled && isDraggingProject}
               key={`collection:${item.id}`}
             >
               {(state) => renderCollection(item, state)}
@@ -162,6 +189,7 @@ function LibraryProjectItem({
   children,
   disabled,
   dropHint,
+  onLongPress,
   projectId,
 }: {
   children: (state: {
@@ -171,6 +199,7 @@ function LibraryProjectItem({
   }) => ReactNode;
   disabled: boolean;
   dropHint: boolean;
+  onLongPress?: () => void;
   projectId: string;
 }) {
   const id = projectDragId(projectId);
@@ -190,13 +219,71 @@ function LibraryProjectItem({
         !disabled && "cursor-grab active:cursor-grabbing",
       )}
       layout={!isDragging}
+      onContextMenu={(event) => {
+        // Allow card-level context menus; don't let browser menu steal focus mid-drag.
+        if (isDragging) {
+          event.preventDefault();
+        }
+      }}
+      onPointerDown={(event) => {
+        if (!onLongPress || event.pointerType !== "touch") {
+          return;
+        }
+
+        const target = event.currentTarget;
+        const pointerId = event.pointerId;
+        const startX = event.clientX;
+        const startY = event.clientY;
+        let triggered = false;
+
+        const timer = window.setTimeout(() => {
+          triggered = true;
+          onLongPress();
+        }, 400);
+
+        function clear() {
+          window.clearTimeout(timer);
+          target.removeEventListener("pointermove", onMove);
+          target.removeEventListener("pointerup", onUp);
+          target.removeEventListener("pointercancel", onUp);
+        }
+
+        function onMove(moveEvent: PointerEvent) {
+          if (moveEvent.pointerId !== pointerId) {
+            return;
+          }
+
+          const dx = Math.abs(moveEvent.clientX - startX);
+          const dy = Math.abs(moveEvent.clientY - startY);
+
+          if (dx > 10 || dy > 10) {
+            clear();
+          }
+        }
+
+        function onUp(upEvent: PointerEvent) {
+          if (upEvent.pointerId !== pointerId) {
+            return;
+          }
+
+          clear();
+
+          if (triggered) {
+            upEvent.preventDefault();
+          }
+        }
+
+        target.addEventListener("pointermove", onMove);
+        target.addEventListener("pointerup", onUp);
+        target.addEventListener("pointercancel", onUp);
+      }}
       ref={(node) => {
         setDragRef(node);
         setDropRef(node);
       }}
       transition={{ type: "spring", stiffness: 420, damping: 36 }}
       {...attributes}
-      {...listeners}
+      {...(disabled ? {} : listeners)}
     >
       {children({
         dropHint,

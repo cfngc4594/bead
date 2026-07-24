@@ -11,6 +11,8 @@ export function ProjectsSkeleton() {
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <Skeleton className="h-8 w-32 rounded-lg sm:w-48 lg:w-56" />
               <Skeleton className="h-8 w-18 rounded-lg" />
+              <Skeleton className="h-8 w-24 rounded-lg" />
+              <Skeleton className="h-8 w-18 rounded-lg" />
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Skeleton className="h-8 w-18 rounded-lg" />

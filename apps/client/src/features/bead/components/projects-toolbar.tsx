@@ -12,8 +12,16 @@ import {
 } from "@bead/ui/components/command";
 import { Input } from "@bead/ui/components/input";
 import { PopoverContent, PopoverTrigger } from "@bead/ui/components/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@bead/ui/components/select";
 import { cn } from "@bead/ui/lib/utils";
-import { Check, PlusCircle, X } from "lucide-react";
+import { Check, CheckSquare, PlusCircle, X } from "lucide-react";
+import type { LibrarySort } from "@/features/collections/hooks/use-library-feed";
 import { NativeBackPopover } from "@/features/native/native-back-overlays";
 
 export type ProjectSizeFilterOption = {
@@ -23,18 +31,26 @@ export type ProjectSizeFilterOption = {
 };
 
 type ProjectsToolbarProps = {
+  onSelectModeChange: (enabled: boolean) => void;
   onSizeFilterChange: (value: string[]) => void;
+  onSortChange: (value: LibrarySort) => void;
   onTitleFilterChange: (value: string) => void;
+  selectMode: boolean;
   sizeFilter: string[];
   sizeOptions: ProjectSizeFilterOption[];
+  sort: LibrarySort;
   titleFilter: string;
 };
 
 export function ProjectsToolbar({
+  onSelectModeChange,
   onSizeFilterChange,
+  onSortChange,
   onTitleFilterChange,
+  selectMode,
   sizeFilter,
   sizeOptions,
+  sort,
   titleFilter,
 }: ProjectsToolbarProps) {
   const hasTitleFilter = titleFilter.length > 0;
@@ -68,6 +84,32 @@ export function ProjectsToolbar({
           options={sizeOptions}
           value={sizeFilter}
         />
+        <Select
+          onValueChange={(value) => onSortChange(value as LibrarySort)}
+          value={sort}
+        >
+          <SelectTrigger
+            aria-label="排序方式"
+            className="h-8 w-auto gap-1.5 px-2.5"
+            size="sm"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="start">
+            <SelectItem value="updatedAt">最近更新</SelectItem>
+            <SelectItem value="title">标题</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          aria-pressed={selectMode}
+          className="h-8"
+          onClick={() => onSelectModeChange(!selectMode)}
+          type="button"
+          variant={selectMode ? "secondary" : "outline"}
+        >
+          <CheckSquare aria-hidden="true" />
+          {selectMode ? "取消选择" : "选择"}
+        </Button>
       </div>
     </div>
   );

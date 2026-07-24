@@ -76,24 +76,47 @@ export async function addProjectToCollection({
   collectionId: string;
   projectId: string;
 }) {
+  return addProjectsToCollection({
+    collectionId,
+    projectIds: [projectId],
+  });
+}
+
+/** Add one or more projects to a collection (moves them out of any prior collection). */
+export async function addProjectsToCollection({
+  collectionId,
+  projectIds,
+}: {
+  collectionId: string;
+  projectIds: string[];
+}) {
   await preloadLocalCollections();
-  const collection = getRequiredCollection(collectionId);
+  getRequiredCollection(collectionId);
 
-  if (!projectsCollection.has(projectId)) {
-    throw new Error(`Bead project not found: ${projectId}`);
-  }
+  const uniqueProjectIds = getUniqueExistingProjectIds(projectIds);
 
-  if (collection.projectIds.includes(projectId)) {
-    return collection;
+  if (uniqueProjectIds.length === 0) {
+    return getRequiredCollection(collectionId);
   }
 
   const now = Date.now();
 
   await commitCollectionMutation(() => {
-    detachProjectFromCollections(projectId);
+    for (const projectId of uniqueProjectIds) {
+      detachProjectFromCollections(projectId);
+    }
+
     const current = getRequiredCollection(collectionId);
+    const nextProjectIds = [...current.projectIds];
+
+    for (const projectId of uniqueProjectIds) {
+      if (!nextProjectIds.includes(projectId)) {
+        nextProjectIds.push(projectId);
+      }
+    }
+
     collectionsCollection.update(collectionId, (draft) => {
-      draft.projectIds = [...current.projectIds, projectId];
+      draft.projectIds = nextProjectIds;
       draft.updatedAt = now;
     });
   });
