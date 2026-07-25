@@ -1,17 +1,30 @@
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
+import { cn } from "@bead/ui/lib/utils";
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/components/theme-provider";
+import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
-import { getBoardSize } from "@/features/bead/lib/canvas-geometry";
-import type { Project } from "@/features/bead/storage/projects";
-import { getCurrentCanvas } from "@/features/bead/storage/projects";
+import { getPatternSize } from "@/features/bead/lib/canvas-geometry";
+import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 
 type ProjectPreviewProps = {
-  project: Project;
+  className?: string;
+  cols: number;
+  rows: number;
+  snapshot: CanvasSnapshot;
 };
 
 const previewScale = 2;
 const previewPadding = 4;
 
-export function ProjectPreview({ project }: ProjectPreviewProps) {
+export function ProjectPreview({
+  className,
+  cols,
+  rows,
+  snapshot,
+}: ProjectPreviewProps) {
+  const { theme } = useTheme();
+  const boardTheme = resolveBoardTheme(theme);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -21,15 +34,15 @@ export function ProjectPreview({ project }: ProjectPreviewProps) {
       return;
     }
 
-    const boardSize = getBoardSize(project.rows, project.cols);
-    const beads = getCurrentCanvas({
-      cellCount: project.rows * project.cols,
-      project,
+    const patternSize = getPatternSize(rows, cols);
+    const beads = expandSnapshot({
+      cellCount: rows * cols,
+      snapshot,
     });
     const context = canvas.getContext("2d");
 
-    canvas.width = (boardSize.width + previewPadding * 2) * previewScale;
-    canvas.height = (boardSize.height + previewPadding * 2) * previewScale;
+    canvas.width = (patternSize.width + previewPadding * 2) * previewScale;
+    canvas.height = (patternSize.height + previewPadding * 2) * previewScale;
 
     if (!context) {
       return;
@@ -37,13 +50,18 @@ export function ProjectPreview({ project }: ProjectPreviewProps) {
 
     context.scale(previewScale, previewScale);
     context.translate(previewPadding, previewPadding);
-    drawBoard(context, project.rows, project.cols, beads, {
-      showBeadCodes: true,
-      showGuideLines: false,
+    drawBoard(context, rows, cols, beads, {
+      showBeadCodes: false,
+      showGrid: false,
+      showLabels: false,
+      theme: boardTheme,
     });
-  }, [project]);
+  }, [boardTheme, cols, rows, snapshot]);
 
   return (
-    <canvas className="h-full w-full object-contain p-3" ref={canvasRef} />
+    <canvas
+      className={cn("h-full w-full object-contain p-3", className)}
+      ref={canvasRef}
+    />
   );
 }

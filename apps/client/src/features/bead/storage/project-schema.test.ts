@@ -8,16 +8,13 @@ test("projectSchema accepts the current project shape", () => {
   expect(projectSchema.safeParse(createProject()).success).toBe(true);
 });
 
-test("projectSchema rejects invalid structure and dimensions", () => {
+test("projectSchema rejects invalid structure", () => {
   expect(
     projectSchema.safeParse(createProject({ snapshots: [] })).success,
   ).toBe(false);
-  expect(projectSchema.safeParse(createProject({ rows: 0 })).success).toBe(
-    false,
-  );
-  expect(projectSchema.safeParse(createProject({ cols: 1.5 })).success).toBe(
-    false,
-  );
+  expect(
+    projectSchema.safeParse({ ...createProject(), sizeId: "17x17" }).success,
+  ).toBe(false);
 });
 
 test("projectIntegritySchema accepts the current project shape", () => {
@@ -95,8 +92,6 @@ function createProject(overrides: Partial<Project> = {}): Project {
     id: "project-1",
     title: "Demo",
     sizeId: "16x16",
-    rows: 16,
-    cols: 16,
     snapshots: [
       {
         cells: [

@@ -1,11 +1,15 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
+import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
+import { useBeadCodeRendering } from "@/features/bead/lib/bead-code-visibility";
+import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
+import { boardInteractionPalettes } from "@/features/bead/lib/board-theme-colors";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import {
   cellSize,
@@ -29,41 +33,48 @@ import type {
 
 export type { GridCell };
 
-export type CanvasBoardProps = {
+type CanvasBoardViewProps = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
+  resetViewSignal: number;
+  resetViewAfterResizeSignal: number;
+  viewport?: Viewport;
+};
+
+type EditableCanvasBoardProps = {
+  mode: "editable";
   tool: CanvasTool;
-  showBeadCodes: boolean;
-  showGuideLines: boolean;
   onEditStart: () => void;
   onEditCell: (cell: GridCell) => void;
   onEditEnd: () => void;
   onPickCell: (cell: GridCell) => void;
   onMoveSelection: (beads: CanvasState) => void;
   selectionResetSignal: number;
-  resetViewSignal: number;
-  resetViewAfterResizeSignal: number;
-  viewport?: Viewport;
 };
 
-export function CanvasBoard({
-  rows,
-  cols,
-  beads,
-  tool,
-  showBeadCodes,
-  showGuideLines,
-  onEditStart,
-  onEditCell,
-  onEditEnd,
-  onPickCell,
-  onMoveSelection,
-  selectionResetSignal,
-  resetViewSignal,
-  resetViewAfterResizeSignal,
-  viewport = { width: 760, height: 640 },
-}: CanvasBoardProps) {
+type ReadonlyCanvasBoardProps = {
+  mode: "readonly";
+};
+
+export type CanvasBoardProps = CanvasBoardViewProps &
+  (EditableCanvasBoardProps | ReadonlyCanvasBoardProps);
+
+export function CanvasBoard(props: CanvasBoardProps) {
+  const {
+    rows,
+    cols,
+    beads,
+    resetViewSignal,
+    resetViewAfterResizeSignal,
+    viewport = { width: 760, height: 640 },
+  } = props;
+  const tool = props.mode === "editable" ? props.tool : "pan";
+  const selectionResetSignal =
+    props.mode === "editable" ? props.selectionResetSignal : 0;
+  const { theme } = useTheme();
+  const boardTheme = resolveBoardTheme(theme);
+  const interactionPalette = boardInteractionPalettes[boardTheme];
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const { isStageMeasured, stageSize } = useStageSize({
@@ -99,8 +110,8 @@ export function CanvasBoard({
     containerRef,
     onPinchMove: handlePinchMove,
     onPinchStart: () => {
-      if (isPainting) {
-        onEditEnd();
+      if (isPainting && props.mode === "editable") {
+        props.onEditEnd();
         setIsPainting(false);
       }
       setHoveredCell(null);
@@ -120,18 +131,26 @@ export function CanvasBoard({
   } = useSelectionGesture({
     beads,
     cols,
-    onMoveSelection,
+    onMoveSelection: moveSelection,
     resetSignal: selectionResetSignal,
     rows,
   });
   const gridOrigin = getGridOrigin();
+  const renderBeadCodes = useBeadCodeRendering(view.scale);
+  const showCellHover = shouldShowCellHover(tool, isTemporaryPan);
   const canvasCursor = getCanvasCursor({
-    hoveredCell,
+    hoveredCell: showCellHover ? hoveredCell : null,
     isDraggable,
     isMovingSelection,
     selection,
     tool,
   });
+
+  useEffect(() => {
+    if (!showCellHover) {
+      setHoveredCell(null);
+    }
+  }, [showCellHover]);
 
   function getCellFromPointer(): GridCell | null {
     const stage = stageRef.current;
@@ -145,6 +164,10 @@ export function CanvasBoard({
   }
 
   function editFromPointer() {
+    if (props.mode !== "editable") {
+      return;
+    }
+
     const cell = getCellFromPointer();
 
     if (!cell) {
@@ -152,7 +175,13 @@ export function CanvasBoard({
     }
 
     setHoveredCell(cell);
-    onEditCell(cell);
+    props.onEditCell(cell);
+  }
+
+  function moveSelection(nextBeads: CanvasState) {
+    if (props.mode === "editable") {
+      props.onMoveSelection(nextBeads);
+    }
   }
 
   function handlePointerDown(event: KonvaEventObject<PointerEvent>) {
@@ -162,11 +191,15 @@ export function CanvasBoard({
       return;
     }
 
+    if (props.mode !== "editable") {
+      return;
+    }
+
     if (tool === "picker") {
       const cell = getCellFromPointer();
 
       if (cell) {
-        onPickCell(cell);
+        props.onPickCell(cell);
       }
 
       return;
@@ -186,7 +219,7 @@ export function CanvasBoard({
     }
 
     setIsPainting(true);
-    onEditStart();
+    props.onEditStart();
     editFromPointer();
   }
 
@@ -198,7 +231,14 @@ export function CanvasBoard({
     }
 
     const cell = getCellFromPointer();
-    setHoveredCell(cell);
+
+    if (showCellHover) {
+      setHoveredCell(cell);
+    }
+
+    if (props.mode !== "editable") {
+      return;
+    }
 
     if (tool === "select") {
       updateSelection(cell);
@@ -206,7 +246,7 @@ export function CanvasBoard({
     }
 
     if (isEditTool(tool) && isPainting && cell) {
-      onEditCell(cell);
+      props.onEditCell(cell);
     }
   }
 
@@ -217,8 +257,8 @@ export function CanvasBoard({
 
     resetPinchIfIdle(resetPinch);
 
-    if (isPainting) {
-      onEditEnd();
+    if (isPainting && props.mode === "editable") {
+      props.onEditEnd();
     }
 
     if (tool === "select") {
@@ -233,8 +273,8 @@ export function CanvasBoard({
     resetPinch();
     setHoveredCell(null);
 
-    if (isPainting) {
-      onEditEnd();
+    if (isPainting && props.mode === "editable") {
+      props.onEditEnd();
     }
 
     setIsPainting(false);
@@ -286,20 +326,20 @@ export function CanvasBoard({
             listening={false}
             sceneFunc={(context, shape) => {
               drawBoard(context, rows, cols, displayedBeads, {
-                showBeadCodes,
-                showGuideLines,
+                showBeadCodes: renderBeadCodes,
+                theme: boardTheme,
               });
               context.fillStrokeShape(shape);
             }}
           />
-          {hoveredCell ? (
+          {showCellHover && hoveredCell ? (
             <>
               <Rect
                 x={gridOrigin.x + hoveredCell.column * cellSize + 1}
                 y={gridOrigin.y + hoveredCell.row * cellSize + 1}
                 width={cellSize - 2}
                 height={cellSize - 2}
-                stroke="#ffffff"
+                stroke={interactionPalette.hoverOuterStroke}
                 strokeWidth={2}
                 listening={false}
               />
@@ -308,7 +348,7 @@ export function CanvasBoard({
                 y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
                 width={cellSize - 5}
                 height={cellSize - 5}
-                stroke="#111111"
+                stroke={interactionPalette.hoverInnerStroke}
                 strokeWidth={1}
                 listening={false}
               />
@@ -317,8 +357,8 @@ export function CanvasBoard({
           {tool === "select" && selectionBox ? (
             <Rect
               {...getSelectionBoxRect(selectionBox)}
-              fill="rgba(59, 130, 246, 0.12)"
-              stroke="#2563eb"
+              fill={interactionPalette.selectionFill}
+              stroke={interactionPalette.selectionStroke}
               strokeWidth={1.5}
               listening={false}
             />
@@ -330,12 +370,12 @@ export function CanvasBoard({
                 moveTargetOrigin ?? selection.origin,
               )}
               dash={[5, 4]}
-              fill="rgba(59, 130, 246, 0.08)"
+              fill={interactionPalette.activeSelectionFill}
               stroke={
                 moveTargetOrigin &&
                 !isSelectionInBounds(selection, moveTargetOrigin, rows, cols)
-                  ? "#dc2626"
-                  : "#2563eb"
+                  ? interactionPalette.invalidSelectionStroke
+                  : interactionPalette.selectionStroke
               }
               strokeWidth={1.5}
               listening={false}
@@ -367,6 +407,10 @@ export function CanvasBoard({
       </Stage>
     </div>
   );
+}
+
+function shouldShowCellHover(tool: CanvasTool, isTemporaryPan: boolean) {
+  return tool !== "pan" && !isTemporaryPan;
 }
 
 function isEditTool(tool: CanvasTool) {

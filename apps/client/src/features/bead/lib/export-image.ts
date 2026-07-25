@@ -14,8 +14,6 @@ type ExportBeadImageOptions = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
-  showBeadCodes: boolean;
-  showGuideLines: boolean;
 };
 
 type DownloadBeadImageOptions = ExportBeadImageOptions & {
@@ -49,8 +47,6 @@ export function createBeadImageBlob({
   rows,
   cols,
   beads,
-  showBeadCodes,
-  showGuideLines,
 }: ExportBeadImageOptions) {
   const boardSize = getBoardSize(rows, cols);
   const stats = getBeadStats(beads);
@@ -79,7 +75,7 @@ export function createBeadImageBlob({
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.scale(exportScale, exportScale);
   context.translate(exportHorizontalPadding, exportTopPadding);
-  drawBoard(context, rows, cols, beads, { showBeadCodes, showGuideLines });
+  drawBoard(context, rows, cols, beads, { showBeadCodes: true });
   drawBeadStats(context, {
     stats,
     x: boardOrigin,

@@ -24,8 +24,11 @@ import { Input } from "@bead/ui/components/input";
 import {
   Copy,
   Edit3,
+  FolderInput,
+  FolderMinus,
   LoaderCircle,
   MoreHorizontal,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { type SubmitEvent, useEffect, useState } from "react";
@@ -34,9 +37,14 @@ import {
   DEFAULT_PROJECT_TITLE,
   deleteProject as deleteStoredProject,
   duplicateProject as duplicateStoredProject,
+  getFilledCount,
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import { JoinCollectionDialog } from "@/features/collections/components/join-collection-dialog";
+import { removeProjectFromCollection } from "@/features/collections/storage/collection-commands";
+import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
+import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import {
   NativeBackAlertDialog,
   NativeBackDialog,
@@ -44,10 +52,25 @@ import {
 } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
-export function ProjectActions({ project }: { project: Project }) {
+type ProjectActionsProject = Pick<
+  Project,
+  "currentIndex" | "id" | "sizeId" | "snapshots" | "title"
+>;
+
+export function ProjectActions({
+  collectionId,
+  project,
+}: {
+  collectionId?: string;
+  project: ProjectActionsProject;
+}) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const publishMutation = usePublishDiscoverProjects();
+  const inCollection = collectionId != null;
 
   async function handleDuplicateProject() {
     try {
@@ -80,6 +103,47 @@ export function ProjectActions({ project }: { project: Project }) {
     }
   }
 
+  async function handlePublishProject() {
+    if (publishMutation.isPending || getFilledCount(project) === 0) {
+      return;
+    }
+
+    try {
+      await publishMutation.mutateAsync([createPublishInput(project)]);
+      trackEvent("project_published", {
+        projectCount: 1,
+        sizeId: project.sizeId,
+        source: "project_actions",
+      });
+      toast.success("已发布");
+    } catch (error) {
+      console.error("Unable to publish bead project", error);
+      toast.error("发布作品失败");
+    }
+  }
+
+  async function handleRemoveFromCollection() {
+    if (!collectionId || isRemoving) {
+      return;
+    }
+
+    setIsRemoving(true);
+
+    try {
+      await removeProjectFromCollection({
+        collectionId,
+        projectId: project.id,
+      });
+      trackEvent("collection_project_removed", { source: "menu" });
+      toast.success("已移出合集");
+    } catch (error) {
+      console.error("Unable to remove project from collection", error);
+      toast.error("移出合集失败");
+    } finally {
+      setIsRemoving(false);
+    }
+  }
+
   function handleDeleteOpenChange(nextOpen: boolean) {
     if (!nextOpen && isDeleting) {
       return;
@@ -94,20 +158,52 @@ export function ProjectActions({ project }: { project: Project }) {
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={`${project.title} 操作`}
+            onPointerDown={(event) => event.stopPropagation()}
             size="icon-sm"
             variant="ghost"
           >
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
+        <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem onSelect={() => setIsRenameOpen(true)}>
             <Edit3 />
             重命名
           </DropdownMenuItem>
+          {inCollection ? (
+            <DropdownMenuItem
+              disabled={isRemoving}
+              onSelect={() => void handleRemoveFromCollection()}
+            >
+              {isRemoving ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <FolderMinus />
+              )}
+              移出合集
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onSelect={() => setIsJoinOpen(true)}>
+              <FolderInput />
+              加入合集…
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={handleDuplicateProject}>
             <Copy />
             复制
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={
+              publishMutation.isPending || getFilledCount(project) === 0
+            }
+            onSelect={handlePublishProject}
+          >
+            {publishMutation.isPending ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <Share2 />
+            )}
+            {publishMutation.isPending ? "正在发布" : "发布"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -130,10 +226,16 @@ export function ProjectActions({ project }: { project: Project }) {
       {isDeleteOpen ? (
         <DeleteProjectDialog
           isDeleting={isDeleting}
-          project={project}
           onConfirm={handleDeleteProject}
           onOpenChange={handleDeleteOpenChange}
           open={isDeleteOpen}
+        />
+      ) : null}
+      {isJoinOpen ? (
+        <JoinCollectionDialog
+          onOpenChange={setIsJoinOpen}
+          open={isJoinOpen}
+          projectIds={[project.id]}
         />
       ) : null}
     </>
@@ -145,7 +247,7 @@ function RenameProjectDialog({
   onOpenChange,
   open,
 }: {
-  project: Project;
+  project: ProjectActionsProject;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -207,13 +309,11 @@ function RenameProjectDialog({
 
 function DeleteProjectDialog({
   isDeleting,
-  project,
   onConfirm,
   onOpenChange,
   open,
 }: {
   isDeleting: boolean;
-  project: Project;
   onConfirm: () => Promise<void>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -223,9 +323,7 @@ function DeleteProjectDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>删除作品？</AlertDialogTitle>
-          <AlertDialogDescription>
-            删除「{project.title}」后无法恢复。
-          </AlertDialogDescription>
+          <AlertDialogDescription>删除后无法恢复</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>

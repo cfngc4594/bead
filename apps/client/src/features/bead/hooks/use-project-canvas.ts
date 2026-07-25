@@ -40,8 +40,6 @@ export function useProjectCanvas({
           id: project.id,
           title: project.title,
           sizeId: project.sizeId,
-          rows: project.rows,
-          cols: project.cols,
           snapshots: project.snapshots,
           currentIndex: project.currentIndex,
           updatedAt: project.updatedAt,

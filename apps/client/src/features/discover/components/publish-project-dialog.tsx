@@ -1,0 +1,171 @@
+import { MAX_DISCOVER_PROJECTS_PER_PUBLISH } from "@bead/core/discover";
+import { Button } from "@bead/ui/components/button";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@bead/ui/components/dialog";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@bead/ui/components/empty";
+import { ScrollArea } from "@bead/ui/components/scroll-area";
+import { FolderOpen, LoaderCircle, Upload } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { SelectableProjectCard } from "@/features/bead/components/selectable-project-card";
+import { useProjectChoices } from "@/features/bead/hooks/use-project-choices";
+import { getFilledCount } from "@/features/bead/storage/projects";
+import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
+import { createPublishInput } from "@/features/discover/lib/create-publish-input";
+import { NativeBackDialog } from "@/features/native/native-back-overlays";
+import { trackEvent } from "@/lib/analytics";
+
+export function PublishProjectDialog({
+  onOpenChange,
+  open,
+}: {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}) {
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const publishMutation = usePublishDiscoverProjects();
+  const { data: projects = [] } = useProjectChoices();
+  const publishableProjects = projects.filter(
+    (project) => getFilledCount(project) > 0,
+  );
+  const isPublishing = publishMutation.isPending;
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen && isPublishing) {
+      return;
+    }
+
+    onOpenChange(nextOpen);
+  }
+
+  function toggleProject(projectId: string) {
+    if (
+      !selectedProjectIds.has(projectId) &&
+      selectedProjectIds.size >= MAX_DISCOVER_PROJECTS_PER_PUBLISH
+    ) {
+      toast.error(`每次最多发布 ${MAX_DISCOVER_PROJECTS_PER_PUBLISH} 个作品`);
+      return;
+    }
+
+    setSelectedProjectIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (nextIds.has(projectId)) {
+        nextIds.delete(projectId);
+      } else {
+        nextIds.add(projectId);
+      }
+
+      return nextIds;
+    });
+  }
+
+  async function handlePublish() {
+    if (selectedProjectIds.size === 0 || isPublishing) {
+      return;
+    }
+
+    const selectedProjects = publishableProjects.filter((project) =>
+      selectedProjectIds.has(project.id),
+    );
+
+    try {
+      await publishMutation.mutateAsync(
+        selectedProjects.map(createPublishInput),
+      );
+      trackEvent("project_published", {
+        projectCount: selectedProjects.length,
+        source: "discover_dialog",
+      });
+      toast.success(
+        selectedProjects.length === 1
+          ? "已发布"
+          : `已发布 ${selectedProjects.length} 个作品`,
+      );
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Unable to publish bead projects", error);
+      toast.error("发布作品失败");
+    }
+  }
+
+  return (
+    <NativeBackDialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-h-[min(42rem,calc(100dvh-2rem))] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>发布</DialogTitle>
+          <DialogDescription className="sr-only">
+            选择要发布的作品
+          </DialogDescription>
+        </DialogHeader>
+
+        {publishableProjects.length > 0 ? (
+          <ScrollArea className="-mx-1 min-h-0">
+            <div className="grid gap-3 px-1 pb-1 sm:grid-cols-2">
+              {publishableProjects.map((project) => {
+                const isSelected = selectedProjectIds.has(project.id);
+
+                return (
+                  <SelectableProjectCard
+                    isSelected={isSelected}
+                    key={project.id}
+                    onToggle={() => toggleProject(project.id)}
+                    project={project}
+                  />
+                );
+              })}
+            </div>
+          </ScrollArea>
+        ) : (
+          <Empty className="flex-1 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FolderOpen />
+              </EmptyMedia>
+              <EmptyTitle>暂无可发布的作品</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
+        )}
+
+        <DialogFooter>
+          <Button
+            disabled={isPublishing}
+            onClick={() => handleOpenChange(false)}
+            type="button"
+            variant="outline"
+          >
+            取消
+          </Button>
+          <Button
+            disabled={selectedProjectIds.size === 0 || isPublishing}
+            onClick={() => void handlePublish()}
+            type="button"
+          >
+            {isPublishing ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <Upload />
+            )}
+            {isPublishing
+              ? "正在发布"
+              : selectedProjectIds.size > 0
+                ? `发布 ${selectedProjectIds.size} 个作品`
+                : "发布"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </NativeBackDialog>
+  );
+}

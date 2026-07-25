@@ -1,5 +1,5 @@
+import { canvasSizeIdSchema } from "@bead/core/canvas-sizes";
 import { z } from "zod";
-import { canvasSizeIdSchema } from "@/config/canvas-sizes";
 
 export const beadFillSchema = z
   .object({

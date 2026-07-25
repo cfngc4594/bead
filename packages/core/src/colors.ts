@@ -1,10 +1,12 @@
+import { z } from "zod";
+
 export type BeadColor = {
   type: "mard";
   code: string;
   hex: `#${string}`;
 };
 
-export const mardColors: BeadColor[] = [
+export const mardColors: readonly BeadColor[] = [
   { type: "mard", code: "A1", hex: "#FAF4C8" },
   { type: "mard", code: "A2", hex: "#FFFFD5" },
   { type: "mard", code: "A3", hex: "#FEFF8B" },
@@ -297,3 +299,24 @@ export const mardColors: BeadColor[] = [
   { type: "mard", code: "ZG7", hex: "#E2A9D2" },
   { type: "mard", code: "ZG8", hex: "#AB91C0" },
 ];
+
+const mardColorCodes = new Set(mardColors.map((color) => color.code));
+
+export const mardColorCodeSchema = z
+  .string()
+  .refine((code) => mardColorCodes.has(code), "Unknown MARD bead color code");
+
+const mardColorsByCode = new Map(
+  mardColors.map((color) => [color.code, color] as const),
+);
+const mardColorIndexes = new Map(
+  mardColors.map((color, index) => [color.code, index] as const),
+);
+
+export function getMardColor(code: string) {
+  return mardColorsByCode.get(code);
+}
+
+export function getMardColorIndex(code: string) {
+  return mardColorIndexes.get(code) ?? -1;
+}

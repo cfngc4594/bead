@@ -1,5 +1,5 @@
-import { devEnv } from "./dev-env.js";
-import { app } from "./index.js";
+import { devEnv } from "./dev-env";
+import { app } from "./index";
 
 export default {
   port: devEnv.PORT,

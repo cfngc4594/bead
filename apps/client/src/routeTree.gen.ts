@@ -9,15 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ProjectsRouteRouteImport } from './routes/projects/route'
+import { Route as TabsRouteRouteImport } from './routes/_tabs/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects/$projectId'
+import { Route as DiscoverProjectIdRouteImport } from './routes/discover/$projectId'
+import { Route as TabsSettingsRouteImport } from './routes/_tabs/settings'
+import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
+import { Route as TabsDiscoverRouteImport } from './routes/_tabs/discover'
+import { Route as ProjectsCollectionsIndexRouteImport } from './routes/projects/collections/index'
+import { Route as DiscoverCollectionsIndexRouteImport } from './routes/discover/collections/index'
+import { Route as ProjectsCollectionsCollectionIdRouteImport } from './routes/projects/collections/$collectionId'
+import { Route as DiscoverCollectionsCollectionIdRouteImport } from './routes/discover/collections/$collectionId'
 
-const ProjectsRouteRoute = ProjectsRouteRouteImport.update({
-  id: '/projects',
-  path: '/projects',
+const TabsRouteRoute = TabsRouteRouteImport.update({
+  id: '/_tabs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,70 +31,164 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProjectsRouteRoute,
-} as any)
 const ProjectsNewRoute = ProjectsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => ProjectsRouteRoute,
+  id: '/projects/new',
+  path: '/projects/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
-  id: '/$projectId',
-  path: '/$projectId',
-  getParentRoute: () => ProjectsRouteRoute,
+  id: '/projects/$projectId',
+  path: '/projects/$projectId',
+  getParentRoute: () => rootRouteImport,
 } as any)
+const DiscoverProjectIdRoute = DiscoverProjectIdRouteImport.update({
+  id: '/discover/$projectId',
+  path: '/discover/$projectId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TabsSettingsRoute = TabsSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
+const TabsProjectsRoute = TabsProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
+const TabsDiscoverRoute = TabsDiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => TabsRouteRoute,
+} as any)
+const ProjectsCollectionsIndexRoute =
+  ProjectsCollectionsIndexRouteImport.update({
+    id: '/projects/collections/',
+    path: '/projects/collections/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiscoverCollectionsIndexRoute =
+  DiscoverCollectionsIndexRouteImport.update({
+    id: '/discover/collections/',
+    path: '/discover/collections/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProjectsCollectionsCollectionIdRoute =
+  ProjectsCollectionsCollectionIdRouteImport.update({
+    id: '/projects/collections/$collectionId',
+    path: '/projects/collections/$collectionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiscoverCollectionsCollectionIdRoute =
+  DiscoverCollectionsCollectionIdRouteImport.update({
+    id: '/discover/collections/$collectionId',
+    path: '/discover/collections/$collectionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/projects': typeof ProjectsRouteRouteWithChildren
+  '/discover': typeof TabsDiscoverRoute
+  '/projects': typeof TabsProjectsRoute
+  '/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects/': typeof ProjectsIndexRoute
+  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
+  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
+  '/discover/collections/': typeof DiscoverCollectionsIndexRoute
+  '/projects/collections/': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/discover': typeof TabsDiscoverRoute
+  '/projects': typeof TabsProjectsRoute
+  '/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects': typeof ProjectsIndexRoute
+  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
+  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
+  '/discover/collections': typeof DiscoverCollectionsIndexRoute
+  '/projects/collections': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/projects': typeof ProjectsRouteRouteWithChildren
+  '/_tabs': typeof TabsRouteRouteWithChildren
+  '/_tabs/discover': typeof TabsDiscoverRoute
+  '/_tabs/projects': typeof TabsProjectsRoute
+  '/_tabs/settings': typeof TabsSettingsRoute
+  '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/projects/': typeof ProjectsIndexRoute
+  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
+  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
+  '/discover/collections/': typeof DiscoverCollectionsIndexRoute
+  '/projects/collections/': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/projects' | '/projects/$projectId' | '/projects/new' | '/projects/'
+    | '/'
+    | '/discover'
+    | '/projects'
+    | '/settings'
+    | '/discover/$projectId'
+    | '/projects/$projectId'
+    | '/projects/new'
+    | '/discover/collections/$collectionId'
+    | '/projects/collections/$collectionId'
+    | '/discover/collections/'
+    | '/projects/collections/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/projects/$projectId' | '/projects/new' | '/projects'
+  to:
+    | '/'
+    | '/discover'
+    | '/projects'
+    | '/settings'
+    | '/discover/$projectId'
+    | '/projects/$projectId'
+    | '/projects/new'
+    | '/discover/collections/$collectionId'
+    | '/projects/collections/$collectionId'
+    | '/discover/collections'
+    | '/projects/collections'
   id:
     | '__root__'
     | '/'
-    | '/projects'
+    | '/_tabs'
+    | '/_tabs/discover'
+    | '/_tabs/projects'
+    | '/_tabs/settings'
+    | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
-    | '/projects/'
+    | '/discover/collections/$collectionId'
+    | '/projects/collections/$collectionId'
+    | '/discover/collections/'
+    | '/projects/collections/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ProjectsRouteRoute: typeof ProjectsRouteRouteWithChildren
+  TabsRouteRoute: typeof TabsRouteRouteWithChildren
+  DiscoverProjectIdRoute: typeof DiscoverProjectIdRoute
+  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
+  ProjectsNewRoute: typeof ProjectsNewRoute
+  DiscoverCollectionsCollectionIdRoute: typeof DiscoverCollectionsCollectionIdRoute
+  ProjectsCollectionsCollectionIdRoute: typeof ProjectsCollectionsCollectionIdRoute
+  DiscoverCollectionsIndexRoute: typeof DiscoverCollectionsIndexRoute
+  ProjectsCollectionsIndexRoute: typeof ProjectsCollectionsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteRouteImport
+    '/_tabs': {
+      id: '/_tabs'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TabsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -98,49 +198,105 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/': {
-      id: '/projects/'
-      path: '/'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof ProjectsIndexRouteImport
-      parentRoute: typeof ProjectsRouteRoute
-    }
     '/projects/new': {
       id: '/projects/new'
-      path: '/new'
+      path: '/projects/new'
       fullPath: '/projects/new'
       preLoaderRoute: typeof ProjectsNewRouteImport
-      parentRoute: typeof ProjectsRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/projects/$projectId': {
       id: '/projects/$projectId'
-      path: '/$projectId'
+      path: '/projects/$projectId'
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof ProjectsProjectIdRouteImport
-      parentRoute: typeof ProjectsRouteRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover/$projectId': {
+      id: '/discover/$projectId'
+      path: '/discover/$projectId'
+      fullPath: '/discover/$projectId'
+      preLoaderRoute: typeof DiscoverProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_tabs/settings': {
+      id: '/_tabs/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof TabsSettingsRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
+    '/_tabs/projects': {
+      id: '/_tabs/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof TabsProjectsRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
+    '/_tabs/discover': {
+      id: '/_tabs/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof TabsDiscoverRouteImport
+      parentRoute: typeof TabsRouteRoute
+    }
+    '/projects/collections/': {
+      id: '/projects/collections/'
+      path: '/projects/collections'
+      fullPath: '/projects/collections/'
+      preLoaderRoute: typeof ProjectsCollectionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover/collections/': {
+      id: '/discover/collections/'
+      path: '/discover/collections'
+      fullPath: '/discover/collections/'
+      preLoaderRoute: typeof DiscoverCollectionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/collections/$collectionId': {
+      id: '/projects/collections/$collectionId'
+      path: '/projects/collections/$collectionId'
+      fullPath: '/projects/collections/$collectionId'
+      preLoaderRoute: typeof ProjectsCollectionsCollectionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover/collections/$collectionId': {
+      id: '/discover/collections/$collectionId'
+      path: '/discover/collections/$collectionId'
+      fullPath: '/discover/collections/$collectionId'
+      preLoaderRoute: typeof DiscoverCollectionsCollectionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface ProjectsRouteRouteChildren {
-  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
-  ProjectsNewRoute: typeof ProjectsNewRoute
-  ProjectsIndexRoute: typeof ProjectsIndexRoute
+interface TabsRouteRouteChildren {
+  TabsDiscoverRoute: typeof TabsDiscoverRoute
+  TabsProjectsRoute: typeof TabsProjectsRoute
+  TabsSettingsRoute: typeof TabsSettingsRoute
 }
 
-const ProjectsRouteRouteChildren: ProjectsRouteRouteChildren = {
-  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
-  ProjectsNewRoute: ProjectsNewRoute,
-  ProjectsIndexRoute: ProjectsIndexRoute,
+const TabsRouteRouteChildren: TabsRouteRouteChildren = {
+  TabsDiscoverRoute: TabsDiscoverRoute,
+  TabsProjectsRoute: TabsProjectsRoute,
+  TabsSettingsRoute: TabsSettingsRoute,
 }
 
-const ProjectsRouteRouteWithChildren = ProjectsRouteRoute._addFileChildren(
-  ProjectsRouteRouteChildren,
+const TabsRouteRouteWithChildren = TabsRouteRoute._addFileChildren(
+  TabsRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProjectsRouteRoute: ProjectsRouteRouteWithChildren,
+  TabsRouteRoute: TabsRouteRouteWithChildren,
+  DiscoverProjectIdRoute: DiscoverProjectIdRoute,
+  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
+  ProjectsNewRoute: ProjectsNewRoute,
+  DiscoverCollectionsCollectionIdRoute: DiscoverCollectionsCollectionIdRoute,
+  ProjectsCollectionsCollectionIdRoute: ProjectsCollectionsCollectionIdRoute,
+  DiscoverCollectionsIndexRoute: DiscoverCollectionsIndexRoute,
+  ProjectsCollectionsIndexRoute: ProjectsCollectionsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

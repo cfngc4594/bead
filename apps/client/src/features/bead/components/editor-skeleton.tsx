@@ -1,10 +1,9 @@
+import { mardColors } from "@bead/core/colors";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
-import { mardColors } from "@/data/colors";
 
-const modeToolSkeletons = ["pan", "paint", "mix", "erase", "picker", "select"];
-const toolbarViewSkeletons = ["focus", "model-preview", "codes", "guides"];
-const mobileToolbarViewSkeletons = ["focus", "model-preview"];
+const toolbarViewSkeletons = ["focus", "model-preview"];
+const mobileToolSkeletons = ["pan", "select", "draw"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [
   "image-import",
@@ -48,52 +47,67 @@ export function EditorSkeleton() {
 
 export function CanvasBoardSkeleton() {
   return (
-    <div className="grid h-full w-full touch-none place-items-center overflow-hidden overscroll-none p-6">
-      <div className="flex w-full max-w-[min(78vw,520px)] flex-col items-center gap-4">
-        <Skeleton className="aspect-square w-full max-w-[min(72vh,520px)] rounded-lg" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-2 rounded-full" />
-          <Skeleton className="h-2 w-24 rounded-full" />
+    <>
+      <div className="grid h-full w-full touch-none place-items-center overflow-hidden overscroll-none p-6">
+        <div className="flex w-full max-w-[min(78vw,520px)] flex-col items-center gap-4">
+          <Skeleton className="aspect-square w-full max-w-[min(72vh,520px)] rounded-lg" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-2 rounded-full" />
+            <Skeleton className="h-2 w-24 rounded-full" />
+          </div>
         </div>
       </div>
-    </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
+        <div className="flex items-center gap-1.5 rounded-lg bg-card p-1.5 shadow-md">
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+        </div>
+      </div>
+    </>
   );
 }
 
 function EditorToolbarSkeleton() {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
+      <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <ToolbarIconSkeleton />
-        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md lg:w-56 lg:flex-none" />
+        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 lg:flex">
-        {modeToolSkeletons.map((item) => (
-          <ToolbarIconSkeleton key={item} />
-        ))}
-        {desktopToolbarActionGroups.map((group) => (
-          <ToolbarSkeletonGroup group={group} key={group.join("-")} />
+      <div className="hidden min-w-0 flex-1 items-center justify-end gap-1.5 md:flex">
+        {desktopToolbarActionGroups.map((group, index) => (
+          <ToolbarSkeletonGroup
+            group={group}
+            key={group.join("-")}
+            withSeparator={index > 0}
+          />
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
-        {mobileToolbarViewSkeletons.map((item) => (
-          <ToolbarIconSkeleton key={item} />
-        ))}
-        {toolbarHistorySkeletons.map((item) => (
-          <ToolbarIconSkeleton key={item} />
-        ))}
+      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+        {[...toolbarViewSkeletons, ...toolbarHistorySkeletons.slice(0, 3)].map(
+          (item) => (
+            <ToolbarIconSkeleton key={item} />
+          ),
+        )}
         <ToolbarIconSkeleton />
       </div>
     </header>
   );
 }
 
-function ToolbarSkeletonGroup({ group }: { group: readonly string[] }) {
+function ToolbarSkeletonGroup({
+  group,
+  withSeparator = false,
+}: {
+  group: readonly string[];
+  withSeparator?: boolean;
+}) {
   return (
     <>
-      <ToolbarSeparatorSkeleton />
+      {withSeparator ? <ToolbarSeparatorSkeleton /> : null}
       {group.map((item) => (
         <ToolbarIconSkeleton key={item} />
       ))}
@@ -112,7 +126,9 @@ function ToolbarSeparatorSkeleton() {
 function DesktopEditorSidebarSkeleton() {
   return (
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
-      <CurrentColorSkeleton className="h-16 border-b px-4" />
+      <div className="flex h-16 shrink-0 items-center border-b px-4">
+        <CurrentColorSkeleton />
+      </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
         <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
@@ -138,7 +154,15 @@ function DesktopEditorSidebarSkeleton() {
 function MobileEditorPanelSkeleton() {
   return (
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
-      <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
+      <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
+        <CurrentColorSkeleton />
+        <div className="flex shrink-0 items-center gap-1.5">
+          {mobileToolSkeletons.map((item) => (
+            <ToolbarIconSkeleton key={item} />
+          ))}
+          <ToolbarIconSkeleton />
+        </div>
+      </div>
 
       <div className="flex h-[200px] min-h-0 flex-col">
         <div className="relative h-12 min-w-0 shrink-0">
@@ -167,31 +191,11 @@ function MobileEditorPanelSkeleton() {
   );
 }
 
-function CurrentColorSkeleton({
-  className,
-  showAction = false,
-}: {
-  className: string;
-  showAction?: boolean;
-}) {
+function CurrentColorSkeleton() {
   return (
-    <div
-      className={`flex min-h-0 shrink-0 items-center justify-between gap-3 ${className}`}
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        <Skeleton className="size-8 shrink-0 rounded-full" />
-        <div className="flex h-9 min-w-0 flex-col justify-center gap-1">
-          <Skeleton className="h-4 w-8 rounded-sm" />
-        </div>
-      </div>
-      {showAction ? (
-        <div className="flex shrink-0 items-center gap-1.5">
-          {modeToolSkeletons.map((item) => (
-            <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
-          ))}
-          <Skeleton className="size-7 shrink-0 rounded-lg" />
-        </div>
-      ) : null}
+    <div className="flex min-w-0 items-center gap-3">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <Skeleton className="h-4 w-8 rounded-sm" />
     </div>
   );
 }

@@ -3,9 +3,13 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { Editor } from "@/features/bead/components/editor";
 import { EditorSkeleton } from "@/features/bead/components/editor-skeleton";
-import { projectsCollection } from "@/features/bead/storage/projects";
+import {
+  preloadProjectsCollection,
+  projectsCollection,
+} from "@/features/bead/storage/projects";
 
 export const Route = createFileRoute("/projects/$projectId")({
+  loader: preloadProjectsCollection,
   component: ProjectEditorRoute,
   pendingComponent: EditorSkeleton,
 });

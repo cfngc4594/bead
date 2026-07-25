@@ -1,5 +1,5 @@
+import type { BeadColor } from "@bead/core/colors";
 import { cn } from "@bead/ui/lib/utils";
-import type { BeadColor } from "@/data/colors";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 
 type ColorGridProps = {
@@ -33,7 +33,8 @@ export function ColorGrid({
             className={cn(
               "aspect-square rounded-md border font-semibold text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               layout === "mobile" && "size-10",
-              isSelected && "ring-2 ring-primary ring-offset-2",
+              isSelected &&
+                "ring-2 ring-foreground ring-offset-2 ring-offset-card",
             )}
             key={color.code}
             onClick={() => onSelectColor(color)}

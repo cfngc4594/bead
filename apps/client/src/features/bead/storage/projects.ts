@@ -1,9 +1,13 @@
 import {
+  type CanvasSizeId,
+  getCanvasSizeDefinition,
+} from "@bead/core/canvas-sizes";
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
+import {
+  BasicIndex,
   createCollection,
-  createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
-import type { CanvasSize } from "@/config/canvas-sizes";
 import {
   type CanvasState,
   createEmptyCanvas,
@@ -12,10 +16,17 @@ import {
 import type { Project } from "@/features/bead/storage/project-schema";
 import { projectIntegritySchema } from "@/features/bead/storage/project-schema";
 import {
+  cloneSnapshot,
   compactCanvas,
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
+import {
+  collectionsCollection,
+  detachProjectFromCollections,
+  preloadCollectionStorage,
+} from "@/features/collections/storage/collection-storage";
+import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 export type ProjectId = string;
 export type { Project };
@@ -31,6 +42,10 @@ export const projectsCollection = createCollection(
     getKey: (project) => project.id,
   }),
 );
+
+projectsCollection.createIndex((project) => project.id, {
+  indexType: BasicIndex,
+});
 
 export async function preloadProjectsCollection() {
   await projectsCollection.preload();
@@ -101,12 +116,11 @@ export function redoProject(projectId: ProjectId) {
 export async function duplicateProject(projectId: ProjectId) {
   const project = getRequiredProject(projectId);
   const duplicatedProject: Project = {
-    ...project,
     id: createProjectId(),
-    snapshots: project.snapshots.map((snapshot) => ({
-      ...snapshot,
-      cells: snapshot.cells.map((cell) => [...cell] as typeof cell),
-    })),
+    title: project.title,
+    sizeId: project.sizeId,
+    snapshots: project.snapshots.map(cloneSnapshot),
+    currentIndex: project.currentIndex,
     updatedAt: Date.now(),
   };
 
@@ -117,10 +131,35 @@ export async function duplicateProject(projectId: ProjectId) {
   return duplicatedProject;
 }
 
-export function deleteProject(projectId: ProjectId) {
+export async function createProjectFromSnapshot({
+  sizeId,
+  snapshot,
+  title,
+}: {
+  sizeId: CanvasSizeId;
+  snapshot: CanvasSnapshot;
+  title: string;
+}) {
+  await projectsCollection.preload();
+  const project = buildProjectFromSnapshot({
+    sizeId,
+    snapshot,
+    title,
+  });
+
+  await commitProjectMutation(() => {
+    projectsCollection.insert(project);
+  });
+
+  return project;
+}
+
+export async function deleteProject(projectId: ProjectId) {
+  await Promise.all([projectsCollection.preload(), preloadCollectionStorage()]);
   getRequiredProject(projectId);
 
-  return commitProjectMutation(() => {
+  return commitProjectDeletion(() => {
+    detachProjectFromCollections(projectId);
     projectsCollection.delete(projectId);
   });
 }
@@ -149,13 +188,12 @@ export function renameProject({
   });
 }
 
-export async function createProject(size: CanvasSize) {
+export async function createProject(sizeId: CanvasSizeId) {
+  const size = getCanvasSizeDefinition(sizeId);
   const project: Project = {
     id: createProjectId(),
     title: DEFAULT_PROJECT_TITLE,
-    sizeId: size.id,
-    rows: size.rows,
-    cols: size.cols,
+    sizeId,
     snapshots: [compactCanvas(createEmptyCanvas(size.rows * size.cols))],
     currentIndex: 0,
     updatedAt: Date.now(),
@@ -168,7 +206,33 @@ export async function createProject(size: CanvasSize) {
   return project;
 }
 
-export function getFilledCount(project: Project) {
+export function buildProjectFromSnapshot({
+  sizeId,
+  snapshot,
+  title,
+  updatedAt = Date.now(),
+}: {
+  sizeId: CanvasSizeId;
+  snapshot: CanvasSnapshot;
+  title: string;
+  updatedAt?: number;
+}): Project {
+  const normalizedTitle = normalizeProjectTitle(title);
+
+  return {
+    id: createProjectId(),
+    title:
+      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
+    sizeId,
+    snapshots: [cloneSnapshot(snapshot)],
+    currentIndex: 0,
+    updatedAt,
+  };
+}
+
+export function getFilledCount(
+  project: Pick<Project, "currentIndex" | "snapshots">,
+) {
   return getSnapshotFilledCount(project.snapshots[project.currentIndex]);
 }
 
@@ -207,12 +271,16 @@ function normalizeProjectTitle(title: string) {
 }
 
 function commitProjectMutation(mutator: () => void) {
-  const transaction = createTransaction({
-    mutationFn: async ({ transaction }) => {
-      projectsCollection.utils.acceptMutations(transaction);
-    },
-  });
+  return commitLocalStorageMutation(
+    mutator,
+    projectsCollection.utils.acceptMutations,
+  );
+}
 
-  transaction.mutate(mutator);
-  return transaction.isPersisted.promise;
+function commitProjectDeletion(mutator: () => void) {
+  return commitLocalStorageMutation(
+    mutator,
+    projectsCollection.utils.acceptMutations,
+    collectionsCollection.utils.acceptMutations,
+  );
 }

@@ -1,6 +1,6 @@
+import { mardColors } from "@bead/core/colors";
 import { useRef } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
-import { mardColors } from "@/data/colors";
 import { createPaletteEntries } from "@/features/bead/lib/color-match";
 import {
   createTvStaticSampler,

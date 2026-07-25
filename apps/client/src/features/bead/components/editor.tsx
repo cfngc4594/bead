@@ -1,22 +1,17 @@
+import { getMardColor, mardColors } from "@bead/core/colors";
 import { Capacitor } from "@capacitor/core";
-import {
-  type ComponentType,
-  lazy,
-  Suspense,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
-import { mardColors } from "@/data/colors";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
-import type { CanvasBoardProps } from "@/features/bead/components/canvas";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
-import { CanvasBoardSkeleton } from "@/features/bead/components/editor-skeleton";
+import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
+import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
+import { MobileEditorToolFlyout } from "@/features/bead/components/mobile-editor-tool-flyout";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
+import { useEditorToolFlyout } from "@/features/bead/components/use-editor-tool-flyout";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
@@ -30,15 +25,6 @@ import {
 import type { GridCell } from "@/features/bead/types";
 import { usePet } from "@/features/pet/use-pet";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
-
-const CanvasBoard = lazy(
-  () =>
-    import("@/features/bead/components/canvas").then((module) => ({
-      default: module.CanvasBoard,
-    })) as Promise<{
-      default: ComponentType<CanvasBoardProps>;
-    }>,
-);
 
 type EditorProps = {
   projectId: ProjectId;
@@ -100,10 +86,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setResetViewAfterResizeSignal,
     setResetViewSignal,
     setSelectedLetter,
-    setShowBeadCodes,
-    setShowGuideLines,
-    showBeadCodes,
-    showGuideLines,
     tool,
   } = useEditorActions({
     beads,
@@ -115,6 +97,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   });
   const mixedBeadBrush = useMixedBeadBrush({ beads, size });
   const pet = usePet();
+  const { flyoutOpen, setFlyoutOpen } = useEditorToolFlyout(tool);
 
   const filteredColors = useMemo(
     () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
@@ -168,7 +151,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       return;
     }
 
-    const color = mardColors.find((item) => item.code === bead.code);
+    const color = getMardColor(bead.code);
 
     if (!color) {
       return;
@@ -208,24 +191,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setIsExportSheetOpen(true);
     trackEvent("android_export_sheet_opened", getCanvasProperties());
     createExportImage();
-  }
-
-  function toggleBeadCodes() {
-    trackEvent("display_option_toggled", {
-      ...getCanvasProperties(),
-      enabled: !showBeadCodes,
-      option: "bead_codes",
-    });
-    setShowBeadCodes((value) => !value);
-  }
-
-  function toggleGuideLines() {
-    trackEvent("display_option_toggled", {
-      ...getCanvasProperties(),
-      enabled: !showGuideLines,
-      option: "guide_lines",
-    });
-    setShowGuideLines((value) => !value);
   }
 
   function changeModelPreviewMode(mode: ModelPreviewMode) {
@@ -295,8 +260,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           isModelPreviewOpen={modelPreview.isOpen}
           isPreparingModelPreview={modelPreview.isPreparing}
           projectTitle={title}
-          showBeadCodes={showBeadCodes}
-          showGuideLines={showGuideLines}
           onRedo={actions.redoEdit}
           onPreviewModel={modelPreview.toggle}
           onResetView={() => setResetViewSignal((value) => value + 1)}
@@ -307,13 +270,9 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onImportTemplate={actions.importTemplate}
           onBack={onBack}
           onRenameProject={handleRenameProject}
-          onSelectTool={actions.selectTool}
-          onToggleBeadCodes={toggleBeadCodes}
-          onToggleGuideLines={toggleGuideLines}
           onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
-          tool={tool}
         />
         <ExportImageSheet
           blob={exportImageBlob}
@@ -349,14 +308,13 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               settings={modelPreview.settings}
             />
           ) : (
-            <Suspense fallback={<CanvasBoardSkeleton />}>
-              <CanvasBoard
+            <>
+              <LazyCanvasBoard
+                mode="editable"
                 rows={size.rows}
                 cols={size.cols}
                 beads={beads}
                 tool={tool}
-                showBeadCodes={showBeadCodes}
-                showGuideLines={showGuideLines}
                 onEditCell={editCell}
                 onEditEnd={finishCellEdit}
                 onEditStart={beginCellEdit}
@@ -366,7 +324,19 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
                 resetViewAfterResizeSignal={resetViewAfterResizeSignal}
                 resetViewSignal={resetViewSignal}
               />
-            </Suspense>
+              <EditorToolDock
+                className="hidden md:flex"
+                flyoutOpen={flyoutOpen}
+                onFlyoutOpenChange={setFlyoutOpen}
+                onSelectTool={actions.selectTool}
+                tool={tool}
+              />
+              <MobileEditorToolFlyout
+                open={flyoutOpen}
+                onSelectTool={actions.selectTool}
+                tool={tool}
+              />
+            </>
           )}
         </div>
       </section>
@@ -382,8 +352,10 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       />
       <MobileEditorPanel
         colors={filteredColors}
+        flyoutOpen={flyoutOpen}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}
+        onFlyoutOpenChange={setFlyoutOpen}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }

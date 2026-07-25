@@ -1,28 +1,20 @@
+import {
+  canvasSizeIdSchema,
+  getCanvasSizeDefinition,
+} from "@bead/core/canvas-sizes";
+import {
+  canvasSnapshotSchema,
+  validateCanvasSnapshot,
+} from "@bead/core/canvas-snapshot";
 import { z } from "zod";
-import { canvasSizeIdSchema } from "@/config/canvas-sizes";
 
 const nonEmptyStringSchema = z.string().min(1);
 const nonnegativeIntSchema = z.number().int().nonnegative();
-const positiveIntSchema = z.number().int().positive();
-
-export const canvasSnapshotCellSchema = z.tuple([
-  nonnegativeIntSchema,
-  nonEmptyStringSchema,
-]);
-
-export const canvasSnapshotSchema = z
-  .object({
-    cells: z.array(canvasSnapshotCellSchema),
-  })
-  .strict();
-
 export const projectSchema = z
   .object({
     id: nonEmptyStringSchema,
     title: nonEmptyStringSchema,
     sizeId: canvasSizeIdSchema,
-    rows: positiveIntSchema,
-    cols: positiveIntSchema,
     snapshots: z.array(canvasSnapshotSchema).min(1),
     currentIndex: nonnegativeIntSchema,
     updatedAt: nonnegativeIntSchema,
@@ -46,7 +38,8 @@ export function validateProjectIntegrity(
   project: Project,
   addIssue: (issue: ProjectIntegrityIssue) => void,
 ) {
-  const cellCount = project.rows * project.cols;
+  const size = getCanvasSizeDefinition(project.sizeId);
+  const cellCount = size.rows * size.cols;
 
   if (project.currentIndex >= project.snapshots.length) {
     addIssue({
@@ -56,28 +49,12 @@ export function validateProjectIntegrity(
   }
 
   project.snapshots.forEach((snapshot, snapshotIndex) => {
-    const cellIndexes = new Set<number>();
-
-    snapshot.cells.forEach(([beadIndex], cellIndex) => {
-      if (beadIndex >= cellCount) {
-        addIssue({
-          message: "cell index must be within the project canvas",
-          path: ["snapshots", snapshotIndex, "cells", cellIndex, 0],
-        });
-      }
-
-      if (cellIndexes.has(beadIndex)) {
-        addIssue({
-          message: "cell indexes must be unique within a snapshot",
-          path: ["snapshots", snapshotIndex, "cells", cellIndex, 0],
-        });
-      }
-
-      cellIndexes.add(beadIndex);
+    validateCanvasSnapshot({
+      addIssue,
+      cellCount,
+      path: ["snapshots", snapshotIndex],
+      snapshot,
     });
   });
 }
-
-export type CanvasSnapshotCell = z.infer<typeof canvasSnapshotCellSchema>;
-export type CanvasSnapshot = z.infer<typeof canvasSnapshotSchema>;
 export type Project = z.infer<typeof projectSchema>;

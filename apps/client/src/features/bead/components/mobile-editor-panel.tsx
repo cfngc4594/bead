@@ -1,13 +1,13 @@
+import type { BeadColor } from "@bead/core/colors";
 import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { cn } from "@bead/ui/lib/utils";
 import { ChevronDown, ChevronUp, Rotate3D } from "lucide-react";
 import { useState } from "react";
-import type { BeadColor } from "@/data/colors";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";
-import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
+import { MobileEditorToolDock } from "@/features/bead/components/mobile-editor-tool-dock";
 import {
   ModelPreviewControls,
   type ModelPreviewControlsBinding,
@@ -20,10 +20,12 @@ type MobileEditorPanelProps = {
   selectedColor: BeadColor;
   selectedLetter: string;
   tool: CanvasTool;
+  flyoutOpen: boolean;
   modelPreviewControls: ModelPreviewControlsBinding | null;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
   onSelectTool: (tool: CanvasTool) => void;
+  onFlyoutOpenChange: (open: boolean) => void;
   onResetViewAfterResize: () => void;
 };
 
@@ -33,10 +35,12 @@ export function MobileEditorPanel({
   selectedColor,
   selectedLetter,
   tool,
+  flyoutOpen,
   modelPreviewControls,
   onSelectColor,
   onSelectLetter,
   onSelectTool,
+  onFlyoutOpenChange,
   onResetViewAfterResize,
 }: MobileEditorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -60,19 +64,19 @@ export function MobileEditorPanel({
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
               <Rotate3D aria-hidden="true" className="size-4" />
             </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">3D 预览</p>
-              <p className="truncate text-xs text-muted-foreground">
-                烫法与材质设置
-              </p>
-            </div>
+            <p className="min-w-0 truncate text-sm font-medium">3D 预览</p>
           </div>
         ) : (
           <CurrentColor color={selectedColor} />
         )}
         <div className="flex shrink-0 items-center gap-1.5">
           {isModelPreviewOpen ? null : (
-            <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+            <MobileEditorToolDock
+              flyoutOpen={flyoutOpen}
+              onFlyoutOpenChange={onFlyoutOpenChange}
+              tool={tool}
+              onSelectTool={onSelectTool}
+            />
           )}
           <Button
             aria-expanded={isExpanded}
@@ -104,7 +108,7 @@ export function MobileEditorPanel({
       </div>
 
       {isExpanded ? (
-        <div className="h-[200px] min-h-0">
+        <div className="h-50 min-h-0">
           {isModelPreviewOpen ? (
             <ScrollArea className="h-full min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
               <ModelPreviewControls
