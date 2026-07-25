@@ -38,12 +38,12 @@ function SettingsPage() {
       aria-label="设置"
       className="flex h-full min-h-0 flex-col bg-background"
     >
-      <header className="mx-auto flex h-16 w-full max-w-3xl shrink-0 items-center border-b px-4 sm:px-6 lg:px-8">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center border-b px-4 md:px-8">
         <h1 className="font-semibold text-lg tracking-tight">设置</h1>
       </header>
 
       <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 md:px-8">
           <section aria-labelledby="appearance-title" className="space-y-4">
             <SectionHeading icon={Monitor} id="appearance-title" title="外观" />
             <fieldset
