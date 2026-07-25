@@ -4,6 +4,11 @@
   "sourceRoot": "packages/core/src",
   "projectType": "library",
   "targets": {
+    "build": {
+      "cache": true,
+      "command": "bun run --cwd packages/core build",
+      "outputs": ["{projectRoot}/dist"]
+    },
     "typecheck": {
       "cache": true,
       "command": "bun run --cwd packages/core typecheck"

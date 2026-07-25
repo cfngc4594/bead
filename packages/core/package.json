@@ -3,13 +3,34 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "bun build ./src/colors.ts ./src/canvas-sizes.ts ./src/canvas-snapshot.ts ./src/discover.ts --outdir ./dist --format esm --target node --packages external",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    "./colors": "./src/colors.ts",
-    "./discover": "./src/discover.ts",
-    "./canvas-sizes": "./src/canvas-sizes.ts",
-    "./canvas-snapshot": "./src/canvas-snapshot.ts"
+    "./colors": {
+      "types": "./src/colors.ts",
+      "bun": "./src/colors.ts",
+      "node": "./dist/colors.js",
+      "default": "./src/colors.ts"
+    },
+    "./discover": {
+      "types": "./src/discover.ts",
+      "bun": "./src/discover.ts",
+      "node": "./dist/discover.js",
+      "default": "./src/discover.ts"
+    },
+    "./canvas-sizes": {
+      "types": "./src/canvas-sizes.ts",
+      "bun": "./src/canvas-sizes.ts",
+      "node": "./dist/canvas-sizes.js",
+      "default": "./src/canvas-sizes.ts"
+    },
+    "./canvas-snapshot": {
+      "types": "./src/canvas-snapshot.ts",
+      "bun": "./src/canvas-snapshot.ts",
+      "node": "./dist/canvas-snapshot.js",
+      "default": "./src/canvas-snapshot.ts"
+    }
   },
   "dependencies": {
     "zod": "^4.4.3"

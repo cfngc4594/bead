@@ -27,6 +27,7 @@
 # tanstack
 /.tanstack/
 /apps/api/out/
+/packages/core/dist/
 /apps/client/out/
 /apps/site/out/
 /packages/ui/out/
