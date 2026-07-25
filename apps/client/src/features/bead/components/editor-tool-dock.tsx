@@ -208,7 +208,8 @@ function DockToolButton({
           className={cn(
             "shrink-0 rounded-md",
             isMain ? "size-8 p-1" : "size-6 p-1",
-            isActive && "bg-muted text-foreground shadow-xs",
+            isActive &&
+              "border-border bg-muted text-foreground shadow-xs dark:border-input dark:bg-input/30",
           )}
           disabled={disabled}
           onClick={onClick}
