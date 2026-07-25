@@ -8,12 +8,12 @@ import type {
 } from "@bead/core/discover";
 import { DISCOVER_COLLECTION_PREVIEW_LIMIT } from "@bead/core/discover";
 import { and, asc, count, desc, eq, inArray, lt } from "drizzle-orm";
-import { db } from "../../db/client";
+import { db } from "../../db/client.js";
 import {
   discoverCollectionItems,
   discoverCollections,
   discoverProjects,
-} from "../../db/schema";
+} from "../../db/schema.js";
 
 type DiscoverProjectRow = typeof discoverProjects.$inferSelect;
 type DiscoverCollectionRow = typeof discoverCollections.$inferSelect;
