@@ -48,11 +48,7 @@ function DesktopTabSidebar() {
   );
 }
 
-function DesktopTabLink({
-  tab,
-}: {
-  tab: (typeof appTabs)[number];
-}) {
+function DesktopTabLink({ tab }: { tab: (typeof appTabs)[number] }) {
   const Icon = tabIcons[tab.id];
   const { label, ...linkProps } = tab;
 
