@@ -43,7 +43,10 @@ describe("discover project routes", () => {
       }),
     );
     const input = {
-      projects: [createPublishProject("Rabbit"), createPublishProject("Flower")],
+      projects: [
+        createPublishProject("Rabbit"),
+        createPublishProject("Flower"),
+      ],
     };
 
     const response = await app.request("/", {

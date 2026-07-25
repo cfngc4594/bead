@@ -53,10 +53,7 @@ export function ProjectCard({
         <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
           {size.title}
         </span>
-        <time
-          className="truncate"
-          dateTime={new Date(timestamp).toISOString()}
-        >
+        <time className="truncate" dateTime={new Date(timestamp).toISOString()}>
           {formatRelativeTime(timestamp)}
           {timestampLabel}
         </time>

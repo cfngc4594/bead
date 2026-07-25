@@ -239,7 +239,9 @@ export function ProjectsPage() {
               const card = (
                 <ProjectCard
                   actions={
-                    selectMode ? undefined : <ProjectActions project={project} />
+                    selectMode ? undefined : (
+                      <ProjectActions project={project} />
+                    )
                   }
                   onOpen={(source) =>
                     trackEvent("project_opened", {
