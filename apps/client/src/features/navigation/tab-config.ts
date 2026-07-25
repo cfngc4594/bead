@@ -26,4 +26,6 @@ export const appTabs = linkOptions([
 ]);
 
 export const appStartTab = appTabs[0];
+export const appMainTabs = appTabs.slice(0, 2);
+export const appSettingsTab = appTabs[2];
 export const appSecondaryTabs = appTabs.slice(1);

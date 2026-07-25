@@ -1,7 +1,12 @@
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
+import { cn } from "@bead/ui/lib/utils";
 import { Link, Outlet } from "@tanstack/react-router";
 import { Compass, Grid2x2, type LucideIcon, Settings } from "lucide-react";
-import { appTabs } from "@/features/navigation/tab-config";
+import {
+  appMainTabs,
+  appSettingsTab,
+  appTabs,
+} from "@/features/navigation/tab-config";
 
 const tabIcons = {
   discover: Compass,
@@ -13,39 +18,58 @@ export function TabLayout() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {isMobile ? null : <DesktopTabHeader />}
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <Outlet />
+    <div className="flex h-full min-h-0">
+      {isMobile ? null : <DesktopTabSidebar />}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <Outlet />
+        </div>
+        {isMobile ? <MobileTabNavigation /> : null}
       </div>
-      {isMobile ? <MobileTabNavigation /> : null}
     </div>
   );
 }
 
-function DesktopTabHeader() {
+function DesktopTabSidebar() {
   return (
-    <header className="shrink-0 border-b bg-background">
+    <aside className="flex h-full w-16 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
       <nav
         aria-label="主要导航"
-        className="mx-auto flex h-16 w-full max-w-5xl items-stretch gap-1 px-8"
+        className="flex flex-1 flex-col items-stretch gap-1 p-2"
       >
-        {appTabs.map(({ id, label, ...linkProps }) => {
-          const Icon = tabIcons[id];
-
-          return (
-            <Link
-              {...linkProps}
-              className="relative flex min-w-24 items-center justify-center gap-2 px-4 text-muted-foreground text-sm outline-none transition-colors after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:bg-foreground after:opacity-0 hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground data-[status=active]:after:opacity-100 focus-visible:bg-muted"
-              key={id}
-            >
-              <Icon aria-hidden="true" className="size-4" strokeWidth={1.8} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+        {appMainTabs.map((tab) => (
+          <DesktopTabLink key={tab.id} tab={tab} />
+        ))}
       </nav>
-    </header>
+      <nav aria-label="设置" className="flex flex-col items-stretch p-2">
+        <DesktopTabLink tab={appSettingsTab} />
+      </nav>
+    </aside>
+  );
+}
+
+function DesktopTabLink({
+  tab,
+}: {
+  tab: (typeof appTabs)[number];
+}) {
+  const Icon = tabIcons[tab.id];
+  const { label, ...linkProps } = tab;
+
+  return (
+    <Link
+      {...linkProps}
+      aria-label={label}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-2.5 text-muted-foreground text-xs outline-none transition-colors",
+        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        "focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground",
+        "data-[status=active]:bg-sidebar-accent data-[status=active]:font-medium data-[status=active]:text-sidebar-accent-foreground",
+      )}
+    >
+      <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
+      <span className="truncate">{label}</span>
+    </Link>
   );
 }
 

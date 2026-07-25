@@ -1,11 +1,9 @@
 import { ScrollArea } from "@bead/ui/components/scroll-area";
-import { Separator } from "@bead/ui/components/separator";
 import { cn } from "@bead/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { Info, Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
-import { appConfig } from "@/config/app";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 
 export const Route = createFileRoute("/_tabs/settings")({
@@ -79,18 +77,6 @@ function SettingsPage() {
                 );
               })}
             </fieldset>
-          </section>
-
-          <Separator />
-
-          <section aria-labelledby="about-title" className="space-y-4">
-            <SectionHeading icon={Info} id="about-title" title="关于" />
-            <dl className="grid gap-3 rounded-lg border px-3 py-3 text-sm sm:grid-cols-[8rem_1fr]">
-              <dt className="text-muted-foreground">应用</dt>
-              <dd className="font-medium">{appConfig.name}</dd>
-              <dt className="text-muted-foreground">版本</dt>
-              <dd className="font-medium">{appConfig.version}</dd>
-            </dl>
           </section>
         </div>
       </ScrollArea>
