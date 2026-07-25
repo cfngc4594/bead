@@ -4,9 +4,25 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/android.yml"
   pull_request:
     branches:
       - main
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/android.yml"
   workflow_dispatch:
 
 permissions:
