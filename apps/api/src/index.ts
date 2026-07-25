@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { discoverRoutes } from "./features/discover/routes";
-import { serverEnv } from "./server-env";
+import { discoverRoutes } from "./features/discover/routes.js";
+import { serverEnv } from "./server-env.js";
 
 export const app = new Hono()
   .use(

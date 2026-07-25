@@ -8,7 +8,10 @@ import type {
 } from "@bead/core/discover";
 import { discoverCollectionSchema } from "@bead/core/discover";
 import { z } from "zod";
-import { createDiscoverRoutes, type DiscoverRouteRepository } from "./routes";
+import {
+  createDiscoverRoutes,
+  type DiscoverRouteRepository,
+} from "./routes.js";
 
 const COLLECTION_ID = "123e4567-e89b-12d3-a456-426614174000";
 const PROJECT_IDS = [

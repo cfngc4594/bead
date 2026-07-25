@@ -12,7 +12,7 @@ import {
   findDiscoverProject,
   listDiscoverCollections,
   listDiscoverProjects,
-} from "./repository";
+} from "./repository.js";
 
 const discoverProjectParamSchema = z.object({
   projectId: z.uuid(),
