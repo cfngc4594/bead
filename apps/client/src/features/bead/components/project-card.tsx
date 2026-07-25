@@ -2,7 +2,7 @@ import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { Skeleton } from "@bead/ui/components/skeleton";
 import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { Check, FolderOpen } from "lucide-react";
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { ProjectPreview } from "@/features/bead/components/project-preview";
@@ -15,9 +15,6 @@ type ProjectCardRoute = "/discover/$projectId" | "/projects/$projectId";
 
 export function ProjectCard({
   actions,
-  collectionTitle,
-  dropHint = false,
-  dropTarget = false,
   openLabel,
   onOpen,
   onSelectToggle,
@@ -30,9 +27,6 @@ export function ProjectCard({
   timestampLabel,
 }: {
   actions?: ReactNode;
-  collectionTitle?: string;
-  dropHint?: boolean;
-  dropTarget?: boolean;
   openLabel: string;
   onOpen: (source: "preview" | "title") => void;
   onSelectToggle?: () => void;
@@ -59,20 +53,13 @@ export function ProjectCard({
         <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
           {size.title}
         </span>
-        {collectionTitle ? (
-          <span className="flex min-w-0 items-center gap-1 truncate">
-            <FolderOpen className="size-3 shrink-0" aria-hidden="true" />
-            <span className="truncate">{collectionTitle}</span>
-          </span>
-        ) : (
-          <time
-            className="truncate"
-            dateTime={new Date(timestamp).toISOString()}
-          >
-            {formatRelativeTime(timestamp)}
-            {timestampLabel}
-          </time>
-        )}
+        <time
+          className="truncate"
+          dateTime={new Date(timestamp).toISOString()}
+        >
+          {formatRelativeTime(timestamp)}
+          {timestampLabel}
+        </time>
       </div>
     </>
   );
@@ -81,20 +68,9 @@ export function ProjectCard({
     <article
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-card shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/50",
-        dropHint && !dropTarget && "border-primary/35",
-        dropTarget &&
-          "scale-[1.02] border-primary shadow-md ring-2 ring-primary/35",
         selectMode && selected && "border-primary ring-2 ring-primary/30",
       )}
     >
-      {dropTarget ? (
-        <div className="pointer-events-none absolute inset-x-0 top-2 z-10 flex justify-center">
-          <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground text-xs shadow-sm">
-            合并为合集
-          </span>
-        </div>
-      ) : null}
-
       {selectMode ? (
         <button
           aria-label={`${selected ? "取消选择" : "选择"} ${project.title}`}

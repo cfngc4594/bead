@@ -17,10 +17,6 @@ import { Route as DiscoverProjectIdRouteImport } from './routes/discover/$projec
 import { Route as TabsSettingsRouteImport } from './routes/_tabs/settings'
 import { Route as TabsProjectsRouteImport } from './routes/_tabs/projects'
 import { Route as TabsDiscoverRouteImport } from './routes/_tabs/discover'
-import { Route as ProjectsCollectionsIndexRouteImport } from './routes/projects/collections/index'
-import { Route as DiscoverCollectionsIndexRouteImport } from './routes/discover/collections/index'
-import { Route as ProjectsCollectionsCollectionIdRouteImport } from './routes/projects/collections/$collectionId'
-import { Route as DiscoverCollectionsCollectionIdRouteImport } from './routes/discover/collections/$collectionId'
 
 const TabsRouteRoute = TabsRouteRouteImport.update({
   id: '/_tabs',
@@ -61,30 +57,6 @@ const TabsDiscoverRoute = TabsDiscoverRouteImport.update({
   path: '/discover',
   getParentRoute: () => TabsRouteRoute,
 } as any)
-const ProjectsCollectionsIndexRoute =
-  ProjectsCollectionsIndexRouteImport.update({
-    id: '/projects/collections/',
-    path: '/projects/collections/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DiscoverCollectionsIndexRoute =
-  DiscoverCollectionsIndexRouteImport.update({
-    id: '/discover/collections/',
-    path: '/discover/collections/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProjectsCollectionsCollectionIdRoute =
-  ProjectsCollectionsCollectionIdRouteImport.update({
-    id: '/projects/collections/$collectionId',
-    path: '/projects/collections/$collectionId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DiscoverCollectionsCollectionIdRoute =
-  DiscoverCollectionsCollectionIdRouteImport.update({
-    id: '/discover/collections/$collectionId',
-    path: '/discover/collections/$collectionId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,10 +66,6 @@ export interface FileRoutesByFullPath {
   '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
-  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
-  '/discover/collections/': typeof DiscoverCollectionsIndexRoute
-  '/projects/collections/': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,10 +75,6 @@ export interface FileRoutesByTo {
   '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
-  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
-  '/discover/collections': typeof DiscoverCollectionsIndexRoute
-  '/projects/collections': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,10 +86,6 @@ export interface FileRoutesById {
   '/discover/$projectId': typeof DiscoverProjectIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/new': typeof ProjectsNewRoute
-  '/discover/collections/$collectionId': typeof DiscoverCollectionsCollectionIdRoute
-  '/projects/collections/$collectionId': typeof ProjectsCollectionsCollectionIdRoute
-  '/discover/collections/': typeof DiscoverCollectionsIndexRoute
-  '/projects/collections/': typeof ProjectsCollectionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,10 +97,6 @@ export interface FileRouteTypes {
     | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
-    | '/discover/collections/$collectionId'
-    | '/projects/collections/$collectionId'
-    | '/discover/collections/'
-    | '/projects/collections/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,10 +106,6 @@ export interface FileRouteTypes {
     | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
-    | '/discover/collections/$collectionId'
-    | '/projects/collections/$collectionId'
-    | '/discover/collections'
-    | '/projects/collections'
   id:
     | '__root__'
     | '/'
@@ -164,10 +116,6 @@ export interface FileRouteTypes {
     | '/discover/$projectId'
     | '/projects/$projectId'
     | '/projects/new'
-    | '/discover/collections/$collectionId'
-    | '/projects/collections/$collectionId'
-    | '/discover/collections/'
-    | '/projects/collections/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -176,10 +124,6 @@ export interface RootRouteChildren {
   DiscoverProjectIdRoute: typeof DiscoverProjectIdRoute
   ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
   ProjectsNewRoute: typeof ProjectsNewRoute
-  DiscoverCollectionsCollectionIdRoute: typeof DiscoverCollectionsCollectionIdRoute
-  ProjectsCollectionsCollectionIdRoute: typeof ProjectsCollectionsCollectionIdRoute
-  DiscoverCollectionsIndexRoute: typeof DiscoverCollectionsIndexRoute
-  ProjectsCollectionsIndexRoute: typeof ProjectsCollectionsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -240,34 +184,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TabsDiscoverRouteImport
       parentRoute: typeof TabsRouteRoute
     }
-    '/projects/collections/': {
-      id: '/projects/collections/'
-      path: '/projects/collections'
-      fullPath: '/projects/collections/'
-      preLoaderRoute: typeof ProjectsCollectionsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/discover/collections/': {
-      id: '/discover/collections/'
-      path: '/discover/collections'
-      fullPath: '/discover/collections/'
-      preLoaderRoute: typeof DiscoverCollectionsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/projects/collections/$collectionId': {
-      id: '/projects/collections/$collectionId'
-      path: '/projects/collections/$collectionId'
-      fullPath: '/projects/collections/$collectionId'
-      preLoaderRoute: typeof ProjectsCollectionsCollectionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/discover/collections/$collectionId': {
-      id: '/discover/collections/$collectionId'
-      path: '/discover/collections/$collectionId'
-      fullPath: '/discover/collections/$collectionId'
-      preLoaderRoute: typeof DiscoverCollectionsCollectionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -293,10 +209,6 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverProjectIdRoute: DiscoverProjectIdRoute,
   ProjectsProjectIdRoute: ProjectsProjectIdRoute,
   ProjectsNewRoute: ProjectsNewRoute,
-  DiscoverCollectionsCollectionIdRoute: DiscoverCollectionsCollectionIdRoute,
-  ProjectsCollectionsCollectionIdRoute: ProjectsCollectionsCollectionIdRoute,
-  DiscoverCollectionsIndexRoute: DiscoverCollectionsIndexRoute,
-  ProjectsCollectionsIndexRoute: ProjectsCollectionsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

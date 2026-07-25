@@ -1,84 +1,72 @@
 import { describe, expect, test } from "bun:test";
 import type {
-  DiscoverCollection,
-  DiscoverCollectionSummary,
   DiscoverProject,
-  PublishDiscoverCollection,
   PublishDiscoverProject,
 } from "@bead/core/discover";
-import { discoverCollectionSchema } from "@bead/core/discover";
+import { discoverProjectSchema } from "@bead/core/discover";
 import { z } from "zod";
 import {
   createDiscoverRoutes,
   type DiscoverRouteRepository,
 } from "./routes.js";
 
-const COLLECTION_ID = "123e4567-e89b-12d3-a456-426614174000";
-const PROJECT_IDS = [
-  "123e4567-e89b-12d3-a456-426614174001",
-  "123e4567-e89b-12d3-a456-426614174002",
-] as const;
+const PROJECT_ID = "123e4567-e89b-12d3-a456-426614174001";
 
-describe("discover collection routes", () => {
-  test("returns lightweight collection summaries", async () => {
-    const summary = createCollectionSummary();
+describe("discover project routes", () => {
+  test("returns discover projects", async () => {
+    const project = createProject(createPublishProject("Rabbit"), 0);
     const app = createDiscoverRoutes(
-      createRepository({ listCollections: async () => [summary] }),
+      createRepository({ listProjects: async () => [project] }),
     );
 
-    const response = await app.request("/collections");
+    const response = await app.request("/");
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ collections: [summary] });
+    expect(await response.json()).toEqual({ projects: [project] });
   });
 
-  test("returns 404 for a missing collection and 400 for an invalid id", async () => {
+  test("returns 404 for a missing project and 400 for an invalid id", async () => {
     const app = createDiscoverRoutes(createRepository());
 
-    expect((await app.request(`/collections/${COLLECTION_ID}`)).status).toBe(
-      404,
-    );
-    expect((await app.request("/collections/not-a-uuid")).status).toBe(400);
+    expect((await app.request(`/${PROJECT_ID}`)).status).toBe(404);
+    expect((await app.request("/not-a-uuid")).status).toBe(400);
   });
 
-  test("validates publish input and preserves project order", async () => {
-    let receivedInput: PublishDiscoverCollection | undefined;
+  test("validates publish input", async () => {
+    let receivedProjects: PublishDiscoverProject[] | undefined;
     const app = createDiscoverRoutes(
       createRepository({
-        createCollection: async (input) => {
-          receivedInput = input;
-          return createCollection(input);
+        createProjects: async (projects) => {
+          receivedProjects = projects;
+          return projects.map(createProject);
         },
       }),
     );
     const input = {
-      title: "Spring set",
-      projects: [
-        createPublishProject("Rabbit"),
-        createPublishProject("Flower"),
-      ],
+      projects: [createPublishProject("Rabbit"), createPublishProject("Flower")],
     };
 
-    const response = await app.request("/collections", {
+    const response = await app.request("/", {
       body: JSON.stringify(input),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
 
     expect(response.status).toBe(201);
-    expect(receivedInput?.projects.map((project) => project.title)).toEqual([
+    expect(receivedProjects?.map((project) => project.title)).toEqual([
       "Rabbit",
       "Flower",
     ]);
     const responseBody = z
-      .object({ collection: discoverCollectionSchema })
+      .object({ projects: z.array(discoverProjectSchema) })
       .parse(await response.json());
-    expect(
-      responseBody.collection.projects.map((project) => project.title),
-    ).toEqual(["Rabbit", "Flower"]);
+    expect(responseBody.projects.map((project) => project.title)).toEqual([
+      "Rabbit",
+      "Flower",
+    ]);
 
-    const invalidResponse = await app.request("/collections", {
-      body: JSON.stringify({ title: "Empty", projects: [] }),
+    const invalidResponse = await app.request("/", {
+      body: JSON.stringify({ projects: [] }),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -90,12 +78,9 @@ function createRepository(
   overrides: Partial<DiscoverRouteRepository> = {},
 ): DiscoverRouteRepository {
   return {
-    createCollection: async (input) => createCollection(input),
     createProjects: async (projects) =>
       projects.map((project, index) => createProject(project, index)),
-    findCollection: async () => null,
     findProject: async () => null,
-    listCollections: async () => [],
     listProjects: async () => [],
     ...overrides,
   };
@@ -111,40 +96,14 @@ function createPublishProject(title: string): PublishDiscoverProject {
 
 function createProject(
   project: PublishDiscoverProject,
-  index: number,
+  index = 0,
 ): DiscoverProject {
   return {
     ...project,
-    id: PROJECT_IDS[index] ?? PROJECT_IDS[0],
+    id:
+      index === 0
+        ? PROJECT_ID
+        : `123e4567-e89b-12d3-a456-42661417400${index + 1}`,
     publishedAt: 1,
-  };
-}
-
-function createCollection(
-  input: PublishDiscoverCollection,
-): DiscoverCollection {
-  return {
-    id: COLLECTION_ID,
-    title: input.title,
-    publishedAt: 1,
-    projects: input.projects.map(createProject),
-  };
-}
-
-function createCollectionSummary(): DiscoverCollectionSummary {
-  const project = createProject(createPublishProject("Rabbit"), 0);
-
-  return {
-    id: COLLECTION_ID,
-    title: "Spring set",
-    publishedAt: 1,
-    projectCount: 12,
-    previewProjects: [
-      {
-        id: project.id,
-        sizeId: project.sizeId,
-        snapshot: project.snapshot,
-      },
-    ],
   };
 }
