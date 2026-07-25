@@ -77,12 +77,12 @@ export function EditorToolDock({
         className,
       )}
     >
-      <div className="pointer-events-auto relative">
+      <div className="pointer-events-auto flex flex-col items-center gap-2">
         {flyoutOpen && drawSelection ? (
           <div
             className={cn(
               editorToolSurfaceClassName,
-              "absolute bottom-full right-0 mb-2 flex items-center gap-1.5 duration-200 animate-in fade-in slide-in-from-bottom-2",
+              "flex items-center gap-1.5 duration-200 animate-in fade-in slide-in-from-bottom-2",
             )}
             role="toolbar"
             aria-label="绘制选项"
