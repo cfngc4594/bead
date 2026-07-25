@@ -3,7 +3,7 @@ import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
 
 const modeToolSkeletons = ["pan", "paint", "mix", "erase", "picker", "select"];
-const toolbarViewSkeletons = ["focus", "model-preview", "codes", "guides"];
+const toolbarViewSkeletons = ["focus", "model-preview"];
 const mobileToolbarViewSkeletons = ["focus", "model-preview"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [

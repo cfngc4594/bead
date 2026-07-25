@@ -38,8 +38,6 @@ export function useEditorActions({
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
-  const [showBeadCodes, setShowBeadCodes] = useState(true);
-  const [showGuideLines, setShowGuideLines] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
@@ -102,8 +100,6 @@ export function useEditorActions({
         cols: size.cols,
         beads,
         filename: `bead-${size.id}.png`,
-        showBeadCodes,
-        showGuideLines,
       });
       trackEvent("image_export_succeeded", getImageExportProperties());
       toast.dismiss(loadingToastId);
@@ -133,8 +129,6 @@ export function useEditorActions({
         rows: size.rows,
         cols: size.cols,
         beads,
-        showBeadCodes,
-        showGuideLines,
       });
 
       trackEvent("image_export_succeeded", {
@@ -266,11 +260,7 @@ export function useEditorActions({
   }
 
   function getImageExportProperties() {
-    return {
-      ...getCanvasProperties(),
-      showBeadCodes,
-      showGuideLines,
-    };
+    return getCanvasProperties();
   }
 
   return {
@@ -289,10 +279,6 @@ export function useEditorActions({
     setResetViewSignal,
     selectColor,
     setSelectedLetter,
-    setShowBeadCodes,
-    setShowGuideLines,
-    showBeadCodes,
-    showGuideLines,
     tool,
     actions: {
       clearDraft,

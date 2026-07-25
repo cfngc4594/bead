@@ -3,7 +3,6 @@ import type { BoardTheme } from "@/features/bead/lib/board-theme";
 type BoardDrawingPalette = {
   cellBackground: string;
   grid: string;
-  guide: string;
   labelBackground: string;
   labelText: string;
 };
@@ -21,14 +20,12 @@ export const boardDrawingPalettes = {
   light: {
     cellBackground: "#ffffff",
     grid: "#d9d9d9",
-    guide: "#8f8f8f",
     labelBackground: "#f3f4f6",
     labelText: "#6b7280",
   },
   dark: {
     cellBackground: "#18181b",
     grid: "#3f3f46",
-    guide: "#a1a1aa",
     labelBackground: "#27272a",
     labelText: "#d4d4d8",
   },

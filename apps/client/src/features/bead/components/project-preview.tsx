@@ -52,7 +52,6 @@ export function ProjectPreview({
     context.translate(previewPadding, previewPadding);
     drawBoard(context, rows, cols, beads, {
       showBeadCodes: false,
-      showGuideLines: false,
       showGrid: false,
       showLabels: false,
       theme: boardTheme,

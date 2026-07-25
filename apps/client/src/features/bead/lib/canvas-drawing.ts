@@ -30,7 +30,6 @@ export function drawBoard(
   beads: readonly (BeadFill | null)[],
   options: {
     showBeadCodes?: boolean;
-    showGuideLines?: boolean;
     showGrid?: boolean;
     showLabels?: boolean;
     theme?: BoardTheme;
@@ -38,7 +37,6 @@ export function drawBoard(
 ) {
   const {
     showBeadCodes = true,
-    showGuideLines = false,
     showGrid = true,
     showLabels = true,
     theme = "light",
@@ -87,43 +85,7 @@ export function drawBoard(
     }
   }
 
-  if (showGuideLines) {
-    drawGuideLines(context, rows, cols, origin, palette.guide);
-  }
-
   context.restore();
-}
-
-function drawGuideLines(
-  context: BoardDrawingContext,
-  rows: number,
-  cols: number,
-  origin: { x: number; y: number },
-  guideColor: string,
-) {
-  const width = cols * cellSize;
-  const height = rows * cellSize;
-
-  context.strokeStyle = guideColor;
-  context.lineWidth = 2;
-
-  for (let col = 5; col < cols; col += 5) {
-    const x = origin.x + col * cellSize + 0.5;
-
-    context.beginPath();
-    context.moveTo(x, origin.y);
-    context.lineTo(x, origin.y + height);
-    context.stroke();
-  }
-
-  for (let row = 5; row < rows; row += 5) {
-    const y = origin.y + row * cellSize + 0.5;
-
-    context.beginPath();
-    context.moveTo(origin.x, y);
-    context.lineTo(origin.x + width, y);
-    context.stroke();
-  }
 }
 
 function drawLabels(

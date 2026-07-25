@@ -13,7 +13,6 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
-import type { BeadCodeRenderState } from "@/features/bead/lib/bead-code-visibility";
 import { createBeadModelInstances } from "@/features/bead/lib/bead-model-layout";
 import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
@@ -51,11 +50,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
   const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
-  const [beadCodeRender, setBeadCodeRender] = useState<BeadCodeRenderState>({
-    preference: true,
-    rendering: false,
-    zoomLimited: false,
-  });
   const {
     beads,
     beginEdit,
@@ -89,10 +83,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setResetViewAfterResizeSignal,
     setResetViewSignal,
     setSelectedLetter,
-    setShowBeadCodes,
-    setShowGuideLines,
-    showBeadCodes,
-    showGuideLines,
     tool,
   } = useEditorActions({
     beads,
@@ -199,24 +189,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     createExportImage();
   }
 
-  function toggleBeadCodes() {
-    trackEvent("display_option_toggled", {
-      ...getCanvasProperties(),
-      enabled: !showBeadCodes,
-      option: "bead_codes",
-    });
-    setShowBeadCodes((value) => !value);
-  }
-
-  function toggleGuideLines() {
-    trackEvent("display_option_toggled", {
-      ...getCanvasProperties(),
-      enabled: !showGuideLines,
-      option: "guide_lines",
-    });
-    setShowGuideLines((value) => !value);
-  }
-
   function changeModelPreviewMode(mode: ModelPreviewMode) {
     modelPreview.setMode(mode);
     trackEvent("model_preview_mode_changed", {
@@ -277,7 +249,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     <main className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
         <EditorToolbar
-          beadCodesZoomLimited={beadCodeRender.zoomLimited}
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
@@ -285,8 +256,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           isModelPreviewOpen={modelPreview.isOpen}
           isPreparingModelPreview={modelPreview.isPreparing}
           projectTitle={title}
-          showBeadCodes={showBeadCodes}
-          showGuideLines={showGuideLines}
           onRedo={actions.redoEdit}
           onPreviewModel={modelPreview.toggle}
           onResetView={() => setResetViewSignal((value) => value + 1)}
@@ -298,8 +267,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onBack={onBack}
           onRenameProject={handleRenameProject}
           onSelectTool={actions.selectTool}
-          onToggleBeadCodes={toggleBeadCodes}
-          onToggleGuideLines={toggleGuideLines}
           onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
@@ -345,9 +312,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               cols={size.cols}
               beads={beads}
               tool={tool}
-              showBeadCodes={showBeadCodes}
-              showGuideLines={showGuideLines}
-              onBeadCodesRenderChange={setBeadCodeRender}
               onEditCell={editCell}
               onEditEnd={finishCellEdit}
               onEditStart={beginCellEdit}

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  cellSize,
-  getInitialScale,
-} from "@/features/bead/lib/canvas-geometry";
+import { cellSize, getInitialScale } from "@/features/bead/lib/canvas-geometry";
 import type { Viewport } from "@/features/bead/types";
 
 /** Matches `drawBoard` bead code font size in logical pixels. */
@@ -20,12 +17,6 @@ export const minScreenFontSizeForBeadCodes = 9;
 export const referenceViewportForBeadCodes: Viewport = {
   width: 390,
   height: 700,
-};
-
-export type BeadCodeRenderState = {
-  preference: boolean;
-  rendering: boolean;
-  zoomLimited: boolean;
 };
 
 export function getScreenCellSize(scale: number) {
@@ -49,15 +40,7 @@ export function shouldHideBeadCodesAtScale(scale: number) {
   return getScreenCellSize(scale) <= hideScreenCellSizeForBeadCodes;
 }
 
-export function resolveBeadCodeRendering(
-  preference: boolean,
-  scale: number,
-  wasRendering: boolean,
-) {
-  if (!preference) {
-    return false;
-  }
-
+export function resolveBeadCodeRendering(scale: number, wasRendering: boolean) {
   if (canShowBeadCodesAtScale(scale)) {
     return true;
   }
@@ -69,55 +52,18 @@ export function resolveBeadCodeRendering(
   return wasRendering;
 }
 
-export function useBeadCodeRendering(preference: boolean, scale: number) {
+export function useBeadCodeRendering(scale: number) {
   const [rendering, setRendering] = useState(() =>
-    resolveBeadCodeRendering(preference, scale, false),
+    resolveBeadCodeRendering(scale, false),
   );
 
   useEffect(() => {
     setRendering((wasRendering) =>
-      resolveBeadCodeRendering(preference, scale, wasRendering),
+      resolveBeadCodeRendering(scale, wasRendering),
     );
-  }, [preference, scale]);
+  }, [scale]);
 
-  return {
-    preference,
-    rendering,
-    zoomLimited: preference && !rendering,
-  } satisfies BeadCodeRenderState;
-}
-
-export function getBeadCodeToggleUi({
-  preference,
-  zoomLimited,
-}: {
-  preference: boolean;
-  zoomLimited: boolean;
-}) {
-  if (!preference) {
-    return {
-      label: "显示豆色序号",
-      tooltip: "显示豆色序号",
-      muted: false,
-      preferenceOffActive: true,
-    } as const;
-  }
-
-  if (zoomLimited) {
-    return {
-      label: "豆色序号",
-      tooltip: "放大以显示序号",
-      muted: true,
-      preferenceOffActive: false,
-    } as const;
-  }
-
-  return {
-    label: "隐藏豆色序号",
-    tooltip: "隐藏豆色序号",
-    muted: false,
-    preferenceOffActive: false,
-  } as const;
+  return rendering;
 }
 
 export function areBeadCodesVisibleAtFitView(

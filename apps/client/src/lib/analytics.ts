@@ -16,7 +16,6 @@ type AnalyticsEventName =
   | "collection_renamed"
   | "library_multiselect_entered"
   | "library_multiselect_action"
-  | "display_option_toggled"
   | "discover_collection_opened"
   | "discover_project_opened"
   | "export_image_regenerated"

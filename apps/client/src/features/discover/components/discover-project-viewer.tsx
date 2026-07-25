@@ -2,29 +2,17 @@ import type { DiscoverProject } from "@bead/core/discover";
 import { Badge } from "@bead/ui/components/badge";
 import { Button } from "@bead/ui/components/button";
 import {
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@bead/ui/components/dropdown-menu";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
-import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Eye,
-  EyeOff,
   Focus,
-  Grid3x3,
   LibraryBig,
   LoaderCircle,
   type LucideIcon,
-  SlidersHorizontal,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -32,9 +20,6 @@ import { getCanvasSize } from "@/config/canvas-sizes";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
-import type { BeadCodeRenderState } from "@/features/bead/lib/bead-code-visibility";
-import { getBeadCodeToggleUi } from "@/features/bead/lib/bead-code-visibility";
-import { NativeBackDropdownMenu } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
 export function DiscoverProjectViewer({
@@ -42,22 +27,11 @@ export function DiscoverProjectViewer({
 }: {
   project: DiscoverProject;
 }) {
-  const [showBeadCodes, setShowBeadCodes] = useState(true);
-  const [showGuideLines, setShowGuideLines] = useState(false);
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
-  const [beadCodeRender, setBeadCodeRender] = useState<BeadCodeRenderState>({
-    preference: true,
-    rendering: false,
-    zoomLimited: false,
-  });
   const [isAdding, setIsAdding] = useState(false);
   const size = getCanvasSize(project.sizeId);
-  const beadCodeToggleUi = getBeadCodeToggleUi({
-    preference: showBeadCodes,
-    zoomLimited: beadCodeRender.zoomLimited,
-  });
   const beads = useMemo(
     () =>
       expandSnapshot({
@@ -123,40 +97,10 @@ export function DiscoverProjectViewer({
           </Badge>
         </div>
 
-        <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
-          <ViewerToolbarButton
-            icon={Focus}
-            label="居中显示"
-            onClick={resetView}
-          />
-          <ViewerToolbarButton
-            icon={showBeadCodes ? Eye : EyeOff}
-            isActive={beadCodeToggleUi.preferenceOffActive}
-            label={beadCodeToggleUi.label}
-            muted={beadCodeToggleUi.muted}
-            onClick={() => setShowBeadCodes((value) => !value)}
-            tooltip={beadCodeToggleUi.tooltip}
-          />
-          <ViewerToolbarButton
-            icon={Grid3x3}
-            isActive={showGuideLines}
-            label="辅助线"
-            onClick={() => setShowGuideLines((value) => !value)}
-            tooltip={showGuideLines ? "隐藏辅助线" : "显示辅助线"}
-          />
-        </div>
-
-        <MobileViewerMenu
-          beadCodeMenuLabel={
-            showBeadCodes && beadCodeRender.zoomLimited
-              ? "豆色序号（放大后显示）"
-              : "豆色序号"
-          }
-          showBeadCodes={showBeadCodes}
-          showGuideLines={showGuideLines}
-          onResetView={resetView}
-          onShowBeadCodesChange={setShowBeadCodes}
-          onShowGuideLinesChange={setShowGuideLines}
+        <ViewerToolbarButton
+          icon={Focus}
+          label="居中显示"
+          onClick={resetView}
         />
 
         <Button
@@ -182,9 +126,6 @@ export function DiscoverProjectViewer({
           rows={size.rows}
           cols={size.cols}
           beads={beads}
-          showBeadCodes={showBeadCodes}
-          showGuideLines={showGuideLines}
-          onBeadCodesRenderChange={setBeadCodeRender}
           resetViewAfterResizeSignal={resetViewAfterResizeSignal}
           resetViewSignal={resetViewSignal}
         />
@@ -197,14 +138,12 @@ function ViewerToolbarButton({
   icon: Icon,
   isActive,
   label,
-  muted = false,
   onClick,
   tooltip = label,
 }: {
   icon: LucideIcon;
   isActive?: boolean;
   label: string;
-  muted?: boolean;
   onClick: () => void;
   tooltip?: string;
 }) {
@@ -214,7 +153,6 @@ function ViewerToolbarButton({
         <Button
           aria-label={tooltip}
           aria-pressed={isActive}
-          className={cn(muted && "opacity-60")}
           onClick={onClick}
           size="icon-sm"
           type="button"
@@ -225,54 +163,5 @@ function ViewerToolbarButton({
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
-  );
-}
-
-function MobileViewerMenu({
-  beadCodeMenuLabel,
-  showBeadCodes,
-  showGuideLines,
-  onResetView,
-  onShowBeadCodesChange,
-  onShowGuideLinesChange,
-}: {
-  beadCodeMenuLabel: string;
-  showBeadCodes: boolean;
-  showGuideLines: boolean;
-  onResetView: () => void;
-  onShowBeadCodesChange: (value: boolean) => void;
-  onShowGuideLinesChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="sm:hidden">
-      <NativeBackDropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button aria-label="预览设置" size="icon-sm" variant="outline">
-            <SlidersHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onSelect={onResetView}>
-            <Focus />
-            居中显示
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            checked={showBeadCodes}
-            onCheckedChange={onShowBeadCodesChange}
-          >
-            <Eye />
-            {beadCodeMenuLabel}
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            checked={showGuideLines}
-            onCheckedChange={onShowGuideLinesChange}
-          >
-            <Grid3x3 />
-            辅助线
-          </DropdownMenuCheckboxItem>
-        </DropdownMenuContent>
-      </NativeBackDropdownMenu>
-    </div>
   );
 }

@@ -9,16 +9,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
-import { cn } from "@bead/ui/lib/utils";
 import {
   ArrowLeft,
   Download,
-  Eye,
-  EyeOff,
   FileDown,
   FileUp,
   Focus,
-  Grid3x3,
   ImageUp,
   LoaderCircle,
   type LucideIcon,
@@ -32,7 +28,6 @@ import {
 import { useState } from "react";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
-import { getBeadCodeToggleUi } from "@/features/bead/lib/bead-code-visibility";
 import type { CanvasTool } from "@/features/bead/types";
 import { NativeBackSheet } from "@/features/native/native-back-overlays";
 import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
@@ -43,13 +38,8 @@ type EditorToolbarProps = {
   canRedo: boolean;
   canClear: boolean;
   projectTitle: string;
-  showBeadCodes: boolean;
-  beadCodesZoomLimited?: boolean;
-  showGuideLines: boolean;
   isModelPreviewOpen: boolean;
   isExportImageSheetEnabled: boolean;
-  onToggleBeadCodes: () => void;
-  onToggleGuideLines: () => void;
   onBack: () => void;
   onRenameProject: (title: string) => void;
   onSelectTool: (tool: CanvasTool) => void;
@@ -74,7 +64,6 @@ type ToolbarIconButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   isActive?: boolean;
-  muted?: boolean;
   onClick: () => void;
 };
 
@@ -86,7 +75,6 @@ type ToolbarAction = {
   disabled?: boolean;
   loading?: boolean;
   isActive?: boolean;
-  muted?: boolean;
   onClick: () => void;
 };
 
@@ -96,13 +84,8 @@ export function EditorToolbar({
   canRedo,
   canClear,
   projectTitle,
-  showBeadCodes,
-  beadCodesZoomLimited = false,
-  showGuideLines,
   isModelPreviewOpen,
   isExportImageSheetEnabled,
-  onToggleBeadCodes,
-  onToggleGuideLines,
   onBack,
   onRenameProject,
   onSelectTool,
@@ -120,10 +103,6 @@ export function EditorToolbar({
   isPreparingModelPreview = false,
 }: EditorToolbarProps) {
   const disableCanvasEditActions = isModelPreviewOpen;
-  const beadCodeToggleUi = getBeadCodeToggleUi({
-    preference: showBeadCodes,
-    zoomLimited: beadCodesZoomLimited,
-  });
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
@@ -142,23 +121,7 @@ export function EditorToolbar({
     loading: isPreparingModelPreview,
     onClick: onPreviewModel,
   };
-  const displayActions: ToolbarAction[] = [
-    {
-      icon: showBeadCodes ? Eye : EyeOff,
-      isActive: beadCodeToggleUi.preferenceOffActive,
-      label: beadCodeToggleUi.label,
-      muted: beadCodeToggleUi.muted,
-      tooltip: beadCodeToggleUi.tooltip,
-      onClick: onToggleBeadCodes,
-    },
-    {
-      icon: Grid3x3,
-      isActive: showGuideLines,
-      label: showGuideLines ? "隐藏辅助线" : "显示辅助线",
-      onClick: onToggleGuideLines,
-    },
-  ];
-  const viewActions = [resetViewAction, previewModelAction, ...displayActions];
+  const viewActions = [resetViewAction, previewModelAction];
   const historyActions: ToolbarAction[] = [
     {
       disabled: disableCanvasEditActions || !canUndo,
@@ -209,7 +172,7 @@ export function EditorToolbar({
     },
   ];
   const mobileTopViewActions = [resetViewAction, previewModelAction];
-  const mobileSheetActions = [...displayActions, ...fileActions];
+  const mobileSheetActions = fileActions;
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
@@ -312,7 +275,6 @@ function SheetActionButton({
   disabled = false,
   loading = false,
   isActive = false,
-  muted = false,
   onClick,
 }: ToolbarAction) {
   const IconToRender = loading ? LoaderCircle : Icon;
@@ -320,10 +282,7 @@ function SheetActionButton({
   return (
     <Button
       aria-pressed={isActive || undefined}
-      className={cn(
-        "h-11 justify-start gap-2",
-        muted && "opacity-60",
-      )}
+      className="h-11 justify-start gap-2"
       disabled={disabled}
       onClick={onClick}
       title={tooltip ?? label}
@@ -343,7 +302,6 @@ function ToolbarIconButton({
   disabled = false,
   loading = false,
   isActive = false,
-  muted = false,
   onClick,
 }: ToolbarIconButtonProps) {
   const IconToRender = loading ? LoaderCircle : Icon;
@@ -355,7 +313,6 @@ function ToolbarIconButton({
         <Button
           aria-label={tooltipLabel}
           aria-pressed={isActive || undefined}
-          className={cn(muted && "opacity-60")}
           disabled={disabled}
           onClick={onClick}
           size="icon-sm"
@@ -364,7 +321,9 @@ function ToolbarIconButton({
           <IconToRender className={loading ? "animate-spin" : undefined} />
         </Button>
       </TooltipTrigger>
-      <TooltipContent className="hidden md:block">{tooltipLabel}</TooltipContent>
+      <TooltipContent className="hidden md:block">
+        {tooltipLabel}
+      </TooltipContent>
     </Tooltip>
   );
 }
