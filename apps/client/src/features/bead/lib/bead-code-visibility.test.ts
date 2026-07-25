@@ -1,26 +1,28 @@
 import { expect, test } from "bun:test";
 import {
   areBeadCodesVisibleAtFitView,
+  canShowBeadCodesAtScale,
+  hideScreenCellSizeForBeadCodes,
   minScreenCellSizeForBeadCodes,
   referenceViewportForBeadCodes,
-  shouldRenderBeadCodes,
+  resolveBeadCodeRendering,
 } from "@/features/bead/lib/bead-code-visibility";
 import { getInitialScale } from "@/features/bead/lib/canvas-geometry";
 
 test("hides bead codes when zoomed out below readability threshold", () => {
-  expect(shouldRenderBeadCodes(true, 0.4)).toBe(false);
-  expect(shouldRenderBeadCodes(true, 1)).toBe(false);
+  expect(canShowBeadCodesAtScale(0.4)).toBe(false);
+  expect(canShowBeadCodesAtScale(1)).toBe(false);
 });
 
 test("shows bead codes when zoomed in enough", () => {
   const minScale = minScreenCellSizeForBeadCodes / 18;
 
-  expect(shouldRenderBeadCodes(true, minScale)).toBe(true);
-  expect(shouldRenderBeadCodes(true, minScale + 0.2)).toBe(true);
+  expect(canShowBeadCodesAtScale(minScale)).toBe(true);
+  expect(canShowBeadCodesAtScale(minScale + 0.2)).toBe(true);
 });
 
 test("respects user preference to hide bead codes", () => {
-  expect(shouldRenderBeadCodes(false, 3)).toBe(false);
+  expect(resolveBeadCodeRendering(false, 3, true)).toBe(false);
 });
 
 test("uses canvas dimensions rather than preset size ids", () => {
@@ -30,8 +32,8 @@ test("uses canvas dimensions rather than preset size ids", () => {
     height: 640,
   });
 
-  expect(shouldRenderBeadCodes(true, largeFitScale)).toBe(false);
-  expect(shouldRenderBeadCodes(true, smallFitScale)).toBe(true);
+  expect(canShowBeadCodesAtScale(largeFitScale)).toBe(false);
+  expect(canShowBeadCodesAtScale(smallFitScale)).toBe(true);
   expect(areBeadCodesVisibleAtFitView(87, 87)).toBe(false);
   expect(
     areBeadCodesVisibleAtFitView(16, 16, { width: 760, height: 640 }),
@@ -43,4 +45,17 @@ test("supports non-square custom canvases via max dimension", () => {
   expect(
     areBeadCodesVisibleAtFitView(12, 20, { width: 760, height: 640 }),
   ).toBe(true);
+});
+
+test("hysteresis keeps bead codes visible between hide and show thresholds", () => {
+  const midScale = 22 / 18;
+
+  expect(resolveBeadCodeRendering(true, midScale, false)).toBe(false);
+  expect(resolveBeadCodeRendering(true, midScale, true)).toBe(true);
+});
+
+test("hysteresis hides bead codes once below hide threshold", () => {
+  const hideScale = hideScreenCellSizeForBeadCodes / 18;
+
+  expect(resolveBeadCodeRendering(true, hideScale, true)).toBe(false);
 });

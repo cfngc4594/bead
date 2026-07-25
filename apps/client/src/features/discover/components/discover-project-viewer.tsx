@@ -13,10 +13,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
+import { cn } from "@bead/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Eye,
+  EyeOff,
   Focus,
   Grid3x3,
   LibraryBig,
@@ -30,6 +32,8 @@ import { getCanvasSize } from "@/config/canvas-sizes";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
+import type { BeadCodeRenderState } from "@/features/bead/lib/bead-code-visibility";
+import { getBeadCodeToggleUi } from "@/features/bead/lib/bead-code-visibility";
 import { NativeBackDropdownMenu } from "@/features/native/native-back-overlays";
 import { trackEvent } from "@/lib/analytics";
 
@@ -43,8 +47,17 @@ export function DiscoverProjectViewer({
   const [resetViewSignal, setResetViewSignal] = useState(0);
   const [resetViewAfterResizeSignal, setResetViewAfterResizeSignal] =
     useState(0);
+  const [beadCodeRender, setBeadCodeRender] = useState<BeadCodeRenderState>({
+    preference: true,
+    rendering: false,
+    zoomLimited: false,
+  });
   const [isAdding, setIsAdding] = useState(false);
   const size = getCanvasSize(project.sizeId);
+  const beadCodeToggleUi = getBeadCodeToggleUi({
+    preference: showBeadCodes,
+    zoomLimited: beadCodeRender.zoomLimited,
+  });
   const beads = useMemo(
     () =>
       expandSnapshot({
@@ -117,11 +130,12 @@ export function DiscoverProjectViewer({
             onClick={resetView}
           />
           <ViewerToolbarButton
-            icon={Eye}
-            isActive={showBeadCodes}
-            label="豆色序号"
+            icon={showBeadCodes ? Eye : EyeOff}
+            isActive={beadCodeToggleUi.preferenceOffActive}
+            label={beadCodeToggleUi.label}
+            muted={beadCodeToggleUi.muted}
             onClick={() => setShowBeadCodes((value) => !value)}
-            tooltip={showBeadCodes ? "隐藏豆色序号" : "显示豆色序号"}
+            tooltip={beadCodeToggleUi.tooltip}
           />
           <ViewerToolbarButton
             icon={Grid3x3}
@@ -133,6 +147,11 @@ export function DiscoverProjectViewer({
         </div>
 
         <MobileViewerMenu
+          beadCodeMenuLabel={
+            showBeadCodes && beadCodeRender.zoomLimited
+              ? "豆色序号（放大后显示）"
+              : "豆色序号"
+          }
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
           onResetView={resetView}
@@ -165,6 +184,7 @@ export function DiscoverProjectViewer({
           beads={beads}
           showBeadCodes={showBeadCodes}
           showGuideLines={showGuideLines}
+          onBeadCodesRenderChange={setBeadCodeRender}
           resetViewAfterResizeSignal={resetViewAfterResizeSignal}
           resetViewSignal={resetViewSignal}
         />
@@ -177,12 +197,14 @@ function ViewerToolbarButton({
   icon: Icon,
   isActive,
   label,
+  muted = false,
   onClick,
   tooltip = label,
 }: {
   icon: LucideIcon;
   isActive?: boolean;
   label: string;
+  muted?: boolean;
   onClick: () => void;
   tooltip?: string;
 }) {
@@ -190,8 +212,9 @@ function ViewerToolbarButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          aria-label={label}
+          aria-label={tooltip}
           aria-pressed={isActive}
+          className={cn(muted && "opacity-60")}
           onClick={onClick}
           size="icon-sm"
           type="button"
@@ -206,12 +229,14 @@ function ViewerToolbarButton({
 }
 
 function MobileViewerMenu({
+  beadCodeMenuLabel,
   showBeadCodes,
   showGuideLines,
   onResetView,
   onShowBeadCodesChange,
   onShowGuideLinesChange,
 }: {
+  beadCodeMenuLabel: string;
   showBeadCodes: boolean;
   showGuideLines: boolean;
   onResetView: () => void;
@@ -226,7 +251,7 @@ function MobileViewerMenu({
             <SlidersHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onSelect={onResetView}>
             <Focus />
             居中显示
@@ -237,7 +262,7 @@ function MobileViewerMenu({
             onCheckedChange={onShowBeadCodesChange}
           >
             <Eye />
-            豆色序号
+            {beadCodeMenuLabel}
           </DropdownMenuCheckboxItem>
           <DropdownMenuCheckboxItem
             checked={showGuideLines}

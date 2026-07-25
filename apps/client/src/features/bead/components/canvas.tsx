@@ -1,13 +1,14 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
-import { shouldRenderBeadCodes } from "@/features/bead/lib/bead-code-visibility";
+import { useBeadCodeRendering } from "@/features/bead/lib/bead-code-visibility";
+import type { BeadCodeRenderState } from "@/features/bead/lib/bead-code-visibility";
 import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
 import { boardInteractionPalettes } from "@/features/bead/lib/board-theme-colors";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
@@ -42,6 +43,7 @@ type CanvasBoardViewProps = {
   resetViewSignal: number;
   resetViewAfterResizeSignal: number;
   viewport?: Viewport;
+  onBeadCodesRenderChange?: (state: BeadCodeRenderState) => void;
 };
 
 type EditableCanvasBoardProps = {
@@ -72,6 +74,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
     resetViewSignal,
     resetViewAfterResizeSignal,
     viewport = { width: 760, height: 640 },
+    onBeadCodesRenderChange,
   } = props;
   const tool = props.mode === "editable" ? props.tool : "pan";
   const selectionResetSignal =
@@ -140,7 +143,17 @@ export function CanvasBoard(props: CanvasBoardProps) {
     rows,
   });
   const gridOrigin = getGridOrigin();
-  const renderBeadCodes = shouldRenderBeadCodes(showBeadCodes, view.scale);
+  const beadCodeRender = useBeadCodeRendering(showBeadCodes, view.scale);
+  const onBeadCodesRenderChangeRef = useRef(onBeadCodesRenderChange);
+
+  useEffect(() => {
+    onBeadCodesRenderChangeRef.current = onBeadCodesRenderChange;
+  }, [onBeadCodesRenderChange]);
+
+  useEffect(() => {
+    onBeadCodesRenderChangeRef.current?.(beadCodeRender);
+  }, [beadCodeRender]);
+
   const canvasCursor = getCanvasCursor({
     hoveredCell,
     isDraggable,
@@ -320,7 +333,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
             listening={false}
             sceneFunc={(context, shape) => {
               drawBoard(context, rows, cols, displayedBeads, {
-                showBeadCodes: renderBeadCodes,
+                showBeadCodes: beadCodeRender.rendering,
                 showGuideLines,
                 theme: boardTheme,
               });

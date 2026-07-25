@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@bead/ui/components/tooltip";
+import { cn } from "@bead/ui/lib/utils";
 import {
   ArrowLeft,
   Download,
@@ -31,6 +32,7 @@ import {
 import { useState } from "react";
 import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
+import { getBeadCodeToggleUi } from "@/features/bead/lib/bead-code-visibility";
 import type { CanvasTool } from "@/features/bead/types";
 import { NativeBackSheet } from "@/features/native/native-back-overlays";
 import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
@@ -42,6 +44,7 @@ type EditorToolbarProps = {
   canClear: boolean;
   projectTitle: string;
   showBeadCodes: boolean;
+  beadCodesZoomLimited?: boolean;
   showGuideLines: boolean;
   isModelPreviewOpen: boolean;
   isExportImageSheetEnabled: boolean;
@@ -66,20 +69,24 @@ type EditorToolbarProps = {
 
 type ToolbarIconButtonProps = {
   label: string;
+  tooltip?: string;
   icon: LucideIcon;
   disabled?: boolean;
   loading?: boolean;
   isActive?: boolean;
+  muted?: boolean;
   onClick: () => void;
 };
 
 type ToolbarAction = {
   label: string;
+  tooltip?: string;
   icon: LucideIcon;
   closeSheetOnClick?: boolean;
   disabled?: boolean;
   loading?: boolean;
   isActive?: boolean;
+  muted?: boolean;
   onClick: () => void;
 };
 
@@ -90,6 +97,7 @@ export function EditorToolbar({
   canClear,
   projectTitle,
   showBeadCodes,
+  beadCodesZoomLimited = false,
   showGuideLines,
   isModelPreviewOpen,
   isExportImageSheetEnabled,
@@ -112,6 +120,10 @@ export function EditorToolbar({
   isPreparingModelPreview = false,
 }: EditorToolbarProps) {
   const disableCanvasEditActions = isModelPreviewOpen;
+  const beadCodeToggleUi = getBeadCodeToggleUi({
+    preference: showBeadCodes,
+    zoomLimited: beadCodesZoomLimited,
+  });
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
@@ -133,8 +145,10 @@ export function EditorToolbar({
   const displayActions: ToolbarAction[] = [
     {
       icon: showBeadCodes ? Eye : EyeOff,
-      isActive: !showBeadCodes,
-      label: showBeadCodes ? "隐藏豆色序号" : "显示豆色序号",
+      isActive: beadCodeToggleUi.preferenceOffActive,
+      label: beadCodeToggleUi.label,
+      muted: beadCodeToggleUi.muted,
+      tooltip: beadCodeToggleUi.tooltip,
       onClick: onToggleBeadCodes,
     },
     {
@@ -293,10 +307,12 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
 
 function SheetActionButton({
   label,
+  tooltip,
   icon: Icon,
   disabled = false,
   loading = false,
   isActive = false,
+  muted = false,
   onClick,
 }: ToolbarAction) {
   const IconToRender = loading ? LoaderCircle : Icon;
@@ -304,9 +320,13 @@ function SheetActionButton({
   return (
     <Button
       aria-pressed={isActive || undefined}
-      className="h-11 justify-start gap-2"
+      className={cn(
+        "h-11 justify-start gap-2",
+        muted && "opacity-60",
+      )}
       disabled={disabled}
       onClick={onClick}
+      title={tooltip ?? label}
       type="button"
       variant={isActive ? "default" : "outline"}
     >
@@ -318,20 +338,24 @@ function SheetActionButton({
 
 function ToolbarIconButton({
   label,
+  tooltip,
   icon: Icon,
   disabled = false,
   loading = false,
   isActive = false,
+  muted = false,
   onClick,
 }: ToolbarIconButtonProps) {
   const IconToRender = loading ? LoaderCircle : Icon;
+  const tooltipLabel = tooltip ?? label;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          aria-label={label}
+          aria-label={tooltipLabel}
           aria-pressed={isActive || undefined}
+          className={cn(muted && "opacity-60")}
           disabled={disabled}
           onClick={onClick}
           size="icon-sm"
@@ -340,7 +364,7 @@ function ToolbarIconButton({
           <IconToRender className={loading ? "animate-spin" : undefined} />
         </Button>
       </TooltipTrigger>
-      <TooltipContent className="hidden md:block">{label}</TooltipContent>
+      <TooltipContent className="hidden md:block">{tooltipLabel}</TooltipContent>
     </Tooltip>
   );
 }
