@@ -21,11 +21,6 @@ import {
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
-import {
-  collectionsCollection,
-  detachProjectFromCollections,
-  preloadCollectionStorage,
-} from "@/features/collections/storage/collection-storage";
 import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 export type ProjectId = string;
@@ -155,11 +150,10 @@ export async function createProjectFromSnapshot({
 }
 
 export async function deleteProject(projectId: ProjectId) {
-  await Promise.all([projectsCollection.preload(), preloadCollectionStorage()]);
+  await projectsCollection.preload();
   getRequiredProject(projectId);
 
-  return commitProjectDeletion(() => {
-    detachProjectFromCollections(projectId);
+  return commitProjectMutation(() => {
     projectsCollection.delete(projectId);
   });
 }
@@ -274,13 +268,5 @@ function commitProjectMutation(mutator: () => void) {
   return commitLocalStorageMutation(
     mutator,
     projectsCollection.utils.acceptMutations,
-  );
-}
-
-function commitProjectDeletion(mutator: () => void) {
-  return commitLocalStorageMutation(
-    mutator,
-    projectsCollection.utils.acceptMutations,
-    collectionsCollection.utils.acceptMutations,
   );
 }

@@ -23,14 +23,7 @@ import {
 } from "@bead/ui/components/dialog";
 import { Input } from "@bead/ui/components/input";
 import { useIsMobile } from "@bead/ui/hooks/use-mobile";
-import {
-  Copy,
-  Edit3,
-  FolderInput,
-  LoaderCircle,
-  Share2,
-  Trash2,
-} from "lucide-react";
+import { Copy, Edit3, LoaderCircle, Share2, Trash2 } from "lucide-react";
 import { type ReactNode, type SubmitEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -41,7 +34,6 @@ import {
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
-import { JoinCollectionDialog } from "@/features/collections/components/join-collection-dialog";
 import { usePublishDiscoverProjects } from "@/features/discover/api/discover-queries";
 import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import {
@@ -67,7 +59,6 @@ export function ProjectContextMenu({
   const isMobile = useIsMobile();
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const publishMutation = usePublishDiscoverProjects();
 
@@ -134,10 +125,6 @@ export function ProjectContextMenu({
             <Edit3 />
             重命名
           </ContextMenuItem>
-          <ContextMenuItem onSelect={() => setIsJoinOpen(true)}>
-            <FolderInput />
-            加入合集…
-          </ContextMenuItem>
           <ContextMenuItem onSelect={() => void handleDuplicate()}>
             <Copy />
             复制
@@ -202,13 +189,6 @@ export function ProjectContextMenu({
             </AlertDialogFooter>
           </AlertDialogContent>
         </NativeBackAlertDialog>
-      ) : null}
-      {isJoinOpen ? (
-        <JoinCollectionDialog
-          onOpenChange={setIsJoinOpen}
-          open={isJoinOpen}
-          projectIds={[project.id]}
-        />
       ) : null}
     </>
   );

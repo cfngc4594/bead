@@ -10,11 +10,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Compass, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ProjectCard } from "@/features/bead/components/project-card";
-import { CollectionCard } from "@/features/collections/components/collection-card";
-import {
-  discoverCollectionsQueryOptions,
-  discoverProjectsQueryOptions,
-} from "@/features/discover/api/discover-queries";
+import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
 import { PublishProjectDialog } from "@/features/discover/components/publish-project-dialog";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
@@ -24,37 +20,13 @@ export function DiscoverPage() {
   const { data: discoverProjects } = useSuspenseQuery(
     discoverProjectsQueryOptions,
   );
-  const { data: discoverCollections } = useSuspenseQuery(
-    discoverCollectionsQueryOptions,
+  const projects = useMemo(
+    () =>
+      [...discoverProjects].sort(
+        (left, right) => right.publishedAt - left.publishedAt,
+      ),
+    [discoverProjects],
   );
-  const feedItems = useMemo(() => {
-    const items: Array<
-      | {
-          kind: "project";
-          publishedAt: number;
-          project: (typeof discoverProjects)[number];
-        }
-      | {
-          kind: "collection";
-          publishedAt: number;
-          collection: (typeof discoverCollections)[number];
-        }
-    > = [
-      ...discoverProjects.map((project) => ({
-        kind: "project" as const,
-        publishedAt: project.publishedAt,
-        project,
-      })),
-      ...discoverCollections.map((collection) => ({
-        kind: "collection" as const,
-        publishedAt: collection.publishedAt,
-        collection,
-      })),
-    ];
-
-    items.sort((left, right) => right.publishedAt - left.publishedAt);
-    return items;
-  }, [discoverCollections, discoverProjects]);
 
   return (
     <main
@@ -71,42 +43,26 @@ export function DiscoverPage() {
         </div>
       </header>
 
-      {feedItems.length > 0 ? (
+      {projects.length > 0 ? (
         <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
           <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
-            {feedItems.map((item) =>
-              item.kind === "project" ? (
-                <ProjectCard
-                  key={`project:${item.project.id}`}
-                  onOpen={(source) =>
-                    trackEvent("discover_project_opened", {
-                      sizeId: item.project.sizeId,
-                      source,
-                    })
-                  }
-                  openLabel="查看"
-                  project={item.project}
-                  route="/discover/$projectId"
-                  snapshot={item.project.snapshot}
-                  timestamp={item.project.publishedAt}
-                  timestampLabel="发布"
-                />
-              ) : (
-                <CollectionCard
-                  key={`collection:${item.collection.id}`}
-                  onOpen={(source) =>
-                    trackEvent("discover_collection_opened", {
-                      projectCount: item.collection.projectCount,
-                      source,
-                    })
-                  }
-                  collection={item.collection}
-                  route="/discover/collections/$collectionId"
-                  timestamp={item.collection.publishedAt}
-                  timestampLabel="发布"
-                />
-              ),
-            )}
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                onOpen={(source) =>
+                  trackEvent("discover_project_opened", {
+                    sizeId: project.sizeId,
+                    source,
+                  })
+                }
+                openLabel="查看"
+                project={project}
+                route="/discover/$projectId"
+                snapshot={project.snapshot}
+                timestamp={project.publishedAt}
+                timestampLabel="发布"
+              />
+            ))}
           </div>
         </ScrollArea>
       ) : (
