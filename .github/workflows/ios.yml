@@ -4,9 +4,25 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/ios.yml"
   pull_request:
     branches:
       - main
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/ios.yml"
   workflow_dispatch:
 
 permissions:
