@@ -7,23 +7,19 @@ import { useState } from "react";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";
-import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import {
   ModelPreviewControls,
   type ModelPreviewControlsBinding,
 } from "@/features/bead/components/model-preview-controls";
-import type { CanvasTool } from "@/features/bead/types";
 
 type MobileEditorPanelProps = {
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
   selectedLetter: string;
-  tool: CanvasTool;
   modelPreviewControls: ModelPreviewControlsBinding | null;
   onSelectColor: (color: BeadColor) => void;
   onSelectLetter: (letter: string) => void;
-  onSelectTool: (tool: CanvasTool) => void;
   onResetViewAfterResize: () => void;
 };
 
@@ -32,11 +28,9 @@ export function MobileEditorPanel({
   colors,
   selectedColor,
   selectedLetter,
-  tool,
   modelPreviewControls,
   onSelectColor,
   onSelectLetter,
-  onSelectTool,
   onResetViewAfterResize,
 }: MobileEditorPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -65,37 +59,32 @@ export function MobileEditorPanel({
         ) : (
           <CurrentColor color={selectedColor} />
         )}
-        <div className="flex shrink-0 items-center gap-1.5">
-          {isModelPreviewOpen ? null : (
-            <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
+        <Button
+          aria-expanded={isExpanded}
+          aria-label={
+            isExpanded
+              ? isModelPreviewOpen
+                ? "折叠 3D 设置面板"
+                : "折叠颜色面板"
+              : isModelPreviewOpen
+                ? "展开 3D 设置面板"
+                : "展开颜色面板"
+          }
+          className="shrink-0"
+          onClick={() => {
+            setIsExpanded((value) => !value);
+            onResetViewAfterResize();
+          }}
+          size="icon-sm"
+          type="button"
+          variant="outline"
+        >
+          {isExpanded ? (
+            <ChevronDown aria-hidden="true" />
+          ) : (
+            <ChevronUp aria-hidden="true" />
           )}
-          <Button
-            aria-expanded={isExpanded}
-            aria-label={
-              isExpanded
-                ? isModelPreviewOpen
-                  ? "折叠 3D 设置面板"
-                  : "折叠颜色面板"
-                : isModelPreviewOpen
-                  ? "展开 3D 设置面板"
-                  : "展开颜色面板"
-            }
-            className="shrink-0"
-            onClick={() => {
-              setIsExpanded((value) => !value);
-              onResetViewAfterResize();
-            }}
-            size="icon-sm"
-            type="button"
-            variant="outline"
-          >
-            {isExpanded ? (
-              <ChevronDown aria-hidden="true" />
-            ) : (
-              <ChevronUp aria-hidden="true" />
-            )}
-          </Button>
-        </div>
+        </Button>
       </div>
 
       {isExpanded ? (

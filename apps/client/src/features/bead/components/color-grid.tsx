@@ -33,7 +33,8 @@ export function ColorGrid({
             className={cn(
               "aspect-square rounded-md border font-semibold text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               layout === "mobile" && "size-10",
-              isSelected && "ring-2 ring-primary ring-offset-2",
+              isSelected &&
+                "ring-2 ring-foreground ring-offset-2 ring-offset-card",
             )}
             key={color.code}
             onClick={() => onSelectColor(color)}

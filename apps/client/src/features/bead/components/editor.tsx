@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
+import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
@@ -266,11 +267,9 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onImportTemplate={actions.importTemplate}
           onBack={onBack}
           onRenameProject={handleRenameProject}
-          onSelectTool={actions.selectTool}
           onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
           isImportingImage={isGeneratingFromImage}
-          tool={tool}
         />
         <ExportImageSheet
           blob={exportImageBlob}
@@ -306,21 +305,24 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               settings={modelPreview.settings}
             />
           ) : (
-            <LazyCanvasBoard
-              mode="editable"
-              rows={size.rows}
-              cols={size.cols}
-              beads={beads}
-              tool={tool}
-              onEditCell={editCell}
-              onEditEnd={finishCellEdit}
-              onEditStart={beginCellEdit}
-              onMoveSelection={moveSelection}
-              onPickCell={pickCell}
-              selectionResetSignal={selectionResetSignal}
-              resetViewAfterResizeSignal={resetViewAfterResizeSignal}
-              resetViewSignal={resetViewSignal}
-            />
+            <>
+              <LazyCanvasBoard
+                mode="editable"
+                rows={size.rows}
+                cols={size.cols}
+                beads={beads}
+                tool={tool}
+                onEditCell={editCell}
+                onEditEnd={finishCellEdit}
+                onEditStart={beginCellEdit}
+                onMoveSelection={moveSelection}
+                onPickCell={pickCell}
+                selectionResetSignal={selectionResetSignal}
+                resetViewAfterResizeSignal={resetViewAfterResizeSignal}
+                resetViewSignal={resetViewSignal}
+              />
+              <EditorToolDock tool={tool} onSelectTool={actions.selectTool} />
+            </>
           )}
         </div>
       </section>
@@ -343,10 +345,8 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         }
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
-        onSelectTool={actions.selectTool}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
-        tool={tool}
       />
     </main>
   );

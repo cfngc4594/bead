@@ -26,14 +26,11 @@ import {
   Undo2,
 } from "lucide-react";
 import { useState } from "react";
-import { ModeToolButtons } from "@/features/bead/components/mode-tool-buttons";
 import { ProjectTitleEditor } from "@/features/bead/components/project-title-editor";
-import type { CanvasTool } from "@/features/bead/types";
 import { NativeBackSheet } from "@/features/native/native-back-overlays";
 import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
 
 type EditorToolbarProps = {
-  tool: CanvasTool;
   canUndo: boolean;
   canRedo: boolean;
   canClear: boolean;
@@ -42,7 +39,6 @@ type EditorToolbarProps = {
   isExportImageSheetEnabled: boolean;
   onBack: () => void;
   onRenameProject: (title: string) => void;
-  onSelectTool: (tool: CanvasTool) => void;
   onResetView: () => void;
   onPreviewModel: () => void;
   onClearDraft: () => void;
@@ -79,7 +75,6 @@ type ToolbarAction = {
 };
 
 export function EditorToolbar({
-  tool,
   canUndo,
   canRedo,
   canClear,
@@ -88,7 +83,6 @@ export function EditorToolbar({
   isExportImageSheetEnabled,
   onBack,
   onRenameProject,
-  onSelectTool,
   onResetView,
   onPreviewModel,
   onClearDraft,
@@ -171,39 +165,38 @@ export function EditorToolbar({
       onClick: onExportTemplate,
     },
   ];
-  const mobileTopViewActions = [resetViewAction, previewModelAction];
-  const mobileSheetActions = fileActions;
+  const compactToolbarActions = [
+    ...viewActions,
+    ...historyActions,
+    ...fileActions,
+  ];
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
+      <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <ToolbarIconButton icon={ArrowLeft} label="返回作品" onClick={onBack} />
         <ProjectTitleEditor
-          className="min-w-0 flex-1 lg:w-56 lg:flex-none"
+          className="min-w-0 flex-1 md:w-56 md:flex-none"
           title={projectTitle}
           onRename={onRenameProject}
         />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 lg:flex">
-        <ModeToolButtons tool={tool} onSelectTool={onSelectTool} />
-        {[viewActions, historyActions, fileActions].map((actions) => (
+      <div className="hidden min-w-0 flex-1 items-center justify-end gap-1.5 md:flex">
+        {[viewActions, historyActions, fileActions].map((actions, index) => (
           <ToolbarActionGroup
             actions={actions}
             key={actions.map((action) => action.label).join("-")}
-            withSeparator
+            withSeparator={index > 0}
           />
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
-        {mobileTopViewActions.map((action) => (
+      <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+        {compactToolbarActions.slice(0, 5).map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
-        {historyActions.map((action) => (
-          <ToolbarIconButton key={action.label} {...action} />
-        ))}
-        <MobileMoreTools actions={mobileSheetActions} />
+        <MobileMoreTools actions={fileActions} />
       </div>
     </header>
   );
