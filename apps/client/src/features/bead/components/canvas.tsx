@@ -1,6 +1,6 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layer, Rect, Shape, Stage } from "react-konva";
 import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
@@ -137,13 +137,20 @@ export function CanvasBoard(props: CanvasBoardProps) {
   });
   const gridOrigin = getGridOrigin();
   const renderBeadCodes = useBeadCodeRendering(view.scale);
+  const showCellHover = shouldShowCellHover(tool, isTemporaryPan);
   const canvasCursor = getCanvasCursor({
-    hoveredCell,
+    hoveredCell: showCellHover ? hoveredCell : null,
     isDraggable,
     isMovingSelection,
     selection,
     tool,
   });
+
+  useEffect(() => {
+    if (!showCellHover) {
+      setHoveredCell(null);
+    }
+  }, [showCellHover]);
 
   function getCellFromPointer(): GridCell | null {
     const stage = stageRef.current;
@@ -224,7 +231,10 @@ export function CanvasBoard(props: CanvasBoardProps) {
     }
 
     const cell = getCellFromPointer();
-    setHoveredCell(cell);
+
+    if (showCellHover) {
+      setHoveredCell(cell);
+    }
 
     if (props.mode !== "editable") {
       return;
@@ -322,7 +332,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
               context.fillStrokeShape(shape);
             }}
           />
-          {hoveredCell ? (
+          {showCellHover && hoveredCell ? (
             <>
               <Rect
                 x={gridOrigin.x + hoveredCell.column * cellSize + 1}
@@ -397,6 +407,10 @@ export function CanvasBoard(props: CanvasBoardProps) {
       </Stage>
     </div>
   );
+}
+
+function shouldShowCellHover(tool: CanvasTool, isTemporaryPan: boolean) {
+  return tool !== "pan" && !isTemporaryPan;
 }
 
 function isEditTool(tool: CanvasTool) {
