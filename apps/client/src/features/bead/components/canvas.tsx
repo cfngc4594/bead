@@ -7,6 +7,7 @@ import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
+import { shouldRenderBeadCodes } from "@/features/bead/lib/bead-code-visibility";
 import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
 import { boardInteractionPalettes } from "@/features/bead/lib/board-theme-colors";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
@@ -139,6 +140,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
     rows,
   });
   const gridOrigin = getGridOrigin();
+  const renderBeadCodes = shouldRenderBeadCodes(showBeadCodes, view.scale);
   const canvasCursor = getCanvasCursor({
     hoveredCell,
     isDraggable,
@@ -318,7 +320,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
             listening={false}
             sceneFunc={(context, shape) => {
               drawBoard(context, rows, cols, displayedBeads, {
-                showBeadCodes,
+                showBeadCodes: renderBeadCodes,
                 showGuideLines,
                 theme: boardTheme,
               });
