@@ -6,6 +6,7 @@
     "dev": "bun --cwd ../.. --env-file=.env --hot apps/api/src/dev.ts",
     "build": "bun run build:deps && bun run typecheck",
     "build:deps": "bun run --cwd ../../packages/core build",
+    "release": "bun run db:migrate && bun run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
