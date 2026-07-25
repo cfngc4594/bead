@@ -1,7 +1,6 @@
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { cn } from "@bead/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import type { LucideIcon } from "lucide-react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
@@ -42,10 +41,12 @@ function SettingsPage() {
 
       <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 md:px-8">
-          <section aria-labelledby="appearance-title" className="space-y-4">
-            <SectionHeading icon={Monitor} id="appearance-title" title="外观" />
+          <section aria-labelledby="theme-title" className="space-y-4">
+            <h2 className="font-medium text-base" id="theme-title">
+              主题
+            </h2>
             <fieldset
-              aria-labelledby="appearance-title"
+              aria-labelledby="theme-title"
               className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0"
             >
               {themeOptions.map(({ icon: Icon, label, value }) => {
@@ -81,26 +82,5 @@ function SettingsPage() {
         </div>
       </ScrollArea>
     </main>
-  );
-}
-
-function SectionHeading({
-  icon: Icon,
-  id,
-  title,
-}: {
-  icon: LucideIcon;
-  id: string;
-  title: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Icon aria-hidden="true" className="size-4" strokeWidth={1.8} />
-      </span>
-      <h2 className="font-medium text-base" id={id}>
-        {title}
-      </h2>
-    </div>
   );
 }
