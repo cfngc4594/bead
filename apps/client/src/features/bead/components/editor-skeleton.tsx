@@ -3,6 +3,7 @@ import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
 
 const toolbarViewSkeletons = ["focus", "model-preview"];
+const mobileToolSkeletons = ["pan", "select", "draw"];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [
   "image-import",
@@ -56,7 +57,7 @@ export function CanvasBoardSkeleton() {
           </div>
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center px-4">
+      <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
         <div className="flex h-12 items-center gap-2 rounded-xl border border-border/80 bg-background p-2 shadow-md">
           <Skeleton className="size-8 shrink-0 rounded-md" />
           <Skeleton className="size-8 shrink-0 rounded-md" />
@@ -126,7 +127,9 @@ function ToolbarSeparatorSkeleton() {
 function DesktopEditorSidebarSkeleton() {
   return (
     <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
-      <CurrentColorSkeleton className="h-16 border-b px-4" />
+      <div className="flex h-16 shrink-0 items-center border-b px-4">
+        <CurrentColorSkeleton />
+      </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
         <ScrollArea className="h-full min-h-0 border-r **:data-[slot=scroll-area-scrollbar]:hidden">
@@ -152,7 +155,15 @@ function DesktopEditorSidebarSkeleton() {
 function MobileEditorPanelSkeleton() {
   return (
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
-      <CurrentColorSkeleton className="h-14 border-b px-4" showAction />
+      <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
+        <CurrentColorSkeleton />
+        <div className="flex shrink-0 items-center gap-1.5">
+          {mobileToolSkeletons.map((item) => (
+            <ToolbarIconSkeleton key={item} />
+          ))}
+          <ToolbarIconSkeleton />
+        </div>
+      </div>
 
       <div className="flex h-[200px] min-h-0 flex-col">
         <div className="relative h-12 min-w-0 shrink-0">
@@ -181,24 +192,11 @@ function MobileEditorPanelSkeleton() {
   );
 }
 
-function CurrentColorSkeleton({
-  className,
-  showAction = false,
-}: {
-  className: string;
-  showAction?: boolean;
-}) {
+function CurrentColorSkeleton() {
   return (
-    <div
-      className={`flex min-h-0 shrink-0 items-center justify-between gap-3 ${className}`}
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        <Skeleton className="size-8 shrink-0 rounded-full" />
-        <div className="flex h-9 min-w-0 flex-col justify-center gap-1">
-          <Skeleton className="h-4 w-8 rounded-sm" />
-        </div>
-      </div>
-      {showAction ? <Skeleton className="size-7 shrink-0 rounded-lg" /> : null}
+    <div className="flex min-w-0 items-center gap-3">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <Skeleton className="h-4 w-8 rounded-sm" />
     </div>
   );
 }

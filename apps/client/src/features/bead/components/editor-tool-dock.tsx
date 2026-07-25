@@ -37,12 +37,16 @@ const flyoutSurfaceClassName = cn(
 
 type EditorToolDockProps = {
   tool: CanvasTool;
+  flyoutOpen: boolean;
+  onFlyoutOpenChange: (open: boolean) => void;
   onSelectTool: (tool: CanvasTool) => void;
   className?: string;
 };
 
 export function EditorToolDock({
   tool,
+  flyoutOpen,
+  onFlyoutOpenChange,
   onSelectTool,
   className,
 }: EditorToolDockProps) {
@@ -66,11 +70,18 @@ export function EditorToolDock({
   }
 
   function activateDrawEntry() {
-    if (isDrawToolActive) {
+    if (!isDrawToolActive) {
+      onSelectTool("paint");
+      onFlyoutOpenChange(true);
       return;
     }
 
-    onSelectTool("paint");
+    onFlyoutOpenChange(!flyoutOpen);
+  }
+
+  function selectMainTool(nextTool: CanvasTool) {
+    onFlyoutOpenChange(false);
+    onSelectTool(nextTool);
   }
 
   return (
@@ -81,7 +92,7 @@ export function EditorToolDock({
       )}
     >
       <div className="pointer-events-auto relative">
-        {drawSelection ? (
+        {flyoutOpen && drawSelection ? (
           <div
             className={cn(
               flyoutSurfaceClassName,
@@ -137,13 +148,13 @@ export function EditorToolDock({
             <DockToolButton
               definition={panToolDefinition}
               isActive={tool === "pan"}
-              onClick={() => onSelectTool("pan")}
+              onClick={() => selectMainTool("pan")}
               size="main"
             />
             <DockToolButton
               definition={selectToolDefinition}
               isActive={tool === "select"}
-              onClick={() => onSelectTool("select")}
+              onClick={() => selectMainTool("select")}
               size="main"
             />
           </div>
@@ -151,6 +162,7 @@ export function EditorToolDock({
           <DockDivider size="main" />
 
           <DockToolButton
+            ariaExpanded={isDrawToolActive ? flyoutOpen : undefined}
             definition={drawTriggerIcon}
             isActive={isDrawToolActive}
             key={
@@ -181,6 +193,7 @@ function DockToolButton({
   isActive,
   disabled = false,
   label,
+  ariaExpanded,
   onClick,
   size,
 }: {
@@ -192,6 +205,7 @@ function DockToolButton({
   isActive: boolean;
   disabled?: boolean;
   label?: string;
+  ariaExpanded?: boolean;
   onClick: () => void;
   size: "main" | "flyout";
 }) {
@@ -203,6 +217,7 @@ function DockToolButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          aria-expanded={ariaExpanded}
           aria-label={tooltipLabel}
           aria-pressed={isActive}
           className={cn(

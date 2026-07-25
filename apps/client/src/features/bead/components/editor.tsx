@@ -9,7 +9,9 @@ import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
+import { MobileEditorToolFlyout } from "@/features/bead/components/mobile-editor-tool-flyout";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
+import { useEditorToolFlyout } from "@/features/bead/components/use-editor-tool-flyout";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
@@ -95,6 +97,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   });
   const mixedBeadBrush = useMixedBeadBrush({ beads, size });
   const pet = usePet();
+  const { flyoutOpen, setFlyoutOpen } = useEditorToolFlyout(tool);
 
   const filteredColors = useMemo(
     () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
@@ -321,7 +324,18 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
                 resetViewAfterResizeSignal={resetViewAfterResizeSignal}
                 resetViewSignal={resetViewSignal}
               />
-              <EditorToolDock tool={tool} onSelectTool={actions.selectTool} />
+              <EditorToolDock
+                className="hidden md:flex"
+                flyoutOpen={flyoutOpen}
+                onFlyoutOpenChange={setFlyoutOpen}
+                onSelectTool={actions.selectTool}
+                tool={tool}
+              />
+              <MobileEditorToolFlyout
+                open={flyoutOpen}
+                onSelectTool={actions.selectTool}
+                tool={tool}
+              />
             </>
           )}
         </div>
@@ -338,15 +352,19 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       />
       <MobileEditorPanel
         colors={filteredColors}
+        flyoutOpen={flyoutOpen}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}
+        onFlyoutOpenChange={setFlyoutOpen}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
+        onSelectTool={actions.selectTool}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
+        tool={tool}
       />
     </main>
   );
