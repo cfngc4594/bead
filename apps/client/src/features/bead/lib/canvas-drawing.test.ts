@@ -39,10 +39,38 @@ test("draws a clean pattern preview without labels, codes, or grid lines", () =>
     showLabels: false,
   });
 
-  expect(fillRects).toEqual([
-    [0, 0, cellSize, cellSize],
-    [0, 0, cellSize, cellSize],
-  ]);
+  expect(fillRects).toEqual([[0, 0, cellSize, cellSize]]);
   expect(fillTextCount).toBe(0);
   expect(strokeRectCount).toBe(0);
+});
+
+test("leaves empty cells transparent in preview mode", () => {
+  const fillRects: [number, number, number, number][] = [];
+  const context = {
+    beginPath() {},
+    fillRect(x: number, y: number, width: number, height: number) {
+      fillRects.push([x, y, width, height]);
+    },
+    fillStyle: "",
+    fillText() {},
+    font: "",
+    lineTo() {},
+    lineWidth: 1,
+    moveTo() {},
+    restore() {},
+    save() {},
+    stroke() {},
+    strokeRect() {},
+    strokeStyle: "",
+    textAlign: "start",
+    textBaseline: "alphabetic",
+  } satisfies BoardDrawingContext;
+
+  drawBoard(context, 1, 1, [null], {
+    showBeadCodes: false,
+    showGrid: false,
+    showLabels: false,
+  });
+
+  expect(fillRects).toEqual([]);
 });

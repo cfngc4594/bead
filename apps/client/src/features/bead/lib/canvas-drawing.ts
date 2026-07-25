@@ -59,10 +59,9 @@ export function drawBoard(
       const y = origin.y + row * cellSize;
       const color = beads[row * cols + col];
 
-      context.fillStyle = palette.cellBackground;
-      context.fillRect(x, y, cellSize, cellSize);
-
       if (showGrid) {
+        context.fillStyle = palette.cellBackground;
+        context.fillRect(x, y, cellSize, cellSize);
         context.strokeStyle = palette.grid;
         context.lineWidth = 1;
         context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
