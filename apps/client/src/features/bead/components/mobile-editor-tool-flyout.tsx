@@ -1,11 +1,8 @@
-import { Button } from "@bead/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@bead/ui/components/tooltip";
 import { cn } from "@bead/ui/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import {
+  EditorToolButton,
+  editorToolSurfaceClassName,
+} from "@/features/bead/components/editor-tool-button";
 import {
   type BeadFillMode,
   beadFillModeDefinitions,
@@ -17,9 +14,6 @@ import {
   resolveCanvasTool,
 } from "@/features/bead/lib/canvas-tool-definitions";
 import type { CanvasTool } from "@/features/bead/types";
-
-const flyoutSurfaceClassName =
-  "h-10 rounded-lg border border-border/80 bg-background p-2 shadow-md";
 
 type MobileEditorToolFlyoutProps = {
   open: boolean;
@@ -57,92 +51,34 @@ export function MobileEditorToolFlyout({
     >
       <div
         className={cn(
-          flyoutSurfaceClassName,
-          "pointer-events-auto flex items-center gap-2 duration-200 animate-in fade-in slide-in-from-bottom-2",
+          editorToolSurfaceClassName,
+          "pointer-events-auto flex items-center gap-1.5 duration-200 animate-in fade-in slide-in-from-bottom-2",
         )}
         role="toolbar"
         aria-label="绘制选项"
       >
-        <fieldset
-          aria-label="绘制工具"
-          className="m-0 flex min-w-0 items-center gap-2 border-0 p-0"
-        >
-          {drawInstrumentDefinitions.map((definition) => (
-            <FlyoutToolButton
-              definition={definition}
-              isActive={drawSelection.instrument === definition.id}
-              key={definition.id}
-              onClick={() => applyDrawSelection(definition.id)}
-            />
-          ))}
-        </fieldset>
-
-        <FlyoutDivider />
-
-        <fieldset
-          aria-label="豆型"
-          className="m-0 flex min-w-0 items-center gap-2 border-0 p-0"
-        >
-          {beadFillModeDefinitions.map((definition) => (
-            <FlyoutToolButton
-              definition={definition}
-              disabled={!beadFillEnabled}
-              isActive={
-                beadFillEnabled && drawSelection.beadFillMode === definition.id
-              }
-              key={definition.id}
-              onClick={() => applyDrawSelection("brush", definition.id)}
-            />
-          ))}
-        </fieldset>
+        {drawInstrumentDefinitions.map((definition) => (
+          <EditorToolButton
+            icon={definition.icon}
+            isActive={drawSelection.instrument === definition.id}
+            key={definition.id}
+            label={definition.label}
+            onClick={() => applyDrawSelection(definition.id)}
+          />
+        ))}
+        {beadFillModeDefinitions.map((definition) => (
+          <EditorToolButton
+            disabled={!beadFillEnabled}
+            icon={definition.icon}
+            isActive={
+              beadFillEnabled && drawSelection.beadFillMode === definition.id
+            }
+            key={definition.id}
+            label={definition.label}
+            onClick={() => applyDrawSelection("brush", definition.id)}
+          />
+        ))}
       </div>
     </div>
-  );
-}
-
-function FlyoutDivider() {
-  return <div aria-hidden="true" className="h-6 w-px shrink-0 bg-border" />;
-}
-
-function FlyoutToolButton({
-  definition,
-  isActive,
-  disabled = false,
-  onClick,
-}: {
-  definition: {
-    label: string;
-    icon: LucideIcon;
-  };
-  isActive: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  const Icon = definition.icon;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-label={definition.label}
-          aria-pressed={isActive}
-          className={cn(
-            "size-6 shrink-0 rounded-md p-1",
-            isActive &&
-              "border-border bg-muted text-foreground shadow-xs dark:border-input dark:bg-input/30",
-          )}
-          disabled={disabled}
-          onClick={onClick}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <Icon className="size-3.5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent className="hidden md:block">
-        {definition.label}
-      </TooltipContent>
-    </Tooltip>
   );
 }

@@ -1,10 +1,5 @@
-import { Button } from "@bead/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@bead/ui/components/tooltip";
 import { cn } from "@bead/ui/lib/utils";
+import { EditorToolButton } from "@/features/bead/components/editor-tool-button";
 import {
   drawTriggerDefinition,
   getDrawTriggerDefinition,
@@ -23,7 +18,7 @@ type MobileEditorToolDockProps = {
   className?: string;
 };
 
-const mobileMainTools = [panToolDefinition, selectToolDefinition] as const;
+const mainTools = [panToolDefinition, selectToolDefinition] as const;
 
 export function MobileEditorToolDock({
   tool,
@@ -62,63 +57,27 @@ export function MobileEditorToolDock({
       role="toolbar"
       aria-label="画布工具"
     >
-      {mobileMainTools.map((definition) => (
-        <MobileToolButton
-          definition={definition}
+      {mainTools.map((definition) => (
+        <EditorToolButton
+          icon={definition.icon}
           isActive={tool === definition.tool}
           key={definition.tool}
+          label={definition.label}
           onClick={() => selectMainTool(definition.tool)}
         />
       ))}
-      <MobileToolButton
-        definition={drawTriggerIcon}
-        isActive={isDrawToolActive}
+      <EditorToolButton
         ariaExpanded={isDrawToolActive ? flyoutOpen : undefined}
+        icon={drawTriggerIcon.icon}
+        isActive={isDrawToolActive}
         key={
           drawSelection
             ? `${drawSelection.instrument}-${drawSelection.beadFillMode}`
             : "draw-entry"
         }
+        label={drawTriggerIcon.label}
         onClick={activateDrawEntry}
       />
     </div>
-  );
-}
-
-function MobileToolButton({
-  definition,
-  isActive,
-  ariaExpanded,
-  onClick,
-}: {
-  definition: {
-    label: string;
-    icon: typeof panToolDefinition.icon;
-  };
-  isActive: boolean;
-  ariaExpanded?: boolean;
-  onClick: () => void;
-}) {
-  const Icon = definition.icon;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-expanded={ariaExpanded}
-          aria-label={definition.label}
-          aria-pressed={isActive}
-          onClick={onClick}
-          size="icon-sm"
-          type="button"
-          variant={isActive ? "default" : "outline"}
-        >
-          <Icon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent className="hidden md:block">
-        {definition.label}
-      </TooltipContent>
-    </Tooltip>
   );
 }

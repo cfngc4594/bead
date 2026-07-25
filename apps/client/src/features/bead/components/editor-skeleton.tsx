@@ -58,11 +58,10 @@ export function CanvasBoardSkeleton() {
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
-        <div className="flex h-12 items-center gap-2 rounded-xl border border-border/80 bg-background p-2 shadow-md">
-          <Skeleton className="size-8 shrink-0 rounded-md" />
-          <Skeleton className="size-8 shrink-0 rounded-md" />
-          <Skeleton className="h-8 w-px shrink-0 rounded-none" />
-          <Skeleton className="size-8 shrink-0 rounded-md" />
+        <div className="flex items-center gap-1.5 rounded-lg bg-card p-1.5 shadow-md">
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
+          <Skeleton className="size-7 shrink-0 rounded-lg" />
         </div>
       </div>
     </>
