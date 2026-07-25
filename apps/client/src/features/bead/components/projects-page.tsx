@@ -9,7 +9,6 @@ import {
 import { Button } from "@bead/ui/components/button";
 import {
   Empty,
-  EmptyContent,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -484,19 +483,6 @@ export function ProjectsPage() {
               </EmptyMedia>
               <EmptyTitle>暂无作品</EmptyTitle>
             </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link
-                  onClick={() =>
-                    trackEvent("project_new_clicked", { source: "empty" })
-                  }
-                  to="/projects/new"
-                >
-                  <Plus aria-hidden="true" />
-                  开始拼豆
-                </Link>
-              </Button>
-            </EmptyContent>
           </Empty>
         </div>
       )}
