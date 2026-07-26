@@ -37,9 +37,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  BEAD_TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
-
 jobs:
   changes:
     name: Detect changed paths
@@ -124,10 +121,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      VITE_SITE_GITHUB_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_GITHUB_URL_PREVIEW || vars.VITE_SITE_GITHUB_URL }}
-      VITE_SITE_WEB_APP_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_WEB_APP_URL_PREVIEW || vars.VITE_SITE_WEB_APP_URL }}
-      VITE_SITE_ANDROID_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_ANDROID_URL_PREVIEW || vars.VITE_SITE_ANDROID_URL }}
-      VITE_SITE_IOS_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_IOS_URL_PREVIEW || vars.VITE_SITE_IOS_URL }}
+      VITE_SITE_GITHUB_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_GITHUB_URL_PREVIEW || vars.VITE_SITE_GITHUB_URL }}
+      VITE_SITE_WEB_APP_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_WEB_APP_URL_PREVIEW || vars.VITE_SITE_WEB_APP_URL }}
+      VITE_SITE_ANDROID_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_ANDROID_URL_PREVIEW || vars.VITE_SITE_ANDROID_URL }}
+      VITE_SITE_IOS_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_IOS_URL_PREVIEW || vars.VITE_SITE_IOS_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -159,9 +156,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      VITE_API_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
+      VITE_API_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
