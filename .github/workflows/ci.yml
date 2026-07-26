@@ -39,7 +39,7 @@ jobs:
 
       - name: Filter changed paths
         id: filter
-        uses: dorny/paths-filter@91e6386442053180703fea55f99b7c2d21326728 # v3.0.2
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
           filters: |
             shared:
@@ -96,7 +96,7 @@ jobs:
         run: bun run typecheck
 
   site:
-    name: Build site (${{ github.base_ref == 'develop' && 'Preview' || 'Production' }})
+    name: Build site (${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       github.event.action != 'closed' &&
@@ -104,9 +104,14 @@ jobs:
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.site == 'true'
       )
-    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
+    environment: ${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      VITE_SITE_GITHUB_URL: ${{ vars.VITE_SITE_GITHUB_URL }}
+      VITE_SITE_WEB_APP_URL: ${{ vars.VITE_SITE_WEB_APP_URL }}
+      VITE_SITE_ANDROID_URL: ${{ vars.VITE_SITE_ANDROID_URL }}
+      VITE_SITE_IOS_URL: ${{ vars.VITE_SITE_IOS_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -127,7 +132,7 @@ jobs:
         run: bun run build:site
 
   client-web:
-    name: Build client web (${{ github.base_ref == 'develop' && 'Preview' || 'Production' }})
+    name: Build client web (${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       github.event.action != 'closed' &&
@@ -135,9 +140,13 @@ jobs:
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.client == 'true'
       )
-    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
+    environment: ${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6

@@ -52,12 +52,7 @@ export function ProjectTitleEditor({
   }
 
   return (
-    <div
-      className={cn(
-        "w-[76px] max-w-[92px] min-w-16 shrink-0 md:w-[92px]",
-        className,
-      )}
-    >
+    <div className={cn("w-19 max-w-23 min-w-16 shrink-0 md:w-23", className)}>
       {isEditing ? (
         <input
           aria-label="作品名"
