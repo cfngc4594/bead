@@ -1,9 +1,9 @@
-import { publishDiscoverProjectsSchema } from "@bead/core/discover";
+import { publishDiscoverProjectBodySchema } from "@bead/core/discover";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import {
-  createDiscoverProjects,
+  createDiscoverProject,
   findDiscoverProject,
   listDiscoverProjects,
 } from "./repository.js";
@@ -13,13 +13,13 @@ const discoverProjectParamSchema = z.object({
 });
 
 export type DiscoverRouteRepository = {
-  createProjects: typeof createDiscoverProjects;
+  createProject: typeof createDiscoverProject;
   findProject: typeof findDiscoverProject;
   listProjects: typeof listDiscoverProjects;
 };
 
 const discoverRepository: DiscoverRouteRepository = {
-  createProjects: createDiscoverProjects,
+  createProject: createDiscoverProject,
   findProject: findDiscoverProject,
   listProjects: listDiscoverProjects,
 };
@@ -44,11 +44,15 @@ export function createDiscoverRoutes(repository: DiscoverRouteRepository) {
         return c.json({ project });
       },
     )
-    .post("/", zValidator("json", publishDiscoverProjectsSchema), async (c) => {
-      const input = c.req.valid("json");
-      const projects = await repository.createProjects(input.projects);
-      return c.json({ projects }, 201);
-    });
+    .post(
+      "/",
+      zValidator("json", publishDiscoverProjectBodySchema),
+      async (c) => {
+        const input = c.req.valid("json");
+        const project = await repository.createProject(input.project);
+        return c.json({ project }, 201);
+      },
+    );
 }
 
 export const discoverRoutes = createDiscoverRoutes(discoverRepository);

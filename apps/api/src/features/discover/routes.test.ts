@@ -14,7 +14,7 @@ const PROJECT_ID = "123e4567-e89b-12d3-a456-426614174001";
 
 describe("discover project routes", () => {
   test("returns discover projects", async () => {
-    const project = createProject(createPublishProject("Rabbit"), 0);
+    const project = createProject(createPublishProject("Rabbit"));
     const app = createDiscoverRoutes(
       createRepository({ listProjects: async () => [project] }),
     );
@@ -33,20 +33,17 @@ describe("discover project routes", () => {
   });
 
   test("validates publish input", async () => {
-    let receivedProjects: PublishDiscoverProject[] | undefined;
+    let receivedProject: PublishDiscoverProject | undefined;
     const app = createDiscoverRoutes(
       createRepository({
-        createProjects: async (projects) => {
-          receivedProjects = projects;
-          return projects.map(createProject);
+        createProject: async (project) => {
+          receivedProject = project;
+          return createProject(project);
         },
       }),
     );
     const input = {
-      projects: [
-        createPublishProject("Rabbit"),
-        createPublishProject("Flower"),
-      ],
+      project: createPublishProject("Rabbit"),
     };
 
     const response = await app.request("/", {
@@ -56,20 +53,16 @@ describe("discover project routes", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(receivedProjects?.map((project) => project.title)).toEqual([
-      "Rabbit",
-      "Flower",
-    ]);
+    expect(receivedProject?.title).toBe("Rabbit");
     const responseBody = z
-      .object({ projects: z.array(discoverProjectSchema) })
+      .object({ project: discoverProjectSchema })
       .parse(await response.json());
-    expect(responseBody.projects.map((project) => project.title)).toEqual([
-      "Rabbit",
-      "Flower",
-    ]);
+    expect(responseBody.project.title).toBe("Rabbit");
 
     const invalidResponse = await app.request("/", {
-      body: JSON.stringify({ projects: [] }),
+      body: JSON.stringify({
+        projects: [createPublishProject("Rabbit")],
+      }),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -81,8 +74,7 @@ function createRepository(
   overrides: Partial<DiscoverRouteRepository> = {},
 ): DiscoverRouteRepository {
   return {
-    createProjects: async (projects) =>
-      projects.map((project, index) => createProject(project, index)),
+    createProject: async (project) => createProject(project),
     findProject: async () => null,
     listProjects: async () => [],
     ...overrides,
@@ -97,16 +89,10 @@ function createPublishProject(title: string): PublishDiscoverProject {
   };
 }
 
-function createProject(
-  project: PublishDiscoverProject,
-  index = 0,
-): DiscoverProject {
+function createProject(project: PublishDiscoverProject): DiscoverProject {
   return {
     ...project,
-    id:
-      index === 0
-        ? PROJECT_ID
-        : `123e4567-e89b-12d3-a456-42661417400${index + 1}`,
+    id: PROJECT_ID,
     publishedAt: 1,
   };
 }

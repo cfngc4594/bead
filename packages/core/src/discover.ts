@@ -6,7 +6,7 @@ import {
   validateCanvasSnapshot,
 } from "./canvas-snapshot";
 
-export const MAX_DISCOVER_PROJECTS_PER_PUBLISH = 60;
+export const MAX_DISCOVER_FEED_PAGE_SIZE = 60;
 
 const discoverProjectContentSchema = z
   .object({
@@ -19,12 +19,9 @@ const discoverProjectContentSchema = z
 export const publishDiscoverProjectSchema =
   discoverProjectContentSchema.superRefine(addDiscoverProjectIssues);
 
-export const publishDiscoverProjectsSchema = z
+export const publishDiscoverProjectBodySchema = z
   .object({
-    projects: z
-      .array(publishDiscoverProjectSchema)
-      .min(1)
-      .max(MAX_DISCOVER_PROJECTS_PER_PUBLISH),
+    project: publishDiscoverProjectSchema,
   })
   .strict();
 

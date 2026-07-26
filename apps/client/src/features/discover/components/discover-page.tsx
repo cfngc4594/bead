@@ -1,4 +1,3 @@
-import { Button } from "@bead/ui/components/button";
 import {
   Empty,
   EmptyHeader,
@@ -7,26 +6,14 @@ import {
 } from "@bead/ui/components/empty";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Compass, Upload } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Compass } from "lucide-react";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
-import { PublishProjectDialog } from "@/features/discover/components/publish-project-dialog";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
 
 export function DiscoverPage() {
-  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-  const { data: discoverProjects } = useSuspenseQuery(
-    discoverProjectsQueryOptions,
-  );
-  const projects = useMemo(
-    () =>
-      [...discoverProjects].sort(
-        (left, right) => right.publishedAt - left.publishedAt,
-      ),
-    [discoverProjects],
-  );
+  const { data: projects } = useSuspenseQuery(discoverProjectsQueryOptions);
 
   return (
     <main
@@ -35,12 +22,6 @@ export function DiscoverPage() {
     >
       <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
         <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Button onClick={() => setIsPublishDialogOpen(true)}>
-            <Upload aria-hidden="true" />
-            发布
-          </Button>
-        </div>
       </header>
 
       {projects.length > 0 ? (
@@ -80,13 +61,6 @@ export function DiscoverPage() {
           </Empty>
         </div>
       )}
-
-      {isPublishDialogOpen ? (
-        <PublishProjectDialog
-          onOpenChange={setIsPublishDialogOpen}
-          open={isPublishDialogOpen}
-        />
-      ) : null}
     </main>
   );
 }

@@ -60,9 +60,12 @@ export const selectToolDefinition: ToolDefinition = {
   tool: "select",
 };
 
-export const defaultDrawTool: DrawTool = "paint";
+export const mainToolDefinitions = [
+  panToolDefinition,
+  selectToolDefinition,
+] as const;
 
-const legacyDrawToolDefinitions: ToolDefinition[] = [
+const drawToolDefinitions: ToolDefinition[] = [
   { icon: PenLine, label: "画笔", tool: "paint" },
   { icon: Blend, label: "混豆画笔", tool: "mix" },
   { icon: Eraser, label: "橡皮擦", tool: "erase" },
@@ -72,7 +75,7 @@ const legacyDrawToolDefinitions: ToolDefinition[] = [
 const toolDefinitionById = new Map<CanvasTool, ToolDefinition>([
   [panToolDefinition.tool, panToolDefinition],
   [selectToolDefinition.tool, selectToolDefinition],
-  ...legacyDrawToolDefinitions.map(
+  ...drawToolDefinitions.map(
     (definition) => [definition.tool, definition] as const,
   ),
 ]);
@@ -122,8 +125,9 @@ export function getDrawTriggerDefinition(
   instrument: DrawInstrument,
   beadFillMode: BeadFillMode,
 ) {
-  const canvasTool = resolveCanvasTool(instrument, beadFillMode);
-  const definition = getToolDefinition(canvasTool);
+  const definition = getToolDefinition(
+    resolveCanvasTool(instrument, beadFillMode),
+  );
 
   return {
     icon: definition.icon,

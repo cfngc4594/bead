@@ -5,13 +5,13 @@ import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
+import { DrawToolOptions } from "@/features/bead/components/draw-tool-options";
 import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
 import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
-import { MobileEditorToolFlyout } from "@/features/bead/components/mobile-editor-tool-flyout";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
-import { useEditorToolFlyout } from "@/features/bead/components/use-editor-tool-flyout";
+import { useDrawToolController } from "@/features/bead/hooks/use-draw-tool-controller";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
@@ -97,7 +97,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   });
   const mixedBeadBrush = useMixedBeadBrush({ beads, size });
   const pet = usePet();
-  const { flyoutOpen, setFlyoutOpen } = useEditorToolFlyout(tool);
+  const drawTools = useDrawToolController(tool, actions.selectTool);
 
   const filteredColors = useMemo(
     () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
@@ -326,16 +326,20 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               />
               <EditorToolDock
                 className="hidden md:flex"
-                flyoutOpen={flyoutOpen}
-                onFlyoutOpenChange={setFlyoutOpen}
-                onSelectTool={actions.selectTool}
+                controller={drawTools}
                 tool={tool}
               />
-              <MobileEditorToolFlyout
-                open={flyoutOpen}
-                onSelectTool={actions.selectTool}
-                tool={tool}
-              />
+              {drawTools.flyoutOpen && drawTools.drawSelection ? (
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-end px-4 md:hidden">
+                  <DrawToolOptions
+                    beadFillEnabled={drawTools.beadFillEnabled}
+                    beadFillMode={drawTools.drawSelection.beadFillMode}
+                    className="pointer-events-auto"
+                    instrument={drawTools.drawSelection.instrument}
+                    onSelect={drawTools.applyDrawSelection}
+                  />
+                </div>
+              ) : null}
             </>
           )}
         </div>
@@ -352,16 +356,14 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       />
       <MobileEditorPanel
         colors={filteredColors}
-        flyoutOpen={flyoutOpen}
+        drawTools={drawTools}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}
-        onFlyoutOpenChange={setFlyoutOpen}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
         }
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
-        onSelectTool={actions.selectTool}
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
         tool={tool}

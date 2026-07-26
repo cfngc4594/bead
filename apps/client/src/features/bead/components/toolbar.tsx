@@ -55,7 +55,6 @@ type EditorToolbarProps = {
 
 type ToolbarIconButtonProps = {
   label: string;
-  tooltip?: string;
   icon: LucideIcon;
   disabled?: boolean;
   loading?: boolean;
@@ -65,7 +64,6 @@ type ToolbarIconButtonProps = {
 
 type ToolbarAction = {
   label: string;
-  tooltip?: string;
   icon: LucideIcon;
   closeSheetOnClick?: boolean;
   disabled?: boolean;
@@ -263,7 +261,6 @@ function MobileMoreTools({ actions }: { actions: ToolbarAction[] }) {
 
 function SheetActionButton({
   label,
-  tooltip,
   icon: Icon,
   disabled = false,
   loading = false,
@@ -278,7 +275,7 @@ function SheetActionButton({
       className="h-11 justify-start gap-2"
       disabled={disabled}
       onClick={onClick}
-      title={tooltip ?? label}
+      title={label}
       type="button"
       variant={isActive ? "default" : "outline"}
     >
@@ -290,7 +287,6 @@ function SheetActionButton({
 
 function ToolbarIconButton({
   label,
-  tooltip,
   icon: Icon,
   disabled = false,
   loading = false,
@@ -298,13 +294,12 @@ function ToolbarIconButton({
   onClick,
 }: ToolbarIconButtonProps) {
   const IconToRender = loading ? LoaderCircle : Icon;
-  const tooltipLabel = tooltip ?? label;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          aria-label={tooltipLabel}
+          aria-label={label}
           aria-pressed={isActive || undefined}
           disabled={disabled}
           onClick={onClick}
@@ -314,9 +309,7 @@ function ToolbarIconButton({
           <IconToRender className={loading ? "animate-spin" : undefined} />
         </Button>
       </TooltipTrigger>
-      <TooltipContent className="hidden md:block">
-        {tooltipLabel}
-      </TooltipContent>
+      <TooltipContent className="hidden md:block">{label}</TooltipContent>
     </Tooltip>
   );
 }

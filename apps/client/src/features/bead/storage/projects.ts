@@ -6,6 +6,7 @@ import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import {
   BasicIndex,
   createCollection,
+  createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
 import {
@@ -21,13 +22,17 @@ import {
   expandSnapshot,
   getSnapshotFilledCount,
 } from "@/features/bead/storage/project-snapshots";
-import { commitLocalStorageMutation } from "@/lib/local-storage-transaction";
 
 export type ProjectId = string;
 export type { Project };
 
 export const DEFAULT_PROJECT_TITLE = "未命名作品";
 const PROJECTS_STORAGE_KEY = "bead:projects";
+const ORPHAN_STORAGE_KEYS = [
+  "bead:collections",
+  "bead:collection-items",
+  "bead:library-collections",
+] as const;
 
 export const projectsCollection = createCollection(
   localStorageCollectionOptions({
@@ -44,6 +49,11 @@ projectsCollection.createIndex((project) => project.id, {
 
 export async function preloadProjectsCollection() {
   await projectsCollection.preload();
+
+  for (const key of ORPHAN_STORAGE_KEYS) {
+    localStorage.removeItem(key);
+  }
+
   return null;
 }
 
@@ -136,11 +146,16 @@ export async function createProjectFromSnapshot({
   title: string;
 }) {
   await projectsCollection.preload();
-  const project = buildProjectFromSnapshot({
+  const normalizedTitle = normalizeProjectTitle(title);
+  const project: Project = {
+    id: createProjectId(),
+    title:
+      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
     sizeId,
-    snapshot,
-    title,
-  });
+    snapshots: [cloneSnapshot(snapshot)],
+    currentIndex: 0,
+    updatedAt: Date.now(),
+  };
 
   await commitProjectMutation(() => {
     projectsCollection.insert(project);
@@ -200,30 +215,6 @@ export async function createProject(sizeId: CanvasSizeId) {
   return project;
 }
 
-export function buildProjectFromSnapshot({
-  sizeId,
-  snapshot,
-  title,
-  updatedAt = Date.now(),
-}: {
-  sizeId: CanvasSizeId;
-  snapshot: CanvasSnapshot;
-  title: string;
-  updatedAt?: number;
-}): Project {
-  const normalizedTitle = normalizeProjectTitle(title);
-
-  return {
-    id: createProjectId(),
-    title:
-      normalizedTitle.length === 0 ? DEFAULT_PROJECT_TITLE : normalizedTitle,
-    sizeId,
-    snapshots: [cloneSnapshot(snapshot)],
-    currentIndex: 0,
-    updatedAt,
-  };
-}
-
 export function getFilledCount(
   project: Pick<Project, "currentIndex" | "snapshots">,
 ) {
@@ -265,8 +256,12 @@ function normalizeProjectTitle(title: string) {
 }
 
 function commitProjectMutation(mutator: () => void) {
-  return commitLocalStorageMutation(
-    mutator,
-    projectsCollection.utils.acceptMutations,
-  );
+  const transaction = createTransaction({
+    mutationFn: async ({ transaction: pendingTransaction }) => {
+      projectsCollection.utils.acceptMutations(pendingTransaction);
+    },
+  });
+
+  transaction.mutate(mutator);
+  return transaction.isPersisted.promise;
 }
