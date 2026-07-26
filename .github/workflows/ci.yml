@@ -1,0 +1,205 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - "biome.json"
+      - ".github/workflows/ci.yml"
+      - ".github/actions/**"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - "biome.json"
+      - ".github/workflows/ci.yml"
+      - ".github/actions/**"
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref_name }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed paths
+    if: github.event_name == 'push' || github.event.pull_request.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      site: ${{ steps.filter.outputs.site }}
+      client: ${{ steps.filter.outputs.client }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Filter changed paths
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          # On push to develop/main, diff only this push vs the previous commit on
+          # the same branch. Without this, non-default branches fall back to main...HEAD.
+          base: ${{ github.event_name == 'push' && github.ref || '' }}
+          filters: |
+            shared:
+              - 'package.json'
+              - 'bun.lock'
+              - 'tsconfig.json'
+              - 'nx.json'
+              - 'biome.json'
+              - 'packages/**'
+            site:
+              - 'apps/site/**'
+            client:
+              - 'apps/client/**'
+            api:
+              - 'apps/api/**'
+
+  lint:
+    name: Lint
+    needs: changes
+    if: github.event_name == 'push' || github.event.pull_request.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Lint
+        run: bun run lint
+
+  typecheck:
+    name: Typecheck
+    needs: changes
+    if: >-
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
+      (
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.site == 'true' ||
+        needs.changes.outputs.client == 'true' ||
+        needs.changes.outputs.api == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Typecheck
+        run: bun run typecheck
+
+  site:
+    name: Build site (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
+    needs: changes
+    if: >-
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
+      (
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.site == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SITE_GITHUB_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_GITHUB_URL_PREVIEW || vars.VITE_SITE_GITHUB_URL }}
+      VITE_SITE_WEB_APP_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_WEB_APP_URL_PREVIEW || vars.VITE_SITE_WEB_APP_URL }}
+      VITE_SITE_ANDROID_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_ANDROID_URL_PREVIEW || vars.VITE_SITE_ANDROID_URL }}
+      VITE_SITE_IOS_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_SITE_IOS_URL_PREVIEW || vars.VITE_SITE_IOS_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Validate site build environment
+        run: |
+          for key in VITE_SITE_GITHUB_URL VITE_SITE_WEB_APP_URL VITE_SITE_ANDROID_URL VITE_SITE_IOS_URL; do
+            if [ -z "${!key}" ]; then
+              echo "$key repository variable is required for site builds." >&2
+              exit 1
+            fi
+          done
+
+      - name: Build site
+        run: bun run build:site
+
+  client-web:
+    name: Build client web (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
+    needs: changes
+    if: >-
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
+      (
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.client == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_API_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Validate client build environment
+        run: |
+          for key in VITE_API_URL VITE_UMAMI_SCRIPT_URL VITE_UMAMI_WEBSITE_ID; do
+            if [ -z "${!key}" ]; then
+              echo "$key repository variable is required for client web builds." >&2
+              exit 1
+            fi
+          done
+
+      - name: Build client web
+        run: bun run build:client
+
+  api:
+    name: Build api
+    needs: changes
+    if: >-
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
+      (
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.api == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Build api
+        run: bun run --cwd apps/api build

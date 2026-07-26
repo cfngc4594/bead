@@ -7,12 +7,11 @@ import { useState } from "react";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";
-import { MobileEditorToolDock } from "@/features/bead/components/mobile-editor-tool-dock";
+import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
 import {
   ModelPreviewControls,
   type ModelPreviewControlsBinding,
 } from "@/features/bead/components/model-preview-controls";
-import type { DrawToolController } from "@/features/bead/hooks/use-draw-tool-controller";
 import type { CanvasTool } from "@/features/bead/types";
 
 type MobileEditorPanelProps = {
@@ -21,9 +20,9 @@ type MobileEditorPanelProps = {
   selectedColor: BeadColor;
   selectedLetter: string;
   tool: CanvasTool;
-  drawTools: DrawToolController;
   modelPreviewControls: ModelPreviewControlsBinding | null;
   onSelectColor: (color: BeadColor) => void;
+  onSelectTool: (tool: CanvasTool) => void;
   onSelectLetter: (letter: string) => void;
   onResetViewAfterResize: () => void;
 };
@@ -34,9 +33,9 @@ export function MobileEditorPanel({
   selectedColor,
   selectedLetter,
   tool,
-  drawTools,
   modelPreviewControls,
   onSelectColor,
+  onSelectTool,
   onSelectLetter,
   onResetViewAfterResize,
 }: MobileEditorPanelProps) {
@@ -68,7 +67,11 @@ export function MobileEditorPanel({
         )}
         <div className="flex shrink-0 items-center gap-1.5">
           {isModelPreviewOpen ? null : (
-            <MobileEditorToolDock controller={drawTools} tool={tool} />
+            <EditorToolDock
+              layout="mobile"
+              onSelectTool={onSelectTool}
+              tool={tool}
+            />
           )}
           <Button
             aria-expanded={isExpanded}

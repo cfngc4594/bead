@@ -1,20 +1,10 @@
 name: Android
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "apps/client/**"
-      - "packages/**"
-      - "package.json"
-      - "bun.lock"
-      - "tsconfig.json"
-      - "nx.json"
-      - ".github/workflows/android.yml"
   pull_request:
     branches:
       - main
+      - develop
     paths:
       - "apps/client/**"
       - "packages/**"
@@ -23,45 +13,57 @@ on:
       - "tsconfig.json"
       - "nx.json"
       - ".github/workflows/android.yml"
+      - ".github/actions/**"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/android.yml"
+      - ".github/actions/**"
   workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - production
+          - preview
+
+concurrency:
+  group: android-${{ github.event.pull_request.number || github.ref_name }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   validate-android:
-    name: Validate Android release build
-    if: github.event_name == 'pull_request'
+    name: Validate Android build (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VITE_API_URL: ${{ vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
-
+      BEAD_DEPLOY_ENV: ${{ (github.base_ref || github.ref_name) == 'develop' && 'preview' || 'production' }}
+      VITE_API_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ (github.base_ref || github.ref_name) == 'develop' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
 
-      - name: Set up Java
-        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
-        with:
-          packages: tools platform-tools platforms;android-36 build-tools;36.0.0
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Setup Android
+        uses: ./.github/actions/setup-android
 
       - name: Validate build environment
         run: |
@@ -83,58 +85,71 @@ jobs:
           ./gradlew assembleRelease --no-daemon
 
   release-android:
-    name: Build and publish signed Android APK
-    if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    name: Release Android APK (${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }})
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    environment: ${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
-    environment: android-release
     env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
       VITE_API_URL: ${{ vars.VITE_API_URL }}
       VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
       VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
 
-      - name: Set up Java
-        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
-        with:
-          packages: tools platform-tools platforms;android-36 build-tools;36.0.0
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Setup Android
+        uses: ./.github/actions/setup-android
 
       - name: Validate build environment
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "VITE_API_URL repository variable is required for Android builds." >&2
+            echo "VITE_API_URL is required in the active GitHub environment." >&2
             exit 1
           fi
 
+      - name: Validate Android signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for key in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_PASSWORD; do
+            if [ -z "${!key}" ]; then
+              echo "$key is required in the active GitHub environment secrets." >&2
+              exit 1
+            fi
+          done
+
       - name: Generate release metadata
         id: version
+        shell: bash
         run: |
-          echo "date=$(date -u +'%Y%m%d')" >> "$GITHUB_OUTPUT"
           echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
           echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-          echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+          if [ "$BEAD_DEPLOY_ENV" = "preview" ]; then
+            echo "date=" >> "$GITHUB_OUTPUT"
+            echo "version_name=0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=bead-android-preview-0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
+            echo "apk_filename=Bead-preview.apk" >> "$GITHUB_OUTPUT"
+            echo "release_tag=android-preview-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Bead Android Preview v0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=$(date -u +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+            echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=bead-android-0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "apk_filename=Bead.apk" >> "$GITHUB_OUTPUT"
+            echo "release_tag=android-v$(date -u +'%Y%m%d')-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Bead Android v0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Add Android platform
         run: bun run cap:add:android
@@ -180,38 +195,39 @@ jobs:
         if: always()
         run: rm -f apps/client/android/app/build/outputs/apk/release/signingKey.jks
 
-      - name: Prepare release APK
-        id: release_apk
+      - name: Prepare signed APK
+        id: signed_apk
         env:
           SIGNED_APK: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          APK_FILENAME: ${{ steps.version.outputs.apk_filename }}
         run: |
           test -f "$SIGNED_APK"
-          cp "$SIGNED_APK" "$RUNNER_TEMP/Bead.apk"
-          echo "path=$RUNNER_TEMP/Bead.apk" >> "$GITHUB_OUTPUT"
+          cp "$SIGNED_APK" "$RUNNER_TEMP/$APK_FILENAME"
+          echo "path=$RUNNER_TEMP/$APK_FILENAME" >> "$GITHUB_OUTPUT"
 
-      - name: Upload signed release APK
+      - name: Upload signed APK
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: bead-android-${{ steps.version.outputs.version_name }}
-          path: ${{ steps.release_apk.outputs.path }}
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: ${{ steps.signed_apk.outputs.path }}
           if-no-files-found: error
           retention-days: 14
 
       - name: Publish Android Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
-          files: ${{ steps.release_apk.outputs.path }}
+          files: ${{ steps.signed_apk.outputs.path }}
           fail_on_unmatched_files: true
-          tag_name: android-v${{ steps.version.outputs.date }}-${{ github.run_number }}
+          tag_name: ${{ steps.version.outputs.release_tag }}
           target_commitish: ${{ github.sha }}
-          name: Bead Android v${{ steps.version.outputs.version_name }}
+          name: ${{ steps.version.outputs.release_name }}
           body: |
-            Android signed release APK build
+            Android signed release APK build (${{ env.BEAD_DEPLOY_ENV }})
 
             Version: ${{ steps.version.outputs.version_name }}
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
             Date: ${{ steps.version.outputs.timestamp }}
           draft: false
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ env.BEAD_DEPLOY_ENV == 'preview' }}
+          make_latest: ${{ env.BEAD_DEPLOY_ENV == 'production' }}
