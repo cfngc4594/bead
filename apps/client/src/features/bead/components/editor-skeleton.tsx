@@ -7,8 +7,8 @@ const canvasToolSkeletons = [
   "pan",
   "select",
   "paint",
-  "mix",
   "erase",
+  "mix",
   "picker",
 ];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
