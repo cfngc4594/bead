@@ -13,32 +13,11 @@ on:
       - "tsconfig.json"
       - "nx.json"
       - ".github/workflows/ios.yml"
+      - ".github/workflows/mobile-release.yml"
       - ".github/actions/**"
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - "apps/client/**"
-      - "packages/**"
-      - "package.json"
-      - "bun.lock"
-      - "tsconfig.json"
-      - "nx.json"
-      - ".github/workflows/ios.yml"
-      - ".github/actions/**"
-  workflow_dispatch:
-    inputs:
-      deploy_env:
-        description: Deployment environment
-        required: true
-        type: choice
-        options:
-          - production
-          - preview
 
 concurrency:
-  group: ios-${{ github.event.pull_request.number || github.ref_name }}-${{ github.event_name }}
+  group: ios-${{ github.event.pull_request.number }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
@@ -47,7 +26,7 @@ permissions:
 jobs:
   validate-ios:
     name: Validate iOS build (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
-    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    if: github.event.action != 'closed'
     runs-on: macos-latest
     timeout-minutes: 45
     env:
@@ -94,129 +73,3 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
-
-  release-ios:
-    name: Release iOS IPA (${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }})
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    environment: ${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }}
-    runs-on: macos-latest
-    timeout-minutes: 45
-    env:
-      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
-      VITE_API_URL: ${{ vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-
-      - name: Setup monorepo
-        uses: ./.github/actions/setup-monorepo
-
-      - name: Validate build environment
-        run: |
-          if [ -z "$VITE_API_URL" ]; then
-            echo "VITE_API_URL is required in the active GitHub environment." >&2
-            exit 1
-          fi
-
-      - name: Generate release metadata
-        id: version
-        shell: bash
-        run: |
-          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
-          echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-
-          if [ "$BEAD_DEPLOY_ENV" = "preview" ]; then
-            echo "date=" >> "$GITHUB_OUTPUT"
-            echo "version_name=0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=bead-ios-preview-0.1.${{ github.run_number }}-preview-unsigned" >> "$GITHUB_OUTPUT"
-            echo "ipa_filename=Bead-preview-unsigned.ipa" >> "$GITHUB_OUTPUT"
-            echo "release_tag=ios-preview-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-            echo "release_name=Bead iOS Preview v0.1.${{ github.run_number }}-preview (unsigned)" >> "$GITHUB_OUTPUT"
-          else
-            echo "date=$(date -u +'%Y%m%d')" >> "$GITHUB_OUTPUT"
-            echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-            echo "artifact_name=bead-ios-0.1.${{ github.run_number }}-unsigned" >> "$GITHUB_OUTPUT"
-            echo "ipa_filename=Bead-unsigned.ipa" >> "$GITHUB_OUTPUT"
-            echo "release_tag=ios-v$(date -u +'%Y%m%d')-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-            echo "release_name=Bead iOS v0.1.${{ github.run_number }} (unsigned)" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Add iOS platform
-        run: bun run cap:add:ios
-
-      - name: Sync iOS platform
-        run: bun run cap:sync:ios
-
-      - name: Build unsigned iOS app
-        working-directory: apps/client/ios/App
-        env:
-          VERSION_CODE: ${{ steps.version.outputs.version_code }}
-          VERSION_NAME: ${{ steps.version.outputs.version_name }}
-        run: |
-          if [ -d App.xcworkspace ]; then
-            project_args=(-workspace App.xcworkspace)
-          else
-            project_args=(-project App.xcodeproj)
-          fi
-
-          xcodebuild build \
-            "${project_args[@]}" \
-            -scheme App \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination generic/platform=iOS \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            MARKETING_VERSION="$VERSION_NAME" \
-            CURRENT_PROJECT_VERSION="$VERSION_CODE" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
-
-      - name: Package unsigned IPA
-        env:
-          IPA_FILENAME: ${{ steps.version.outputs.ipa_filename }}
-        run: |
-          products_dir="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos"
-          app_path="$(find "$products_dir" -maxdepth 1 -name '*.app' -type d | head -n 1)"
-
-          if [ -z "$app_path" ]; then
-            echo "No .app bundle found in $products_dir." >&2
-            exit 1
-          fi
-
-          mkdir -p "$RUNNER_TEMP/unsigned-ipa/Payload"
-          cp -R "$app_path" "$RUNNER_TEMP/unsigned-ipa/Payload/"
-
-          cd "$RUNNER_TEMP/unsigned-ipa"
-          zip -qry "$RUNNER_TEMP/$IPA_FILENAME" Payload
-
-      - name: Upload unsigned IPA
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
-        with:
-          name: ${{ steps.version.outputs.artifact_name }}
-          path: ${{ runner.temp }}/${{ steps.version.outputs.ipa_filename }}
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Publish iOS Release
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        with:
-          files: ${{ runner.temp }}/${{ steps.version.outputs.ipa_filename }}
-          fail_on_unmatched_files: true
-          tag_name: ${{ steps.version.outputs.release_tag }}
-          target_commitish: ${{ github.sha }}
-          name: ${{ steps.version.outputs.release_name }}
-          body: |
-            iOS unsigned IPA build (${{ env.BEAD_DEPLOY_ENV }})
-
-            Version: ${{ steps.version.outputs.version_name }}
-            Build #${{ github.run_number }}
-            Commit: ${{ github.sha }}
-            Date: ${{ steps.version.outputs.timestamp }}
-          draft: false
-          prerelease: ${{ env.BEAD_DEPLOY_ENV == 'preview' }}
-          make_latest: ${{ env.BEAD_DEPLOY_ENV == 'production' }}
