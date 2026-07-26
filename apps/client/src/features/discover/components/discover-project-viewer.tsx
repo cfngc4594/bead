@@ -1,19 +1,8 @@
 import type { DiscoverProject } from "@bead/core/discover";
 import { Badge } from "@bead/ui/components/badge";
 import { Button } from "@bead/ui/components/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@bead/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Focus,
-  LibraryBig,
-  LoaderCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowLeft, Focus, LoaderCircle, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getCanvasSize } from "@/config/canvas-sizes";
@@ -66,17 +55,13 @@ export function DiscoverProjectViewer({
       trackEvent("project_added_from_discover", {
         sizeId: project.sizeId,
       });
-      toast.success("已添加到作品库");
+      toast.success("已添加到作品");
     } catch (error) {
       console.error("Unable to add discover project", error);
-      toast.error("添加到作品库失败");
+      toast.error("添加作品失败");
     } finally {
       setIsAdding(false);
     }
-  }
-
-  function resetView() {
-    setResetViewSignal((value) => value + 1);
   }
 
   return (
@@ -97,25 +82,25 @@ export function DiscoverProjectViewer({
           </Badge>
         </div>
 
-        <ViewerToolbarButton
-          icon={Focus}
-          label="居中显示"
-          onClick={resetView}
-        />
+        <Button
+          aria-label="居中显示"
+          onClick={() => setResetViewSignal((value) => value + 1)}
+          size="icon-sm"
+          type="button"
+          variant="outline"
+        >
+          <Focus />
+        </Button>
 
         <Button
-          aria-label="添加到作品库"
+          aria-label="添加到作品"
           disabled={isAdding}
           onClick={() => void handleAddToProjects()}
         >
-          {isAdding ? (
-            <LoaderCircle className="animate-spin" />
-          ) : (
-            <LibraryBig />
-          )}
+          {isAdding ? <LoaderCircle className="animate-spin" /> : <Plus />}
           <span className="sm:hidden">{isAdding ? "添加中" : "添加"}</span>
           <span className="hidden sm:inline">
-            {isAdding ? "正在添加" : "添加到作品库"}
+            {isAdding ? "正在添加" : "添加到作品"}
           </span>
         </Button>
       </header>
@@ -131,37 +116,5 @@ export function DiscoverProjectViewer({
         />
       </section>
     </main>
-  );
-}
-
-function ViewerToolbarButton({
-  icon: Icon,
-  isActive,
-  label,
-  onClick,
-  tooltip = label,
-}: {
-  icon: LucideIcon;
-  isActive?: boolean;
-  label: string;
-  onClick: () => void;
-  tooltip?: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-label={tooltip}
-          aria-pressed={isActive}
-          onClick={onClick}
-          size="icon-sm"
-          type="button"
-          variant={isActive ? "default" : "outline"}
-        >
-          <Icon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{tooltip}</TooltipContent>
-    </Tooltip>
   );
 }

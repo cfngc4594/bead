@@ -7,7 +7,7 @@ import {
 import {
   fetchDiscoverProject,
   fetchDiscoverProjects,
-  publishDiscoverProjects,
+  publishDiscoverProject,
 } from "@/features/discover/api/discover-api";
 
 export const discoverQueryKeys = {
@@ -29,12 +29,12 @@ export function discoverProjectQueryOptions(projectId: string) {
   });
 }
 
-export function usePublishDiscoverProjects() {
+export function usePublishDiscoverProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (projects: PublishDiscoverProject[]) =>
-      publishDiscoverProjects(projects),
+    mutationFn: (project: PublishDiscoverProject) =>
+      publishDiscoverProject(project),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: discoverQueryKeys.list(),

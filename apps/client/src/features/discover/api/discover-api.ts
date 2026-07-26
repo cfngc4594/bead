@@ -3,7 +3,6 @@ import type {
   PublishDiscoverProject,
 } from "@bead/core/discover";
 import { api } from "@/lib/api";
-import { throwResponseError } from "@/lib/api-response";
 
 export async function fetchDiscoverProjects(): Promise<DiscoverProject[]> {
   const response = await api.discover.$get();
@@ -35,15 +34,39 @@ export async function fetchDiscoverProject(
   return body.project;
 }
 
-export async function publishDiscoverProjects(
-  projects: PublishDiscoverProject[],
-): Promise<DiscoverProject[]> {
-  const response = await api.discover.$post({ json: { projects } });
+export async function publishDiscoverProject(
+  project: PublishDiscoverProject,
+): Promise<DiscoverProject> {
+  const response = await api.discover.$post({ json: { project } });
 
   if (!response.ok) {
     return throwResponseError(response, "发布作品失败");
   }
 
   const body = await response.json();
-  return body.projects;
+  return body.project;
+}
+
+async function throwResponseError(
+  response: Response,
+  fallbackMessage: string,
+): Promise<never> {
+  let message = fallbackMessage;
+
+  try {
+    const body: unknown = await response.json();
+
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "error" in body &&
+      typeof body.error === "string"
+    ) {
+      message = body.error;
+    }
+  } catch {
+    // Infrastructure failures may return an empty or non-JSON response.
+  }
+
+  throw new Error(message);
 }

@@ -5,8 +5,6 @@ type AnalyticsEventName =
   | "android_export_sheet_opened"
   | "canvas_edited"
   | "canvas_cleared"
-  | "library_multiselect_entered"
-  | "library_multiselect_action"
   | "discover_project_opened"
   | "export_image_regenerated"
   | "export_image_saved"

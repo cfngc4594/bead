@@ -14,8 +14,11 @@ export function DiscoverError() {
   const router = useRouter();
 
   return (
-    <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
+    <main className="flex h-full min-h-0 flex-col bg-background">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
+        <h1 className="font-semibold text-lg tracking-tight">发现</h1>
+      </header>
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
         <Empty className="flex-1 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -38,8 +41,11 @@ export function DiscoverError() {
 
 export function DiscoverProjectNotFound() {
   return (
-    <main className="flex min-h-full bg-background px-4 py-6 md:px-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
+    <main className="flex h-full min-h-0 flex-col bg-background">
+      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
+        <h1 className="font-semibold text-lg tracking-tight">发现</h1>
+      </header>
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
         <Empty className="flex-1 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">

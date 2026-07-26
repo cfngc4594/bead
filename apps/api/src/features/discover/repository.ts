@@ -1,6 +1,7 @@
-import type {
-  DiscoverProject,
-  PublishDiscoverProject,
+import {
+  type DiscoverProject,
+  MAX_DISCOVER_FEED_PAGE_SIZE,
+  type PublishDiscoverProject,
 } from "@bead/core/discover";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
@@ -20,7 +21,7 @@ export async function listDiscoverProjects(): Promise<DiscoverProject[]> {
     .select()
     .from(discoverProjects)
     .orderBy(desc(discoverProjects.publishedAt), desc(discoverProjects.id))
-    .limit(60);
+    .limit(MAX_DISCOVER_FEED_PAGE_SIZE);
 
   return projects.map(toDiscoverProject);
 }
@@ -37,13 +38,13 @@ export async function findDiscoverProject(
   return project ? toDiscoverProject(project) : null;
 }
 
-export async function createDiscoverProjects(
-  projects: PublishDiscoverProject[],
-): Promise<DiscoverProject[]> {
-  const createdProjects = await db
+export async function createDiscoverProject(
+  project: PublishDiscoverProject,
+): Promise<DiscoverProject> {
+  const [createdProject] = await db
     .insert(discoverProjects)
-    .values(projects)
+    .values(project)
     .returning();
 
-  return createdProjects.map(toDiscoverProject);
+  return toDiscoverProject(createdProject);
 }
