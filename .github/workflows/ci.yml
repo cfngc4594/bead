@@ -15,18 +15,35 @@ on:
       - "biome.json"
       - ".github/workflows/ci.yml"
       - ".github/actions/**"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - "biome.json"
+      - ".github/workflows/ci.yml"
+      - ".github/actions/**"
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
+  group: ci-${{ github.event.pull_request.number || github.ref_name }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
+env:
+  BEAD_TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+
 jobs:
   changes:
     name: Detect changed paths
-    if: github.event.action != 'closed'
+    if: github.event_name == 'push' || github.event.pull_request.action != 'closed'
     runs-on: ubuntu-latest
     outputs:
       shared: ${{ steps.filter.outputs.shared }}
@@ -59,7 +76,7 @@ jobs:
   lint:
     name: Lint
     needs: changes
-    if: github.event.action != 'closed'
+    if: github.event_name == 'push' || github.event.pull_request.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -76,7 +93,7 @@ jobs:
     name: Typecheck
     needs: changes
     if: >-
-      github.event.action != 'closed' &&
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
       (
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.site == 'true' ||
@@ -96,22 +113,21 @@ jobs:
         run: bun run typecheck
 
   site:
-    name: Build site (${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }})
+    name: Build site (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
-      github.event.action != 'closed' &&
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
       (
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.site == 'true'
       )
-    environment: ${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      VITE_SITE_GITHUB_URL: ${{ vars.VITE_SITE_GITHUB_URL }}
-      VITE_SITE_WEB_APP_URL: ${{ vars.VITE_SITE_WEB_APP_URL }}
-      VITE_SITE_ANDROID_URL: ${{ vars.VITE_SITE_ANDROID_URL }}
-      VITE_SITE_IOS_URL: ${{ vars.VITE_SITE_IOS_URL }}
+      VITE_SITE_GITHUB_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_GITHUB_URL_PREVIEW || vars.VITE_SITE_GITHUB_URL }}
+      VITE_SITE_WEB_APP_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_WEB_APP_URL_PREVIEW || vars.VITE_SITE_WEB_APP_URL }}
+      VITE_SITE_ANDROID_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_ANDROID_URL_PREVIEW || vars.VITE_SITE_ANDROID_URL }}
+      VITE_SITE_IOS_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_SITE_IOS_URL_PREVIEW || vars.VITE_SITE_IOS_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -123,7 +139,7 @@ jobs:
         run: |
           for key in VITE_SITE_GITHUB_URL VITE_SITE_WEB_APP_URL VITE_SITE_ANDROID_URL VITE_SITE_IOS_URL; do
             if [ -z "${!key}" ]; then
-              echo "$key is required in the active GitHub environment." >&2
+              echo "$key repository variable is required for site builds." >&2
               exit 1
             fi
           done
@@ -132,21 +148,20 @@ jobs:
         run: bun run build:site
 
   client-web:
-    name: Build client web (${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }})
+    name: Build client web (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
-      github.event.action != 'closed' &&
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
       (
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.client == 'true'
       )
-    environment: ${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      VITE_API_URL: ${{ vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+      VITE_API_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ env.BEAD_TARGET_BRANCH == 'develop' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -158,7 +173,7 @@ jobs:
         run: |
           for key in VITE_API_URL VITE_UMAMI_SCRIPT_URL VITE_UMAMI_WEBSITE_ID; do
             if [ -z "${!key}" ]; then
-              echo "$key is required in the active GitHub environment." >&2
+              echo "$key repository variable is required for client web builds." >&2
               exit 1
             fi
           done
@@ -170,7 +185,7 @@ jobs:
     name: Build api
     needs: changes
     if: >-
-      github.event.action != 'closed' &&
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
       (
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.api == 'true'
