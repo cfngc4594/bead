@@ -1,0 +1,19 @@
+name: Setup Android
+description: Install Java, Android SDK, and Gradle for Android builds.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Java
+      uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
+      with:
+        distribution: temurin
+        java-version: 21
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+      with:
+        packages: tools platform-tools platforms;android-36 build-tools;36.0.0
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
