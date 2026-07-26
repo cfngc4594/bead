@@ -1,23 +1,53 @@
 import { cn } from "@bead/ui/lib/utils";
-import { DrawToolOptions } from "@/features/bead/components/draw-tool-options";
-import { EditorMainTools } from "@/features/bead/components/editor-main-tools";
-import { editorToolSurfaceClassName } from "@/features/bead/components/editor-tool-button";
-import type { DrawToolController } from "@/features/bead/hooks/use-draw-tool-controller";
+import {
+  EditorToolButton,
+  editorToolSurfaceClassName,
+} from "@/features/bead/components/editor-tool-button";
+import { canvasToolDefinitions } from "@/features/bead/lib/canvas-tool-definitions";
 import type { CanvasTool } from "@/features/bead/types";
 
 type EditorToolDockProps = {
   className?: string;
-  controller: DrawToolController;
+  layout: "desktop" | "mobile";
+  onSelectTool: (tool: CanvasTool) => void;
   tool: CanvasTool;
 };
 
 export function EditorToolDock({
   className,
-  controller,
+  layout,
+  onSelectTool,
   tool,
 }: EditorToolDockProps) {
-  const { applyDrawSelection, beadFillEnabled, drawSelection, flyoutOpen } =
-    controller;
+  const toolbar = (
+    <div
+      className={cn(
+        layout === "desktop"
+          ? cn(
+              editorToolSurfaceClassName,
+              "pointer-events-auto flex items-center gap-1.5",
+            )
+          : "flex max-w-[min(100%,17.5rem)] shrink-0 items-center gap-1.5 overflow-x-auto",
+        layout === "mobile" && className,
+      )}
+      role="toolbar"
+      aria-label="画布工具"
+    >
+      {canvasToolDefinitions.map((definition) => (
+        <EditorToolButton
+          icon={definition.icon}
+          isActive={tool === definition.tool}
+          key={definition.tool}
+          label={definition.label}
+          onClick={() => onSelectTool(definition.tool)}
+        />
+      ))}
+    </div>
+  );
+
+  if (layout === "mobile") {
+    return toolbar;
+  }
 
   return (
     <div
@@ -26,27 +56,7 @@ export function EditorToolDock({
         className,
       )}
     >
-      <div className="pointer-events-auto flex flex-col items-center gap-2">
-        {flyoutOpen && drawSelection ? (
-          <DrawToolOptions
-            beadFillEnabled={beadFillEnabled}
-            beadFillMode={drawSelection.beadFillMode}
-            instrument={drawSelection.instrument}
-            onSelect={applyDrawSelection}
-          />
-        ) : null}
-
-        <div
-          className={cn(
-            editorToolSurfaceClassName,
-            "flex items-center gap-1.5",
-          )}
-          role="toolbar"
-          aria-label="画布工具"
-        >
-          <EditorMainTools controller={controller} tool={tool} />
-        </div>
-      </div>
+      {toolbar}
     </div>
   );
 }

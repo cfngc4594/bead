@@ -3,7 +3,14 @@ import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
 
 const toolbarViewSkeletons = ["focus", "model-preview"];
-const mobileToolSkeletons = ["pan", "select", "draw"];
+const canvasToolSkeletons = [
+  "pan",
+  "select",
+  "paint",
+  "mix",
+  "erase",
+  "picker",
+];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [
   "image-import",
@@ -59,9 +66,9 @@ export function CanvasBoardSkeleton() {
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
         <div className="flex items-center gap-1.5 rounded-lg bg-card p-1.5 shadow-md">
-          <Skeleton className="size-7 shrink-0 rounded-lg" />
-          <Skeleton className="size-7 shrink-0 rounded-lg" />
-          <Skeleton className="size-7 shrink-0 rounded-lg" />
+          {canvasToolSkeletons.map((item) => (
+            <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+          ))}
         </div>
       </div>
     </>
@@ -73,7 +80,7 @@ function EditorToolbarSkeleton() {
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <ToolbarIconSkeleton />
-        <Skeleton className="h-7 w-[76px] max-w-[92px] min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
+        <Skeleton className="h-7 w-19 max-w-23 min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center justify-end gap-1.5 md:flex">
@@ -157,14 +164,14 @@ function MobileEditorPanelSkeleton() {
       <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
         <CurrentColorSkeleton />
         <div className="flex shrink-0 items-center gap-1.5">
-          {mobileToolSkeletons.map((item) => (
+          {canvasToolSkeletons.map((item) => (
             <ToolbarIconSkeleton key={item} />
           ))}
           <ToolbarIconSkeleton />
         </div>
       </div>
 
-      <div className="flex h-[200px] min-h-0 flex-col">
+      <div className="flex h-50 min-h-0 flex-col">
         <div className="relative h-12 min-w-0 shrink-0">
           <div className="relative min-w-0 overflow-hidden">
             <div className="flex w-max flex-row gap-1 p-2">
