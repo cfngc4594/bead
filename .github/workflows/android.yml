@@ -222,12 +222,12 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: ${{ steps.version.outputs.release_name }}
           body: |
-            Android signed release APK build (${{ github.environment }})
+            Android signed release APK build (${{ env.BEAD_DEPLOY_ENV }})
 
             Version: ${{ steps.version.outputs.version_name }}
             Build #${{ github.run_number }}
             Commit: ${{ github.sha }}
             Date: ${{ steps.version.outputs.timestamp }}
           draft: false
-          prerelease: ${{ github.environment == 'Preview' }}
-          make_latest: ${{ github.environment == 'Production' }}
+          prerelease: ${{ env.BEAD_DEPLOY_ENV == 'preview' }}
+          make_latest: ${{ env.BEAD_DEPLOY_ENV == 'production' }}
