@@ -33,11 +33,16 @@ permissions:
 
 jobs:
   validate-android:
-    name: Validate Android build (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.base_ref == 'develop' && 'Preview' || 'Production') }})
+    name: Validate Android build (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production') }})
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
-    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
+    environment: ${{ github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -68,13 +73,18 @@ jobs:
           ./gradlew assembleRelease --no-daemon
 
   build-android:
-    name: Build signed Android APK (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.base_ref == 'develop' && 'Preview' || 'Production') }})
+    name: Build signed Android APK (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production') }})
     if: >-
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
       github.event_name == 'workflow_dispatch'
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_env || (github.base_ref == 'develop' && 'preview' || 'production') }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.event.pull_request.base.ref == 'develop' && 'Preview' || 'Production') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
     permissions:
       contents: write
     steps:
@@ -192,7 +202,7 @@ jobs:
           retention-days: 14
 
       - name: Publish Android Release
-        if: github.environment == 'production'
+        if: github.environment == 'Production'
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           files: ${{ steps.signed_apk.outputs.path }}
