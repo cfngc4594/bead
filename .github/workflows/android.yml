@@ -28,23 +28,16 @@ concurrency:
   group: android-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
-env:
-  BEAD_DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_env || (github.base_ref == 'develop' && 'preview' || 'production') }}
-  BEAD_DEPLOY_LABEL: ${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.base_ref == 'develop' && 'Preview' || 'Production') }}
-
 permissions:
   contents: read
 
 jobs:
   validate-android:
-    name: Validate Android build (${{ env.BEAD_DEPLOY_LABEL }})
+    name: Validate Android build (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.base_ref == 'develop' && 'Preview' || 'Production') }})
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      VITE_API_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -58,7 +51,7 @@ jobs:
       - name: Validate build environment
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            echo "VITE_API_URL repository variable is required for Android builds." >&2
+            echo "VITE_API_URL is required in the active GitHub environment." >&2
             exit 1
           fi
 
@@ -75,19 +68,15 @@ jobs:
           ./gradlew assembleRelease --no-daemon
 
   build-android:
-    name: Build signed Android APK (${{ env.BEAD_DEPLOY_LABEL }})
+    name: Build signed Android APK (${{ github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production') || (github.base_ref == 'develop' && 'Preview' || 'Production') }})
     if: >-
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
       github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_env || (github.base_ref == 'develop' && 'preview' || 'production') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
-    environment: ${{ env.BEAD_DEPLOY_ENV == 'production' && 'android-release' || '' }}
-    env:
-      VITE_API_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -103,11 +92,7 @@ jobs:
       - name: Validate build environment
         run: |
           if [ -z "$VITE_API_URL" ]; then
-            if [ "${{ env.BEAD_DEPLOY_ENV }}" = "preview" ]; then
-              echo "VITE_API_URL_PREVIEW repository variable is required for preview Android builds." >&2
-            else
-              echo "VITE_API_URL repository variable is required for Android builds." >&2
-            fi
+            echo "VITE_API_URL is required in the active GitHub environment." >&2
             exit 1
           fi
 
@@ -118,7 +103,7 @@ jobs:
           echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
           echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
-          if [ "${{ env.BEAD_DEPLOY_ENV }}" = "preview" ]; then
+          if [ "$BEAD_DEPLOY_ENV" = "preview" ]; then
             echo "date=" >> "$GITHUB_OUTPUT"
             echo "version_name=0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
             echo "artifact_name=bead-android-preview-0.1.${{ github.run_number }}-preview" >> "$GITHUB_OUTPUT"
@@ -193,7 +178,7 @@ jobs:
           retention-days: 14
 
       - name: Publish Android Release
-        if: env.BEAD_DEPLOY_ENV == 'production'
+        if: github.environment == 'production'
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           files: ${{ steps.signed_apk.outputs.path }}

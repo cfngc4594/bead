@@ -20,10 +20,6 @@ concurrency:
   group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-env:
-  BEAD_DEPLOY_ENV: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
-  BEAD_DEPLOY_LABEL: ${{ github.base_ref == 'develop' && 'Preview' || 'Production' }}
-
 permissions:
   contents: read
 
@@ -100,7 +96,7 @@ jobs:
         run: bun run typecheck
 
   site:
-    name: Build site (${{ env.BEAD_DEPLOY_LABEL }})
+    name: Build site (${{ github.base_ref == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       github.event.action != 'closed' &&
@@ -108,13 +104,9 @@ jobs:
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.site == 'true'
       )
+    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      VITE_SITE_GITHUB_URL: ${{ vars.VITE_SITE_GITHUB_URL }}
-      VITE_SITE_WEB_APP_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_SITE_WEB_APP_URL_PREVIEW || vars.VITE_SITE_WEB_APP_URL }}
-      VITE_SITE_ANDROID_URL: ${{ vars.VITE_SITE_ANDROID_URL }}
-      VITE_SITE_IOS_URL: ${{ vars.VITE_SITE_IOS_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -126,7 +118,7 @@ jobs:
         run: |
           for key in VITE_SITE_GITHUB_URL VITE_SITE_WEB_APP_URL VITE_SITE_ANDROID_URL VITE_SITE_IOS_URL; do
             if [ -z "${!key}" ]; then
-              echo "$key repository variable is required for site builds." >&2
+              echo "$key is required in the active GitHub environment." >&2
               exit 1
             fi
           done
@@ -135,7 +127,7 @@ jobs:
         run: bun run build:site
 
   client-web:
-    name: Build client web (${{ env.BEAD_DEPLOY_LABEL }})
+    name: Build client web (${{ github.base_ref == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       github.event.action != 'closed' &&
@@ -143,12 +135,9 @@ jobs:
         needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.client == 'true'
       )
+    environment: ${{ github.base_ref == 'develop' && 'preview' || 'production' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      VITE_API_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_API_URL_PREVIEW || vars.VITE_API_URL }}
-      VITE_UMAMI_SCRIPT_URL: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_SCRIPT_URL_PREVIEW || vars.VITE_UMAMI_SCRIPT_URL }}
-      VITE_UMAMI_WEBSITE_ID: ${{ env.BEAD_DEPLOY_ENV == 'preview' && vars.VITE_UMAMI_WEBSITE_ID_PREVIEW || vars.VITE_UMAMI_WEBSITE_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -160,7 +149,7 @@ jobs:
         run: |
           for key in VITE_API_URL VITE_UMAMI_SCRIPT_URL VITE_UMAMI_WEBSITE_ID; do
             if [ -z "${!key}" ]; then
-              echo "$key repository variable is required for client web builds." >&2
+              echo "$key is required in the active GitHub environment." >&2
               exit 1
             fi
           done
