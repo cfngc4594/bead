@@ -27,18 +27,12 @@ export type ProjectId = string;
 export type { Project };
 
 export const DEFAULT_PROJECT_TITLE = "未命名作品";
-const PROJECTS_STORAGE_KEY = "bead:projects";
-const ORPHAN_STORAGE_KEYS = [
-  "bead:collections",
-  "bead:collection-items",
-  "bead:library-collections",
-] as const;
 
 export const projectsCollection = createCollection(
   localStorageCollectionOptions({
     id: "projects",
     schema: projectIntegritySchema,
-    storageKey: PROJECTS_STORAGE_KEY,
+    storageKey: "bead:projects",
     getKey: (project) => project.id,
   }),
 );
@@ -46,16 +40,6 @@ export const projectsCollection = createCollection(
 projectsCollection.createIndex((project) => project.id, {
   indexType: BasicIndex,
 });
-
-export async function preloadProjectsCollection() {
-  await projectsCollection.preload();
-
-  for (const key of ORPHAN_STORAGE_KEYS) {
-    localStorage.removeItem(key);
-  }
-
-  return null;
-}
 
 export function getCurrentCanvas({
   cellCount,
@@ -145,7 +129,6 @@ export async function createProjectFromSnapshot({
   snapshot: CanvasSnapshot;
   title: string;
 }) {
-  await projectsCollection.preload();
   const normalizedTitle = normalizeProjectTitle(title);
   const project: Project = {
     id: createProjectId(),
@@ -165,7 +148,6 @@ export async function createProjectFromSnapshot({
 }
 
 export async function deleteProject(projectId: ProjectId) {
-  await projectsCollection.preload();
   getRequiredProject(projectId);
 
   return commitProjectMutation(() => {

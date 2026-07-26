@@ -1,6 +1,8 @@
 import { mardColors } from "@bead/core/colors";
+import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
+import { ArrowLeft } from "lucide-react";
 
 const toolbarViewSkeletons = ["focus", "model-preview"];
 const canvasToolSkeletons = [
@@ -35,11 +37,11 @@ const mobileColorSkeletons = Array.from(
   (_, index) => `mobile-color-${index + 1}`,
 );
 
-export function EditorSkeleton() {
+export function EditorSkeleton({ onBack }: { onBack?: () => void }) {
   return (
     <main className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-none bg-background md:grid-cols-[1fr_280px] md:grid-rows-1">
       <section className="flex min-h-0 min-w-0 flex-col">
-        <EditorToolbarSkeleton />
+        <EditorToolbarSkeleton onBack={onBack} />
 
         <div className="relative min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
           <CanvasBoardSkeleton />
@@ -75,11 +77,23 @@ export function CanvasBoardSkeleton() {
   );
 }
 
-function EditorToolbarSkeleton() {
+function EditorToolbarSkeleton({ onBack }: { onBack?: () => void }) {
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
-        <ToolbarIconSkeleton />
+        {onBack ? (
+          <Button
+            aria-label="返回作品"
+            onClick={onBack}
+            size="icon-sm"
+            type="button"
+            variant="outline"
+          >
+            <ArrowLeft />
+          </Button>
+        ) : (
+          <ToolbarIconSkeleton />
+        )}
         <Skeleton className="h-7 w-19 max-w-23 min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
       </div>
 
