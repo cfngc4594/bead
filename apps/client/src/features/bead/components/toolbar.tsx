@@ -180,7 +180,7 @@ export function EditorToolbar({
         />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-end gap-1.5 md:flex">
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
         {[viewActions, historyActions, fileActions].map((actions, index) => (
           <ToolbarActionGroup
             actions={actions}

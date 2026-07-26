@@ -83,7 +83,7 @@ function EditorToolbarSkeleton() {
         <Skeleton className="h-7 w-19 max-w-23 min-w-0 flex-1 rounded-md md:w-56 md:flex-none" />
       </div>
 
-      <div className="hidden min-w-0 flex-1 items-center justify-end gap-1.5 md:flex">
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
         {desktopToolbarActionGroups.map((group, index) => (
           <ToolbarSkeletonGroup
             group={group}
