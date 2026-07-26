@@ -277,13 +277,13 @@ jobs:
       contents: write
     steps:
       - name: Download Android artifact
-        uses: actions/download-artifact@9395710a79b8856743e161a363c2e2e82de79a91 # v4
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           name: mobile-release-android
           path: release-assets
 
       - name: Download iOS artifact
-        uses: actions/download-artifact@9395710a79b8856743e161a363c2e2e82de79a91 # v4
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           name: mobile-release-ios
           path: release-assets
