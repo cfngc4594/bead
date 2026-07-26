@@ -45,11 +45,11 @@ permissions:
   contents: read
 
 env:
-  BEAD_TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+  BEAD_TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   validate-ios:
-    name: Validate iOS build (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
+    name: Validate iOS build (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: macos-latest
     timeout-minutes: 45

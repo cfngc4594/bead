@@ -45,11 +45,11 @@ permissions:
   contents: read
 
 env:
-  BEAD_TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+  BEAD_TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   validate-android:
-    name: Validate Android build (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
+    name: Validate Android build (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     timeout-minutes: 30

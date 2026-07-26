@@ -38,7 +38,7 @@ permissions:
   contents: read
 
 env:
-  BEAD_TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+  BEAD_TARGET_BRANCH: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   changes:
@@ -113,7 +113,7 @@ jobs:
         run: bun run typecheck
 
   site:
-    name: Build site (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
+    name: Build site (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
@@ -148,7 +148,7 @@ jobs:
         run: bun run build:site
 
   client-web:
-    name: Build client web (${{ env.BEAD_TARGET_BRANCH == 'develop' && 'Preview' || 'Production' }})
+    name: Build client web (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})
     needs: changes
     if: >-
       (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
