@@ -1,0 +1,312 @@
+name: Mobile Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/client/**"
+      - "packages/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
+      - "nx.json"
+      - ".github/workflows/mobile-release.yml"
+      - ".github/workflows/android.yml"
+      - ".github/workflows/ios.yml"
+      - ".github/actions/**"
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - production
+          - preview
+
+concurrency:
+  group: mobile-release-${{ github.ref_name }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    name: Release metadata (${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }})
+    runs-on: ubuntu-latest
+    env:
+      IS_PREVIEW: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'workflow_dispatch' && inputs.deploy_env == 'preview') }}
+    outputs:
+      short_sha: ${{ steps.version.outputs.short_sha }}
+      timestamp: ${{ steps.version.outputs.timestamp }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      version_name: ${{ steps.version.outputs.version_name }}
+      apk_filename: ${{ steps.version.outputs.apk_filename }}
+      ipa_filename: ${{ steps.version.outputs.ipa_filename }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      release_name: ${{ steps.version.outputs.release_name }}
+      is_preview: ${{ steps.version.outputs.is_preview }}
+    steps:
+      - name: Generate release metadata
+        id: version
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+          echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+          if [ "$IS_PREVIEW" = "true" ]; then
+            echo "is_preview=true" >> "$GITHUB_OUTPUT"
+            echo "version_name=0.1.${SHORT_SHA}-preview" >> "$GITHUB_OUTPUT"
+            echo "apk_filename=Bead-preview.apk" >> "$GITHUB_OUTPUT"
+            echo "ipa_filename=Bead-preview-unsigned.ipa" >> "$GITHUB_OUTPUT"
+            echo "release_tag=preview-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Bead Preview v0.1.${SHORT_SHA}-preview" >> "$GITHUB_OUTPUT"
+          else
+            DATE="$(date -u +'%Y%m%d')"
+            echo "is_preview=false" >> "$GITHUB_OUTPUT"
+            echo "version_name=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "apk_filename=Bead.apk" >> "$GITHUB_OUTPUT"
+            echo "ipa_filename=Bead-unsigned.ipa" >> "$GITHUB_OUTPUT"
+            echo "release_tag=v${DATE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+            echo "release_name=Bead v0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-android:
+    name: Build Android APK
+    needs: metadata
+    environment: ${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Setup Android
+        uses: ./.github/actions/setup-android
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL is required in the active GitHub environment." >&2
+            exit 1
+          fi
+
+      - name: Validate Android signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for key in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_PASSWORD; do
+            if [ -z "${!key}" ]; then
+              echo "$key is required in the active GitHub environment secrets." >&2
+              exit 1
+            fi
+          done
+
+      - name: Add Android platform
+        run: bun run cap:add:android
+
+      - name: Sync Android platform
+        run: bun run cap:sync:android
+
+      - name: Set Android app version
+        env:
+          VERSION_CODE: ${{ needs.metadata.outputs.version_code }}
+          VERSION_NAME: ${{ needs.metadata.outputs.version_name }}
+        run: |
+          build_gradle="apps/client/android/app/build.gradle"
+          sed -i -E \
+            "s/versionCode [0-9]+/versionCode $VERSION_CODE/" \
+            "$build_gradle"
+          sed -i -E \
+            "s/versionName \"[^\"]+\"/versionName \"$VERSION_NAME\"/" \
+            "$build_gradle"
+
+          grep -q "versionCode $VERSION_CODE" "$build_gradle"
+          grep -q "versionName \"$VERSION_NAME\"" "$build_gradle"
+
+      - name: Build unsigned release APK
+        working-directory: apps/client/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign release APK
+        id: sign_apk
+        uses: r0adkll/sign-android-release@d5f8436b702872ad5cdb1e6e4d5c8b983d25a997 # Node 24
+        with:
+          releaseDirectory: apps/client/android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "36.0.0"
+
+      - name: Remove decoded signing key
+        if: always()
+        run: rm -f apps/client/android/app/build/outputs/apk/release/signingKey.jks
+
+      - name: Prepare signed APK
+        id: signed_apk
+        env:
+          SIGNED_APK: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          APK_FILENAME: ${{ needs.metadata.outputs.apk_filename }}
+        run: |
+          test -f "$SIGNED_APK"
+          cp "$SIGNED_APK" "$RUNNER_TEMP/$APK_FILENAME"
+          echo "path=$RUNNER_TEMP/$APK_FILENAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: mobile-release-android
+          path: ${{ steps.signed_apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+  build-ios:
+    name: Build iOS IPA
+    needs: metadata
+    environment: ${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }}
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_UMAMI_SCRIPT_URL: ${{ vars.VITE_UMAMI_SCRIPT_URL }}
+      VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Validate build environment
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "VITE_API_URL is required in the active GitHub environment." >&2
+            exit 1
+          fi
+
+      - name: Add iOS platform
+        run: bun run cap:add:ios
+
+      - name: Sync iOS platform
+        run: bun run cap:sync:ios
+
+      - name: Build unsigned iOS app
+        working-directory: apps/client/ios/App
+        env:
+          VERSION_CODE: ${{ needs.metadata.outputs.version_code }}
+          VERSION_NAME: ${{ needs.metadata.outputs.version_name }}
+        run: |
+          if [ -d App.xcworkspace ]; then
+            project_args=(-workspace App.xcworkspace)
+          else
+            project_args=(-project App.xcodeproj)
+          fi
+
+          xcodebuild build \
+            "${project_args[@]}" \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$VERSION_CODE" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package unsigned IPA
+        env:
+          IPA_FILENAME: ${{ needs.metadata.outputs.ipa_filename }}
+        run: |
+          products_dir="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos"
+          app_path="$(find "$products_dir" -maxdepth 1 -name '*.app' -type d | head -n 1)"
+
+          if [ -z "$app_path" ]; then
+            echo "No .app bundle found in $products_dir." >&2
+            exit 1
+          fi
+
+          mkdir -p "$RUNNER_TEMP/unsigned-ipa/Payload"
+          cp -R "$app_path" "$RUNNER_TEMP/unsigned-ipa/Payload/"
+
+          cd "$RUNNER_TEMP/unsigned-ipa"
+          zip -qry "$RUNNER_TEMP/$IPA_FILENAME" Payload
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: mobile-release-ios
+          path: ${{ runner.temp }}/${{ needs.metadata.outputs.ipa_filename }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-release:
+    name: Publish mobile release
+    needs:
+      - metadata
+      - build-android
+      - build-ios
+    environment: ${{ (github.event_name == 'workflow_dispatch' && (inputs.deploy_env == 'preview' && 'Preview' || 'Production')) || (github.ref == 'refs/heads/develop' && 'Preview') || 'Production' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BEAD_DEPLOY_ENV: ${{ vars.BEAD_DEPLOY_ENV }}
+    permissions:
+      contents: write
+    steps:
+      - name: Download Android artifact
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: mobile-release-android
+          path: release-assets
+
+      - name: Download iOS artifact
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: mobile-release-ios
+          path: release-assets
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
+        with:
+          files: release-assets/*
+          fail_on_unmatched_files: true
+          tag_name: ${{ needs.metadata.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ needs.metadata.outputs.release_name }}
+          body: |
+            Mobile release (${{ env.BEAD_DEPLOY_ENV }})
+
+            Version: ${{ needs.metadata.outputs.version_name }}
+            Build #${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Date: ${{ needs.metadata.outputs.timestamp }}
+
+            Assets:
+            - Android: signed APK (${{ needs.metadata.outputs.apk_filename }})
+            - iOS: unsigned IPA (${{ needs.metadata.outputs.ipa_filename }})
+          draft: false
+          prerelease: ${{ needs.metadata.outputs.is_preview == 'true' }}
+          make_latest: ${{ needs.metadata.outputs.is_preview != 'true' }}
