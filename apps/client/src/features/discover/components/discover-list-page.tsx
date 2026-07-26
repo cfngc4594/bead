@@ -9,12 +9,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
-import { DiscoverContentError } from "@/features/discover/components/discover-error";
-import { DiscoverGridSkeleton } from "@/features/discover/components/discover-skeleton";
+import { DiscoverListSkeleton } from "@/features/discover/components/discover-list-skeleton";
+import { DiscoverListError } from "@/features/discover/components/discover-states";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
 
-export function DiscoverPage() {
+export function DiscoverListPage() {
   return (
     <main
       aria-label="发现"
@@ -24,12 +24,12 @@ export function DiscoverPage() {
         <h1 className="font-semibold text-lg tracking-tight">发现</h1>
       </header>
 
-      <DiscoverProjectGrid />
+      <DiscoverListContent />
     </main>
   );
 }
 
-function DiscoverProjectGrid() {
+function DiscoverListContent() {
   const {
     data: projects,
     isPending,
@@ -38,11 +38,11 @@ function DiscoverProjectGrid() {
   } = useQuery(discoverProjectsQueryOptions);
 
   if (isPending) {
-    return <DiscoverGridSkeleton />;
+    return <DiscoverListSkeleton />;
   }
 
   if (isError) {
-    return <DiscoverContentError onRetry={() => void refetch()} />;
+    return <DiscoverListError onRetry={() => void refetch()} />;
   }
 
   if (projects.length === 0) {

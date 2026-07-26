@@ -7,11 +7,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, RefreshCw, SearchX, WifiOff } from "lucide-react";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 
-export function DiscoverContentError({ onRetry }: { onRetry: () => void }) {
+export function DiscoverListError({ onRetry }: { onRetry: () => void }) {
   return (
     <div
       className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8"
@@ -36,27 +36,35 @@ export function DiscoverContentError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function DiscoverError() {
-  const router = useRouter();
-
+export function DiscoverProjectError({ onRetry }: { onRetry: () => void }) {
   return (
-    <main className="flex h-full min-h-0 flex-col bg-background">
-      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
-        <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-      </header>
-      <DiscoverContentError onRetry={() => void router.invalidate()} />
-    </main>
+    <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/30">
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
+        <Empty className="flex-1 border bg-background">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <WifiOff />
+            </EmptyMedia>
+            <EmptyTitle>加载失败</EmptyTitle>
+            <EmptyDescription>检查网络连接</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={onRetry}>
+              <RefreshCw aria-hidden="true" />
+              重试
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    </section>
   );
 }
 
-export function DiscoverProjectNotFound() {
+export function DiscoverProjectNotFoundPanel() {
   return (
-    <main className="flex h-full min-h-0 flex-col bg-background">
-      <header className="mx-auto flex h-16 w-full max-w-5xl shrink-0 items-center gap-2 border-b px-4 md:px-8">
-        <h1 className="font-semibold text-lg tracking-tight">发现</h1>
-      </header>
+    <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/30">
       <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
-        <Empty className="flex-1 border">
+        <Empty className="flex-1 border bg-background">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <SearchX />
@@ -74,6 +82,14 @@ export function DiscoverProjectNotFound() {
           </EmptyContent>
         </Empty>
       </div>
-    </main>
+    </section>
+  );
+}
+
+export function DiscoverProjectNotFoundTitle() {
+  return (
+    <p className="min-w-0 flex-1 truncate font-medium text-muted-foreground text-sm">
+      作品不存在
+    </p>
   );
 }

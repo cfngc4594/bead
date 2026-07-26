@@ -1,12 +1,13 @@
 import { Toaster } from "@bead/ui/components/sonner";
 import { TooltipProvider } from "@bead/ui/components/tooltip";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { appConfig } from "@/config/app";
 import { NativeBackHandler } from "@/features/native/native-back-handler";
 import { NativeSafeAreaViewport } from "@/features/native/native-safe-area";
 import { initAnalytics } from "@/lib/analytics";
+import type { RouterContext } from "@/lib/router-context";
 import "@/styles/globals.css";
 
 const TOASTER_SAFE_AREA_OFFSET = {
@@ -16,7 +17,7 @@ const TOASTER_SAFE_AREA_OFFSET = {
   left: "calc(1rem + env(safe-area-inset-left, 0px))",
 };
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
 });
 

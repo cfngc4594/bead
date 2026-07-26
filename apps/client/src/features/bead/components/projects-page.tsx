@@ -10,12 +10,13 @@ import { useLiveQuery } from "@tanstack/react-db";
 import { Link } from "@tanstack/react-router";
 import { Grid2x2, Plus } from "lucide-react";
 import { ProjectListItem } from "@/features/bead/components/project-list-item";
+import { ProjectsGridSkeleton } from "@/features/bead/components/projects-grid-skeleton";
 import { projectsCollection } from "@/features/bead/storage/projects";
 import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 import { trackEvent } from "@/lib/analytics";
 
 export function ProjectsPage() {
-  const { data: projects = [] } = useLiveQuery(
+  const { data: projects = [], isReady } = useLiveQuery(
     (query) =>
       query
         .from({ project: projectsCollection })
@@ -48,7 +49,9 @@ export function ProjectsPage() {
         </div>
       </header>
 
-      {projects.length > 0 ? (
+      {!isReady ? (
+        <ProjectsGridSkeleton />
+      ) : projects.length > 0 ? (
         <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
           <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
             {projects.map((project) => (
