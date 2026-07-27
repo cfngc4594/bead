@@ -1,4 +1,3 @@
-import type Konva from "konva";
 import { useEffect, useRef } from "react";
 import type { TouchPoint } from "@/features/bead/lib/touch-gesture";
 
@@ -6,12 +5,10 @@ export function useTouchPinch({
   containerRef,
   onPinchMove,
   onPinchStart,
-  stageRef,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onPinchMove: (points: [TouchPoint, TouchPoint]) => void;
   onPinchStart: () => void;
-  stageRef: React.RefObject<Konva.Stage | null>;
 }) {
   const touchPointersRef = useRef(new Map<number, TouchPoint>());
   const isPinchingRef = useRef(false);
@@ -53,7 +50,6 @@ export function useTouchPinch({
       onPinchStart();
     }
 
-    stageRef.current?.stopDrag();
     onPinchMove([points[0], points[1]]);
 
     return true;
