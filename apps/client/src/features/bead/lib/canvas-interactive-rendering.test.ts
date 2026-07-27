@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
 import {
   drawGridLines,
+  drawLabelGridLines,
+  drawVisibleBeadCodes,
+  getLabelTexturePixelRatio,
   getVisibleGridBounds,
   syncBeadTexture,
 } from "@/features/bead/lib/canvas-interactive-rendering";
@@ -70,6 +73,47 @@ test("draws the maximum grid as one batched path", () => {
   expect(strokeCount).toBe(1);
 });
 
+test("draws label borders as one unclipped path across strip junctions", () => {
+  const segments: [[number, number], [number, number]][] = [];
+  let start: [number, number] | null = null;
+  let strokeCount = 0;
+  const context = {
+    beginPath() {},
+    lineCap: "butt" as CanvasLineCap,
+    lineTo(x: number, y: number) {
+      if (start) {
+        segments.push([start, [x, y]]);
+      }
+    },
+    lineWidth: 1,
+    moveTo(x: number, y: number) {
+      start = [x, y];
+    },
+    stroke() {
+      strokeCount += 1;
+    },
+    strokeStyle: "",
+  };
+
+  drawLabelGridLines(
+    context as Parameters<typeof drawLabelGridLines>[0],
+    1,
+    1,
+    "light",
+  );
+
+  expect(segments).toContainEqual([
+    [18.5, 0.5],
+    [18.5, 18.5],
+  ]);
+  expect(segments).toContainEqual([
+    [0.5, 18.5],
+    [18.5, 18.5],
+  ]);
+  expect(context.lineCap).toBe("square");
+  expect(strokeCount).toBe(1);
+});
+
 test("updates only changed bead texture pixels after initialization", () => {
   const painted: [number, number][] = [];
   const cleared: [number, number][] = [];
@@ -110,4 +154,35 @@ test("updates only changed bead texture pixels after initialization", () => {
   expect(changed).toBe(1);
   expect(painted).toEqual([[1, 0]]);
   expect(cleared).toEqual([]);
+});
+
+test("scales label textures for the current zoom and device density", () => {
+  expect(getLabelTexturePixelRatio(0.25, 2)).toBe(1);
+  expect(getLabelTexturePixelRatio(1.4, 2)).toBe(3);
+  expect(getLabelTexturePixelRatio(3, 2)).toBe(6);
+  expect(getLabelTexturePixelRatio(3, 3)).toBe(8);
+});
+
+test("centers bead codes between the half-pixel grid lines", () => {
+  const texts: [string, number, number][] = [];
+  const context = {
+    fillStyle: "",
+    fillText(text: string, x: number, y: number) {
+      texts.push([text, x, y]);
+    },
+    font: "",
+    textAlign: "start" as CanvasTextAlign,
+    textBaseline: "alphabetic" as CanvasTextBaseline,
+  };
+
+  drawVisibleBeadCodes({
+    beads: [{ code: "A1", hex: "#fff8cc" }],
+    cols: 1,
+    context: context as Parameters<typeof drawVisibleBeadCodes>[0]["context"],
+    rows: 1,
+    view: { x: 0, y: 0, scale: 1 },
+    viewport: { width: 100, height: 100 },
+  });
+
+  expect(texts).toEqual([["A1", 27.5, 27.5]]);
 });

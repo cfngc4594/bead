@@ -1,9 +1,16 @@
 import type { Context } from "konva/lib/Context";
 import type { BoardTheme } from "@/features/bead/lib/board-theme";
 import { boardDrawingPalettes } from "@/features/bead/lib/board-theme-colors";
-import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
+import {
+  cellSize,
+  cellVisualCenterOffset,
+  getGridOrigin,
+  gridLineOffset,
+} from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import type { BeadFill, CanvasView, Viewport } from "@/features/bead/types";
+
+const maxLabelTexturePixelRatio = 8;
 
 type DrawingContext = Pick<
   Context,
@@ -23,6 +30,8 @@ type DrawingContext = Pick<
   | "textAlign"
   | "textBaseline"
 >;
+
+type LabelGridContext = DrawingContext & Pick<Context, "lineCap">;
 
 export function syncBeadTexture({
   beads,
@@ -114,15 +123,74 @@ export function drawGridLines(
   context.lineWidth = 1;
 
   for (let column = 0; column <= cols; column += 1) {
-    const x = origin.x + column * cellSize + 0.5;
-    context.moveTo(x, origin.y + 0.5);
-    context.lineTo(x, origin.y + height + 0.5);
+    const x = origin.x + column * cellSize + gridLineOffset;
+    context.moveTo(x, origin.y + gridLineOffset);
+    context.lineTo(x, origin.y + height + gridLineOffset);
   }
 
   for (let row = 0; row <= rows; row += 1) {
-    const y = origin.y + row * cellSize + 0.5;
-    context.moveTo(origin.x + 0.5, y);
-    context.lineTo(origin.x + width + 0.5, y);
+    const y = origin.y + row * cellSize + gridLineOffset;
+    context.moveTo(origin.x + gridLineOffset, y);
+    context.lineTo(origin.x + width + gridLineOffset, y);
+  }
+
+  context.stroke();
+}
+
+export function drawLabelGridLines(
+  context: LabelGridContext,
+  rows: number,
+  cols: number,
+  theme: BoardTheme,
+) {
+  const firstColumnBoundary = cellSize + gridLineOffset;
+  const lastColumnBoundary = (cols + 1) * cellSize + gridLineOffset;
+  const firstRowBoundary = cellSize + gridLineOffset;
+  const lastRowBoundary = (rows + 1) * cellSize + gridLineOffset;
+  const boardWidth = (cols + 2) * cellSize;
+  const boardHeight = (rows + 2) * cellSize;
+
+  context.beginPath();
+  context.strokeStyle = boardDrawingPalettes[theme].grid;
+  context.lineCap = "square";
+  context.lineWidth = 1;
+
+  for (const y of [
+    gridLineOffset,
+    firstRowBoundary,
+    lastRowBoundary,
+    boardHeight + gridLineOffset,
+  ]) {
+    context.moveTo(firstColumnBoundary, y);
+    context.lineTo(lastColumnBoundary, y);
+  }
+
+  for (let column = 0; column <= cols; column += 1) {
+    const x = (column + 1) * cellSize + gridLineOffset;
+
+    context.moveTo(x, gridLineOffset);
+    context.lineTo(x, firstRowBoundary);
+    context.moveTo(x, lastRowBoundary);
+    context.lineTo(x, boardHeight + gridLineOffset);
+  }
+
+  for (const x of [
+    gridLineOffset,
+    firstColumnBoundary,
+    lastColumnBoundary,
+    boardWidth + gridLineOffset,
+  ]) {
+    context.moveTo(x, firstRowBoundary);
+    context.lineTo(x, lastRowBoundary);
+  }
+
+  for (let row = 0; row <= rows; row += 1) {
+    const y = (row + 1) * cellSize + gridLineOffset;
+
+    context.moveTo(gridLineOffset, y);
+    context.lineTo(firstColumnBoundary, y);
+    context.moveTo(lastColumnBoundary, y);
+    context.lineTo(boardWidth + gridLineOffset, y);
   }
 
   context.stroke();
@@ -165,8 +233,8 @@ export function drawVisibleBeadCodes({
       context.fillStyle = getReadableTextColor(bead.hex);
       context.fillText(
         bead.code,
-        origin.x + column * cellSize + cellSize / 2,
-        origin.y + row * cellSize + cellSize / 2,
+        origin.x + column * cellSize + cellVisualCenterOffset,
+        origin.y + row * cellSize + cellVisualCenterOffset,
       );
     }
   }
@@ -197,16 +265,24 @@ export function getVisibleGridBounds({
   };
 }
 
-export function createColumnLabelTexture(cols: number, theme: BoardTheme) {
+export function createColumnLabelTexture(
+  cols: number,
+  theme: BoardTheme,
+  pixelRatio = 1,
+) {
   const canvas = document.createElement("canvas");
-  canvas.width = (cols + 2) * cellSize;
-  canvas.height = cellSize;
+  const width = (cols + 2) * cellSize;
+  const ratio = Math.max(1, pixelRatio);
+
+  canvas.width = Math.ceil(width * ratio);
+  canvas.height = Math.ceil(cellSize * ratio);
   const context = canvas.getContext("2d");
 
   if (!context) {
     return canvas;
   }
 
+  context.scale(ratio, ratio);
   const palette = boardDrawingPalettes[theme];
   configureLabelContext(context, palette.labelText);
 
@@ -217,16 +293,24 @@ export function createColumnLabelTexture(cols: number, theme: BoardTheme) {
   return canvas;
 }
 
-export function createRowLabelTexture(rows: number, theme: BoardTheme) {
+export function createRowLabelTexture(
+  rows: number,
+  theme: BoardTheme,
+  pixelRatio = 1,
+) {
   const canvas = document.createElement("canvas");
-  canvas.width = cellSize;
-  canvas.height = (rows + 2) * cellSize;
+  const height = (rows + 2) * cellSize;
+  const ratio = Math.max(1, pixelRatio);
+
+  canvas.width = Math.ceil(cellSize * ratio);
+  canvas.height = Math.ceil(height * ratio);
   const context = canvas.getContext("2d");
 
   if (!context) {
     return canvas;
   }
 
+  context.scale(ratio, ratio);
   const palette = boardDrawingPalettes[theme];
   configureLabelContext(context, palette.labelText);
 
@@ -235,6 +319,16 @@ export function createRowLabelTexture(rows: number, theme: BoardTheme) {
   }
 
   return canvas;
+}
+
+export function getLabelTexturePixelRatio(
+  viewScale: number,
+  devicePixelRatio: number,
+) {
+  return Math.min(
+    maxLabelTexturePixelRatio,
+    Math.max(1, Math.ceil(viewScale * devicePixelRatio)),
+  );
 }
 
 function drawLabelCell(
@@ -248,10 +342,12 @@ function drawLabelCell(
 
   context.fillStyle = palette.labelBackground;
   context.fillRect(x, y, cellSize, cellSize);
-  context.strokeStyle = palette.grid;
-  context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
   context.fillStyle = palette.labelText;
-  context.fillText(String(label), x + cellSize / 2, y + cellSize / 2);
+  context.fillText(
+    String(label),
+    x + cellVisualCenterOffset,
+    y + cellVisualCenterOffset,
+  );
 }
 
 function configureLabelContext(
@@ -261,7 +357,6 @@ function configureLabelContext(
   context.font = "600 7px sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.lineWidth = 1;
   context.fillStyle = textColor;
 }
 

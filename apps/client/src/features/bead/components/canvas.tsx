@@ -37,7 +37,9 @@ import {
   createRowLabelTexture,
   drawBeadTexture,
   drawGridLines,
+  drawLabelGridLines,
   drawVisibleBeadCodes,
+  getLabelTexturePixelRatio,
   syncBeadTexture,
 } from "@/features/bead/lib/canvas-interactive-rendering";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
@@ -162,13 +164,17 @@ export function CanvasBoard(props: CanvasBoardProps) {
     rows,
   });
   const beadTexture = useMemo(() => document.createElement("canvas"), []);
+  const labelTexturePixelRatio = getLabelTexturePixelRatio(
+    view.scale,
+    window.devicePixelRatio,
+  );
   const columnLabelTexture = useMemo(
-    () => createColumnLabelTexture(cols, boardTheme),
-    [boardTheme, cols],
+    () => createColumnLabelTexture(cols, boardTheme, labelTexturePixelRatio),
+    [boardTheme, cols, labelTexturePixelRatio],
   );
   const rowLabelTexture = useMemo(
-    () => createRowLabelTexture(rows, boardTheme),
-    [boardTheme, rows],
+    () => createRowLabelTexture(rows, boardTheme, labelTexturePixelRatio),
+    [boardTheme, labelTexturePixelRatio, rows],
   );
   const {
     handleTouchPinch,
@@ -560,17 +566,39 @@ export function CanvasBoard(props: CanvasBoardProps) {
                 drawGridLines(context, rows, cols, boardTheme);
               }}
             />
-            <KonvaImage image={columnLabelTexture} x={0} y={0} />
             <KonvaImage
+              height={cellSize}
               image={columnLabelTexture}
+              width={(cols + 2) * cellSize}
+              x={0}
+              y={0}
+            />
+            <KonvaImage
+              height={cellSize}
+              image={columnLabelTexture}
+              width={(cols + 2) * cellSize}
               x={0}
               y={(rows + 1) * cellSize}
             />
-            <KonvaImage image={rowLabelTexture} x={0} y={0} />
             <KonvaImage
+              height={(rows + 2) * cellSize}
               image={rowLabelTexture}
+              width={cellSize}
+              x={0}
+              y={0}
+            />
+            <KonvaImage
+              height={(rows + 2) * cellSize}
+              image={rowLabelTexture}
+              width={cellSize}
               x={(cols + 1) * cellSize}
               y={0}
+            />
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                drawLabelGridLines(context, rows, cols, boardTheme);
+              }}
             />
           </Group>
         </Layer>
