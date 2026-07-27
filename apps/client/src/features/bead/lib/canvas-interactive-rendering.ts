@@ -1,7 +1,12 @@
 import type { Context } from "konva/lib/Context";
 import type { BoardTheme } from "@/features/bead/lib/board-theme";
 import { boardDrawingPalettes } from "@/features/bead/lib/board-theme-colors";
-import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
+import {
+  cellSize,
+  cellVisualCenterOffset,
+  getGridOrigin,
+  gridLineOffset,
+} from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import type { BeadFill, CanvasView, Viewport } from "@/features/bead/types";
 
@@ -116,15 +121,15 @@ export function drawGridLines(
   context.lineWidth = 1;
 
   for (let column = 0; column <= cols; column += 1) {
-    const x = origin.x + column * cellSize + 0.5;
-    context.moveTo(x, origin.y + 0.5);
-    context.lineTo(x, origin.y + height + 0.5);
+    const x = origin.x + column * cellSize + gridLineOffset;
+    context.moveTo(x, origin.y + gridLineOffset);
+    context.lineTo(x, origin.y + height + gridLineOffset);
   }
 
   for (let row = 0; row <= rows; row += 1) {
-    const y = origin.y + row * cellSize + 0.5;
-    context.moveTo(origin.x + 0.5, y);
-    context.lineTo(origin.x + width + 0.5, y);
+    const y = origin.y + row * cellSize + gridLineOffset;
+    context.moveTo(origin.x + gridLineOffset, y);
+    context.lineTo(origin.x + width + gridLineOffset, y);
   }
 
   context.stroke();
@@ -167,8 +172,8 @@ export function drawVisibleBeadCodes({
       context.fillStyle = getReadableTextColor(bead.hex);
       context.fillText(
         bead.code,
-        origin.x + column * cellSize + cellSize / 2,
-        origin.y + row * cellSize + cellSize / 2,
+        origin.x + column * cellSize + cellVisualCenterOffset,
+        origin.y + row * cellSize + cellVisualCenterOffset,
       );
     }
   }
@@ -277,9 +282,18 @@ function drawLabelCell(
   context.fillStyle = palette.labelBackground;
   context.fillRect(x, y, cellSize, cellSize);
   context.strokeStyle = palette.grid;
-  context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+  context.strokeRect(
+    x + gridLineOffset,
+    y + gridLineOffset,
+    cellSize,
+    cellSize,
+  );
   context.fillStyle = palette.labelText;
-  context.fillText(String(label), x + cellSize / 2, y + cellSize / 2);
+  context.fillText(
+    String(label),
+    x + cellVisualCenterOffset,
+    y + cellVisualCenterOffset,
+  );
 }
 
 function configureLabelContext(

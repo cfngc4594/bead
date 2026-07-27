@@ -1,6 +1,11 @@
 import type { BoardTheme } from "@/features/bead/lib/board-theme";
 import { boardDrawingPalettes } from "@/features/bead/lib/board-theme-colors";
-import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
+import {
+  cellSize,
+  cellVisualCenterOffset,
+  getGridOrigin,
+  gridLineOffset,
+} from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import type { BeadFill } from "@/features/bead/types";
 
@@ -62,7 +67,12 @@ export function drawBoard(
         context.fillRect(x, y, cellSize, cellSize);
         context.strokeStyle = palette.grid;
         context.lineWidth = 1;
-        context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+        context.strokeRect(
+          x + gridLineOffset,
+          y + gridLineOffset,
+          cellSize,
+          cellSize,
+        );
       }
 
       if (color) {
@@ -79,7 +89,11 @@ export function drawBoard(
           context.font = "600 7px sans-serif";
           context.textAlign = "center";
           context.textBaseline = "middle";
-          context.fillText(color.code, x + cellSize / 2, y + cellSize / 2);
+          context.fillText(
+            color.code,
+            x + cellVisualCenterOffset,
+            y + cellVisualCenterOffset,
+          );
         }
       }
     }
@@ -130,7 +144,16 @@ function drawLabelCell(
 ) {
   context.fillStyle = palette.labelBackground;
   context.fillRect(x, y, cellSize, cellSize);
-  context.strokeRect(x + 0.5, y + 0.5, cellSize, cellSize);
+  context.strokeRect(
+    x + gridLineOffset,
+    y + gridLineOffset,
+    cellSize,
+    cellSize,
+  );
   context.fillStyle = palette.labelText;
-  context.fillText(label, x + cellSize / 2, y + cellSize / 2);
+  context.fillText(
+    label,
+    x + cellVisualCenterOffset,
+    y + cellVisualCenterOffset,
+  );
 }

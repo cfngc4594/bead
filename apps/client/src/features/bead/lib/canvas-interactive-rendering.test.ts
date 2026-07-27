@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   drawGridLines,
+  drawVisibleBeadCodes,
   getLabelTexturePixelRatio,
   getVisibleGridBounds,
   syncBeadTexture,
@@ -118,4 +119,28 @@ test("scales label textures for the current zoom and device density", () => {
   expect(getLabelTexturePixelRatio(1.4, 2)).toBe(3);
   expect(getLabelTexturePixelRatio(3, 2)).toBe(6);
   expect(getLabelTexturePixelRatio(3, 3)).toBe(8);
+});
+
+test("centers bead codes between the half-pixel grid lines", () => {
+  const texts: [string, number, number][] = [];
+  const context = {
+    fillStyle: "",
+    fillText(text: string, x: number, y: number) {
+      texts.push([text, x, y]);
+    },
+    font: "",
+    textAlign: "start" as CanvasTextAlign,
+    textBaseline: "alphabetic" as CanvasTextBaseline,
+  };
+
+  drawVisibleBeadCodes({
+    beads: [{ code: "A1", hex: "#fff8cc" }],
+    cols: 1,
+    context: context as Parameters<typeof drawVisibleBeadCodes>[0]["context"],
+    rows: 1,
+    view: { x: 0, y: 0, scale: 1 },
+    viewport: { width: 100, height: 100 },
+  });
+
+  expect(texts).toEqual([["A1", 27.5, 27.5]]);
 });
