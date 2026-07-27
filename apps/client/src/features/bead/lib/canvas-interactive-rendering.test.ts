@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   drawGridLines,
+  drawLabelGridLines,
   drawVisibleBeadCodes,
   getLabelTexturePixelRatio,
   getVisibleGridBounds,
@@ -69,6 +70,47 @@ test("draws the maximum grid as one batched path", () => {
 
   expect(moveCount).toBe(176);
   expect(lineCount).toBe(176);
+  expect(strokeCount).toBe(1);
+});
+
+test("draws label borders as one unclipped path across strip junctions", () => {
+  const segments: [[number, number], [number, number]][] = [];
+  let start: [number, number] | null = null;
+  let strokeCount = 0;
+  const context = {
+    beginPath() {},
+    lineCap: "butt" as CanvasLineCap,
+    lineTo(x: number, y: number) {
+      if (start) {
+        segments.push([start, [x, y]]);
+      }
+    },
+    lineWidth: 1,
+    moveTo(x: number, y: number) {
+      start = [x, y];
+    },
+    stroke() {
+      strokeCount += 1;
+    },
+    strokeStyle: "",
+  };
+
+  drawLabelGridLines(
+    context as Parameters<typeof drawLabelGridLines>[0],
+    1,
+    1,
+    "light",
+  );
+
+  expect(segments).toContainEqual([
+    [18.5, 0.5],
+    [18.5, 18.5],
+  ]);
+  expect(segments).toContainEqual([
+    [0.5, 18.5],
+    [18.5, 18.5],
+  ]);
+  expect(context.lineCap).toBe("square");
   expect(strokeCount).toBe(1);
 });
 

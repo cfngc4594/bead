@@ -37,6 +37,7 @@ import {
   createRowLabelTexture,
   drawBeadTexture,
   drawGridLines,
+  drawLabelGridLines,
   drawVisibleBeadCodes,
   getLabelTexturePixelRatio,
   syncBeadTexture,
@@ -592,6 +593,12 @@ export function CanvasBoard(props: CanvasBoardProps) {
               width={cellSize}
               x={(cols + 1) * cellSize}
               y={0}
+            />
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                drawLabelGridLines(context, rows, cols, boardTheme);
+              }}
             />
           </Group>
         </Layer>
