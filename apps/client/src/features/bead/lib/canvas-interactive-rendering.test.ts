@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   drawGridLines,
+  getLabelTexturePixelRatio,
   getVisibleGridBounds,
   syncBeadTexture,
 } from "@/features/bead/lib/canvas-interactive-rendering";
@@ -110,4 +111,11 @@ test("updates only changed bead texture pixels after initialization", () => {
   expect(changed).toBe(1);
   expect(painted).toEqual([[1, 0]]);
   expect(cleared).toEqual([]);
+});
+
+test("scales label textures for the current zoom and device density", () => {
+  expect(getLabelTexturePixelRatio(0.25, 2)).toBe(1);
+  expect(getLabelTexturePixelRatio(1.4, 2)).toBe(3);
+  expect(getLabelTexturePixelRatio(3, 2)).toBe(6);
+  expect(getLabelTexturePixelRatio(3, 3)).toBe(8);
 });

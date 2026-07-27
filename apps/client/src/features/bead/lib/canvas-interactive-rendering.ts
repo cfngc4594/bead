@@ -5,6 +5,8 @@ import { cellSize, getGridOrigin } from "@/features/bead/lib/canvas-geometry";
 import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 import type { BeadFill, CanvasView, Viewport } from "@/features/bead/types";
 
+const maxLabelTexturePixelRatio = 8;
+
 type DrawingContext = Pick<
   Context,
   | "beginPath"
@@ -197,16 +199,24 @@ export function getVisibleGridBounds({
   };
 }
 
-export function createColumnLabelTexture(cols: number, theme: BoardTheme) {
+export function createColumnLabelTexture(
+  cols: number,
+  theme: BoardTheme,
+  pixelRatio = 1,
+) {
   const canvas = document.createElement("canvas");
-  canvas.width = (cols + 2) * cellSize;
-  canvas.height = cellSize;
+  const width = (cols + 2) * cellSize;
+  const ratio = Math.max(1, pixelRatio);
+
+  canvas.width = Math.ceil(width * ratio);
+  canvas.height = Math.ceil(cellSize * ratio);
   const context = canvas.getContext("2d");
 
   if (!context) {
     return canvas;
   }
 
+  context.scale(ratio, ratio);
   const palette = boardDrawingPalettes[theme];
   configureLabelContext(context, palette.labelText);
 
@@ -217,16 +227,24 @@ export function createColumnLabelTexture(cols: number, theme: BoardTheme) {
   return canvas;
 }
 
-export function createRowLabelTexture(rows: number, theme: BoardTheme) {
+export function createRowLabelTexture(
+  rows: number,
+  theme: BoardTheme,
+  pixelRatio = 1,
+) {
   const canvas = document.createElement("canvas");
-  canvas.width = cellSize;
-  canvas.height = (rows + 2) * cellSize;
+  const height = (rows + 2) * cellSize;
+  const ratio = Math.max(1, pixelRatio);
+
+  canvas.width = Math.ceil(cellSize * ratio);
+  canvas.height = Math.ceil(height * ratio);
   const context = canvas.getContext("2d");
 
   if (!context) {
     return canvas;
   }
 
+  context.scale(ratio, ratio);
   const palette = boardDrawingPalettes[theme];
   configureLabelContext(context, palette.labelText);
 
@@ -235,6 +253,16 @@ export function createRowLabelTexture(rows: number, theme: BoardTheme) {
   }
 
   return canvas;
+}
+
+export function getLabelTexturePixelRatio(
+  viewScale: number,
+  devicePixelRatio: number,
+) {
+  return Math.min(
+    maxLabelTexturePixelRatio,
+    Math.max(1, Math.ceil(viewScale * devicePixelRatio)),
+  );
 }
 
 function drawLabelCell(
