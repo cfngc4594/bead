@@ -202,4 +202,4 @@ jobs:
         uses: ./.github/actions/setup-monorepo
 
       - name: Build api
-        run: bun run --cwd apps/api build
+        run: bun run build:api
