@@ -2,12 +2,37 @@ import type { BeadFill } from "@/features/bead/types";
 
 export type CanvasState = (BeadFill | null)[];
 
+export type CanvasEdit = {
+  index: number;
+  fill: BeadFill | null;
+};
+
 export function createEmptyCanvas(cellCount: number): CanvasState {
   return Array.from({ length: cellCount }, () => null);
 }
 
 export function cloneCanvas(beads: CanvasState): CanvasState {
   return beads.map((bead) => (bead ? { ...bead } : null));
+}
+
+export function applyCanvasEdits(
+  beads: CanvasState,
+  edits: readonly CanvasEdit[],
+) {
+  let next: CanvasState | null = null;
+
+  for (const { index, fill } of edits) {
+    const current = next ? next[index] : beads[index];
+
+    if (isSameBead(current, fill)) {
+      continue;
+    }
+
+    next ??= [...beads];
+    next[index] = fill;
+  }
+
+  return next;
 }
 
 export function isSameCanvas(a: CanvasState, b: CanvasState) {
@@ -24,6 +49,6 @@ export function isSameCanvas(a: CanvasState, b: CanvasState) {
   return true;
 }
 
-function isSameBead(a: BeadFill | null, b: BeadFill | null) {
+export function isSameBead(a: BeadFill | null, b: BeadFill | null) {
   return a?.code === b?.code && a?.hex === b?.hex;
 }
