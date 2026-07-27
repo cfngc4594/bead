@@ -19,6 +19,18 @@ body {
   position: relative;
 }
 
+.pet-shell {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+/* Keep bottom value in sync with PetService.MENU_BOTTOM_PADDING_DP */
+.pet-shell[data-menu-open="true"] {
+  padding-bottom: 92px;
+}
+
 .pet-stage {
   width: 100%;
   height: 100%;
@@ -39,99 +51,140 @@ body {
   );
 }
 
+.pet-stage[data-pomodoro-paused="true"] {
+  opacity: 0.6;
+}
+
 canvas {
   display: block;
 }
 
+/* ── menu overlay ── */
 .pet-menu {
   position: absolute;
   inset: 0;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 10px;
   background: rgb(0 0 0 / 0.1%);
 }
 
-.pet-menu-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 112px;
-  height: 112px;
-  border: 1px solid rgb(255 255 255 / 54%);
-  border-radius: 999px;
-  background: radial-gradient(
-    circle,
-    rgb(24 24 27 / 16%) 0 38px,
-    rgb(24 24 27 / 56%) 39px 56px,
-    transparent 57px
-  );
-  box-shadow:
-    0 10px 24px rgb(0 0 0 / 22%),
-    inset 0 0 0 1px rgb(0 0 0 / 22%);
-  pointer-events: none;
-  transform: translate(-50%, -50%);
+/* ── status line (lives in bottom pad, clear of the model) ── */
+.pet-menu-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pet-menu-timer {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgb(250 250 250);
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 55%);
+}
+
+.pet-menu-status-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(250 250 250 / 62%);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 45%);
+}
+
+/*
+ * Flat glyph row — same hue as the main app dark-mode chrome.
+ * Hierarchy via fill / weight / opacity, never via rainbow colors.
+ */
+.pet-menu-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 .pet-menu-item {
-  position: absolute;
-  z-index: 3;
   display: flex;
   width: 44px;
   height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgb(255 255 255 / 58%);
-  border-radius: 999px;
-  background: rgb(39 39 42 / 88%);
-  box-shadow: 0 8px 18px rgb(0 0 0 / 28%);
-  color: white;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgb(250 250 250);
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 45%));
   touch-action: manipulation;
+  transition:
+    transform 100ms ease,
+    opacity 100ms ease,
+    filter 100ms ease;
 }
 
 .pet-menu-item:active {
-  background: rgb(63 63 70 / 92%);
-  transform: scale(0.94);
+  transform: scale(0.9);
+  opacity: 0.75;
 }
 
-.pet-menu-item-pomodoro {
-  top: 20px;
-  left: 34px;
+/* Primary action: fully opaque */
+.pet-menu-item-primary {
+  opacity: 1;
 }
 
-.pet-menu-item-close {
-  top: 20px;
-  right: 34px;
+/* End session: same color, slightly softer so primary wins */
+.pet-menu-item-danger {
+  opacity: 0.72;
 }
 
-.pet-menu-item-back {
-  top: 58px;
-  left: 14px;
+.pet-menu-item-danger:active {
+  opacity: 0.55;
 }
 
-.pet-menu-item-toggle {
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+/* Close pet: quieter, smaller */
+.pet-menu-item-quiet {
+  width: 36px;
+  height: 36px;
+  opacity: 0.45;
 }
 
-.pet-menu-item-toggle:active {
-  transform: translateX(-50%) scale(0.94);
+.pet-menu-item-quiet:active {
+  opacity: 0.7;
 }
 
-.pet-menu-item-reset {
-  top: 58px;
-  right: 14px;
+/* ── complete flash ── */
+@keyframes pet-complete-flash {
+  0% {
+    opacity: 0.4;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
-.pet-menu-item-cancel {
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+.pet-stage[data-pomodoro-complete="true"] {
+  animation:
+    pet-complete-flash 0.9s ease-out forwards,
+    pet-breathe 3.2s ease-in-out infinite 0.9s;
 }
 
-.pet-menu-item-cancel:active {
-  transform: translateX(-50%) scale(0.94);
-}
-
+/* ── breathe ── */
 @keyframes pet-breathe {
   0%,
   100% {

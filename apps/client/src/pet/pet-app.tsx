@@ -1,13 +1,6 @@
 import type { PetConfig } from "@bead/pet";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import {
-  ArrowLeftIcon,
-  PauseIcon,
-  PlayIcon,
-  RotateCcwIcon,
-  TimerIcon,
-  XIcon,
-} from "lucide-react";
+import { PauseIcon, PlayIcon, PowerIcon, XIcon } from "lucide-react";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 import { BeadInstancedMesh } from "@/features/bead/components/bead-instanced-mesh";
@@ -30,17 +23,17 @@ declare global {
 
 const cameraFov = 32;
 const pomodoroDurationMs = 25 * 60 * 1000;
+const completeFlashDurationMs = 900;
 
-type PetMenuLevel = "main" | "pomodoro";
 type PomodoroState =
   | { status: "idle" }
   | { startedAt: number; status: "running" }
-  | { elapsedMs: number; status: "paused" };
+  | { elapsedMs: number; status: "paused" }
+  | { status: "complete" };
 
 export function PetApp() {
   const [config, setConfig] = useState(readInitialConfig);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuLevel, setMenuLevel] = useState<PetMenuLevel>("main");
   const [pomodoroState, setPomodoroState] = useState<PomodoroState>({
     status: "idle",
   });
@@ -62,12 +55,10 @@ export function PetApp() {
 
     function handleLongPress() {
       setMenuOpen(true);
-      setMenuLevel("main");
     }
 
     function handleCloseMenu() {
       setMenuOpen(false);
-      setMenuLevel("main");
     }
 
     window.addEventListener("bead-pet-config", handleConfig);
@@ -84,7 +75,7 @@ export function PetApp() {
   }, []);
 
   useEffect(() => {
-    if (pomodoroState.status === "idle") {
+    if (pomodoroState.status === "idle" || pomodoroState.status === "complete") {
       setPomodoroProgress(1);
       return;
     }
@@ -105,7 +96,7 @@ export function PetApp() {
       setPomodoroProgress(nextProgress);
 
       if (nextProgress >= 1) {
-        setPomodoroState({ status: "idle" });
+        setPomodoroState({ status: "complete" });
       }
     }
 
@@ -115,18 +106,26 @@ export function PetApp() {
     return () => window.clearInterval(intervalId);
   }, [pomodoroState]);
 
+  // After complete flash, reset to idle
+  useEffect(() => {
+    if (pomodoroState.status !== "complete") {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setPomodoroState({ status: "idle" });
+    }, completeFlashDurationMs + 600);
+
+    return () => window.clearTimeout(timerId);
+  }, [pomodoroState]);
+
   if (!config || config.instances.length === 0) {
     return null;
   }
 
   function closeMenu() {
     setMenuOpen(false);
-    setMenuLevel("main");
     window.BeadPetAndroid?.closeMenu?.();
-  }
-
-  function enterPomodoroMenu() {
-    setMenuLevel("pomodoro");
   }
 
   function togglePomodoro() {
@@ -150,21 +149,22 @@ export function PetApp() {
     setPomodoroProgress(0);
   }
 
-  function resetPomodoro() {
-    setPomodoroState({ startedAt: Date.now(), status: "running" });
-    setPomodoroProgress(0);
-  }
-
   function stopPet() {
     setMenuOpen(false);
     window.BeadPetAndroid?.stopPet?.();
   }
 
+  const isActive = pomodoroState.status !== "idle";
+  const isComplete = pomodoroState.status === "complete";
+  const isPaused = pomodoroState.status === "paused";
+
   return (
-    <>
+    <div className="pet-shell" data-menu-open={menuOpen}>
       <div
         className="pet-stage"
-        data-pomodoro-active={pomodoroState.status !== "idle"}
+        data-pomodoro-active={isActive && !isComplete}
+        data-pomodoro-paused={isPaused}
+        data-pomodoro-complete={isComplete}
         style={
           {
             "--pet-reveal-percent": `${pomodoroProgress * 100}%`,
@@ -174,42 +174,52 @@ export function PetApp() {
         <PetScene config={config} tapSignal={tapSignal} />
       </div>
       {menuOpen ? (
-        <PetRadialMenu
-          level={menuLevel}
+        <PetMenu
           onCancelPomodoro={() => setPomodoroState({ status: "idle" })}
           onClose={closeMenu}
-          onEnterPomodoro={enterPomodoroMenu}
-          onResetPomodoro={resetPomodoro}
+          onStartPomodoro={() => {
+            togglePomodoro();
+            closeMenu();
+          }}
           onStopPet={stopPet}
           onTogglePomodoro={togglePomodoro}
-          pomodoroStatus={pomodoroState.status}
-          setLevel={setMenuLevel}
+          pomodoroState={pomodoroState}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
-function PetRadialMenu({
-  level,
+function formatCountdown(pomodoroState: PomodoroState): string {
+  let elapsedMs = 0;
+
+  if (pomodoroState.status === "running") {
+    elapsedMs = Date.now() - pomodoroState.startedAt;
+  } else if (pomodoroState.status === "paused") {
+    elapsedMs = pomodoroState.elapsedMs;
+  }
+
+  const remainingMs = Math.max(0, pomodoroDurationMs - elapsedMs);
+  const minutes = Math.floor(remainingMs / 60000);
+  const seconds = Math.floor((remainingMs % 60000) / 1000);
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function PetMenu({
   onCancelPomodoro,
   onClose,
-  onEnterPomodoro,
-  onResetPomodoro,
+  onStartPomodoro,
   onStopPet,
   onTogglePomodoro,
-  pomodoroStatus,
-  setLevel,
+  pomodoroState,
 }: {
-  level: PetMenuLevel;
   onCancelPomodoro: () => void;
   onClose: () => void;
-  onEnterPomodoro: () => void;
-  onResetPomodoro: () => void;
+  onStartPomodoro: () => void;
   onStopPet: () => void;
   onTogglePomodoro: () => void;
-  pomodoroStatus: PomodoroState["status"];
-  setLevel: (level: PetMenuLevel) => void;
+  pomodoroState: PomodoroState;
 }) {
   function handleBackdropPointerDown(
     event: React.PointerEvent<HTMLDivElement>,
@@ -221,70 +231,93 @@ function PetRadialMenu({
     onClose();
   }
 
+  const status = pomodoroState.status;
+  const isIdle = status === "idle" || status === "complete";
+  const isRunning = status === "running";
+
   return (
     <div
       className="pet-menu"
       onPointerDown={handleBackdropPointerDown}
       role="presentation"
     >
-      {level === "main" ? (
-        <>
-          <PetMenuButton
-            ariaLabel="Open pomodoro controls"
-            className="pet-menu-item-pomodoro"
-            onClick={onEnterPomodoro}
-          >
-            <TimerIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-          </PetMenuButton>
-          <PetMenuButton
-            ariaLabel="Close desktop pet"
-            className="pet-menu-item-close"
-            onClick={onStopPet}
-          >
-            <XIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-          </PetMenuButton>
-        </>
-      ) : (
-        <>
-          <PetMenuButton
-            ariaLabel="Back to main menu"
-            className="pet-menu-item-back"
-            onClick={() => setLevel("main")}
-          >
-            <ArrowLeftIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-          </PetMenuButton>
-          <PetMenuButton
-            ariaLabel={
-              pomodoroStatus === "running"
-                ? "Pause pomodoro"
-                : "Start or resume pomodoro"
-            }
-            className="pet-menu-item-toggle"
-            onClick={onTogglePomodoro}
-          >
-            {pomodoroStatus === "running" ? (
-              <PauseIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-            ) : (
-              <PlayIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-            )}
-          </PetMenuButton>
-          <PetMenuButton
-            ariaLabel="Reset pomodoro"
-            className="pet-menu-item-reset"
-            onClick={onResetPomodoro}
-          >
-            <RotateCcwIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-          </PetMenuButton>
-          <PetMenuButton
-            ariaLabel="Cancel pomodoro"
-            className="pet-menu-item-cancel"
-            onClick={onCancelPomodoro}
-          >
-            <XIcon aria-hidden="true" size={18} strokeWidth={2.4} />
-          </PetMenuButton>
-        </>
-      )}
-      <div className="pet-menu-ring" />
+      {!isIdle ? (
+        <div className="pet-menu-status">
+          <span className="pet-menu-timer">{formatCountdown(pomodoroState)}</span>
+          <span className="pet-menu-status-label">
+            {status === "paused" ? "已暂停" : "专注中"}
+          </span>
+        </div>
+      ) : null}
+      <div className="pet-menu-row">
+        {isIdle ? (
+          <>
+            <PetMenuButton
+              ariaLabel="开始番茄钟"
+              className="pet-menu-item-primary"
+              onClick={onStartPomodoro}
+            >
+              <PlayIcon
+                aria-hidden="true"
+                fill="currentColor"
+                size={24}
+                strokeWidth={0}
+              />
+            </PetMenuButton>
+            <PetMenuButton
+              ariaLabel="关闭桌宠"
+              className="pet-menu-item-quiet"
+              onClick={onStopPet}
+            >
+              <PowerIcon aria-hidden="true" size={20} strokeWidth={2.2} />
+            </PetMenuButton>
+          </>
+        ) : isRunning ? (
+          <>
+            <PetMenuButton
+              ariaLabel="暂停番茄钟"
+              className="pet-menu-item-primary"
+              onClick={onTogglePomodoro}
+            >
+              <PauseIcon
+                aria-hidden="true"
+                fill="currentColor"
+                size={24}
+                strokeWidth={0}
+              />
+            </PetMenuButton>
+            <PetMenuButton
+              ariaLabel="结束番茄钟"
+              className="pet-menu-item-danger"
+              onClick={onCancelPomodoro}
+            >
+              <XIcon aria-hidden="true" size={24} strokeWidth={2.4} />
+            </PetMenuButton>
+          </>
+        ) : (
+          <>
+            <PetMenuButton
+              ariaLabel="继续番茄钟"
+              className="pet-menu-item-primary"
+              onClick={onTogglePomodoro}
+            >
+              <PlayIcon
+                aria-hidden="true"
+                fill="currentColor"
+                size={24}
+                strokeWidth={0}
+              />
+            </PetMenuButton>
+            <PetMenuButton
+              ariaLabel="结束番茄钟"
+              className="pet-menu-item-danger"
+              onClick={onCancelPomodoro}
+            >
+              <XIcon aria-hidden="true" size={24} strokeWidth={2.4} />
+            </PetMenuButton>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -303,7 +336,7 @@ function PetMenuButton({
   return (
     <button
       aria-label={ariaLabel}
-      className={`pet-menu-item ${className}`}
+      className={`pet-menu-item ${className}`.trim()}
       onClick={(event) => {
         event.stopPropagation();
         onClick();

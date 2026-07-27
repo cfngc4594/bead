@@ -48,6 +48,8 @@ public class PetService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "pet";
     private static final int NOTIFICATION_ID = 4102;
     private static final int PET_SIZE_DP = 176;
+    /** Keep in sync with `.pet-shell[data-menu-open="true"]` padding-bottom in pet.css */
+    private static final int MENU_BOTTOM_PADDING_DP = 92;
     private static final int EDGE_HANDLE_WIDTH_DP = 30;
     private static final int EDGE_HANDLE_HEIGHT_DP = 48;
     private static final int EDGE_SNAP_THRESHOLD_DP = 12;
@@ -169,7 +171,7 @@ public class PetService extends Service {
         );
         overlayParams.gravity = Gravity.TOP | Gravity.START;
         Rect displayBounds = getSafeDisplayBounds();
-        Rect contentBounds = getPetContentBounds(size);
+        Rect contentBounds = getOverlayContentBounds();
         overlayParams.x = store.getPositionX(
             displayBounds.right - contentBounds.right - dpToPx(12)
         );
@@ -216,7 +218,7 @@ public class PetService extends Service {
         view.setBackgroundColor(Color.TRANSPARENT);
         view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         view.addJavascriptInterface(
-            new PetJavascriptBridge(this, store, () -> menuOpen = false),
+            new PetJavascriptBridge(this, store, this::closeMenuFromBridge),
             "BeadPetAndroid"
         );
         view.setWebViewClient(
@@ -286,8 +288,7 @@ public class PetService extends Service {
                             longPressed = false;
                             longPressRunnable = () -> {
                                 longPressed = true;
-                                menuOpen = true;
-                                dispatchLongPress();
+                                openMenuFromLongPress();
                             };
                             mainHandler.postDelayed(
                                 longPressRunnable,
@@ -350,16 +351,13 @@ public class PetService extends Service {
 
         overlayParams.x = x;
         overlayParams.y = y;
-        constrainOverlayPosition(
-            getSafeDisplayBounds(),
-            getPetContentBounds(overlayParams.width)
-        );
+        constrainOverlayPosition(getSafeDisplayBounds(), getOverlayContentBounds());
         windowManager.updateViewLayout(overlayView, overlayParams);
     }
 
     private int getDockEdge() {
         Rect displayBounds = getSafeDisplayBounds();
-        Rect contentBounds = getPetContentBounds(overlayParams.width);
+        Rect contentBounds = getOverlayContentBounds();
         int threshold = dpToPx(EDGE_SNAP_THRESHOLD_DP);
         int minX = displayBounds.left - contentBounds.left;
         int maxX = displayBounds.right - contentBounds.right;
@@ -739,8 +737,28 @@ public class PetService extends Service {
         }
     }
 
-    private void closeMenuFromOutside() {
+    private void openMenuFromLongPress() {
+        menuOpen = true;
+        syncOverlayMenuSize();
+        dispatchLongPress();
+    }
+
+    private void closeMenuFromBridge() {
+        if (!menuOpen) {
+            return;
+        }
+
         menuOpen = false;
+        syncOverlayMenuSize();
+    }
+
+    private void closeMenuFromOutside() {
+        if (!menuOpen) {
+            return;
+        }
+
+        menuOpen = false;
+        syncOverlayMenuSize();
 
         if (webView != null) {
             webView.evaluateJavascript(
@@ -748,6 +766,43 @@ public class PetService extends Service {
                 null
             );
         }
+    }
+
+    private void syncOverlayMenuSize() {
+        if (overlayView == null || overlayParams == null || collapsedSide != 0) {
+            return;
+        }
+
+        int petSize = dpToPx(PET_SIZE_DP);
+        int bottomPad = menuOpen ? dpToPx(MENU_BOTTOM_PADDING_DP) : 0;
+        int newWidth = petSize;
+        int newHeight = petSize + bottomPad;
+        int centerX = overlayParams.x + overlayParams.width / 2;
+        int topY = overlayParams.y;
+
+        if (!menuOpen) {
+            // Collapsing: restore top edge based on previous center
+            topY = (overlayParams.y + overlayParams.height / 2) - newHeight / 2;
+        }
+
+        overlayParams.width = newWidth;
+        overlayParams.height = newHeight;
+        overlayParams.x = centerX - newWidth / 2;
+        overlayParams.y = topY;
+        constrainOverlayPosition(getSafeDisplayBounds(), getOverlayContentBounds());
+        windowManager.updateViewLayout(overlayView, overlayParams);
+    }
+
+    private Rect getOverlayContentBounds() {
+        int petSize = dpToPx(PET_SIZE_DP);
+        Rect petContent = getPetContentBounds(petSize);
+
+        return new Rect(
+            petContent.left,
+            petContent.top,
+            petContent.right,
+            petContent.bottom
+        );
     }
 
     private void dispatchConfig() {
