@@ -2,6 +2,7 @@ import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useRef, useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
+  applyCanvasEdits,
   type CanvasState,
   cloneCanvas,
   createEmptyCanvas,
@@ -74,20 +75,21 @@ export function useProjectCanvas({
     setDraftBeads(draft.beads);
   }
 
-  function editCell(index: number, fill: BeadFill | null) {
+  function editCells(
+    edits: readonly { index: number; fill: BeadFill | null }[],
+  ) {
     const draft = draftRef.current;
 
-    if (!draft) {
+    if (!draft || edits.length === 0) {
       return;
     }
 
-    const next = cloneCanvas(draft.beads);
+    const next = applyCanvasEdits(draft.beads, edits);
 
-    if (isSameBead(next[index], fill)) {
+    if (!next) {
       return;
     }
 
-    next[index] = fill;
     draftRef.current = { ...draft, beads: next };
     setDraftBeads(next);
   }
@@ -159,7 +161,7 @@ export function useProjectCanvas({
   return {
     beads,
     beginEdit,
-    editCell,
+    editCells,
     commitEdit,
     commitBeads,
     undo,
@@ -174,8 +176,4 @@ function persistProject(persistence: Promise<unknown>) {
   persistence.catch((error) => {
     console.error("Unable to persist bead project", error);
   });
-}
-
-function isSameBead(a: BeadFill | null, b: BeadFill | null) {
-  return a?.code === b?.code && a?.hex === b?.hex;
 }

@@ -54,7 +54,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const {
     beads,
     beginEdit,
-    editCell: setCell,
+    editCells: setCells,
     commitEdit,
     commitBeads,
     undo,
@@ -112,12 +112,17 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     beginEdit();
   }
 
-  function editCell({ row, column }: GridCell) {
-    const index = row * size.cols + column;
-    const fill = getEditFill(index);
+  function editCells(cells: readonly GridCell[]) {
+    const edits = cells.map(({ row, column }) => {
+      const index = row * size.cols + column;
+      const fill = getEditFill(index);
 
-    setCell(index, fill);
-    mixedBeadBrush.commitCell(index, fill);
+      mixedBeadBrush.commitCell(index, fill);
+
+      return { index, fill };
+    });
+
+    setCells(edits);
   }
 
   function getEditFill(index: number) {
@@ -312,7 +317,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
                 cols={size.cols}
                 beads={beads}
                 tool={tool}
-                onEditCell={editCell}
+                onEditCells={editCells}
                 onEditEnd={finishCellEdit}
                 onEditStart={beginCellEdit}
                 onMoveSelection={moveSelection}
