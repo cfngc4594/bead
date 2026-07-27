@@ -1,7 +1,21 @@
 import type Konva from "konva";
-import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useRef, useState } from "react";
-import { Layer, Rect, Shape, Stage } from "react-konva";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Group,
+  Image as KonvaImage,
+  Layer,
+  Rect,
+  Shape,
+  Stage,
+} from "react-konva";
 import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
@@ -9,19 +23,33 @@ import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
 import { useBeadCodeRendering } from "@/features/bead/lib/bead-code-visibility";
 import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
-import { boardInteractionPalettes } from "@/features/bead/lib/board-theme-colors";
-import { drawBoard } from "@/features/bead/lib/canvas-drawing";
+import {
+  boardDrawingPalettes,
+  boardInteractionPalettes,
+} from "@/features/bead/lib/board-theme-colors";
 import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
 } from "@/features/bead/lib/canvas-geometry";
+import {
+  createColumnLabelTexture,
+  createRowLabelTexture,
+  drawBeadTexture,
+  drawGridLines,
+  drawLabelGridLines,
+  drawVisibleBeadCodes,
+  getLabelTexturePixelRatio,
+  syncBeadTexture,
+} from "@/features/bead/lib/canvas-interactive-rendering";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
+import { getGridLineCells } from "@/features/bead/lib/canvas-stroke";
 import {
   type BeadSelection,
   getSelectionBoxRect,
   getSelectionRect,
   isCellInSelection,
+  isSameCell,
   isSelectionInBounds,
 } from "@/features/bead/lib/selection";
 import type {
@@ -46,7 +74,7 @@ type EditableCanvasBoardProps = {
   mode: "editable";
   tool: CanvasTool;
   onEditStart: () => void;
-  onEditCell: (cell: GridCell) => void;
+  onEditCells: (cells: readonly GridCell[]) => void;
   onEditEnd: () => void;
   onPickCell: (cell: GridCell) => void;
   onMoveSelection: (beads: CanvasState) => void;
@@ -74,21 +102,39 @@ export function CanvasBoard(props: CanvasBoardProps) {
     props.mode === "editable" ? props.selectionResetSignal : 0;
   const { theme } = useTheme();
   const boardTheme = resolveBoardTheme(theme);
+  const drawingPalette = boardDrawingPalettes[boardTheme];
   const interactionPalette = boardInteractionPalettes[boardTheme];
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<Konva.Stage>(null);
+  const boardLayerRef = useRef<Konva.Layer>(null);
+  const pendingEditFrameRef = useRef<number | null>(null);
+  const pendingEditCellsRef = useRef<GridCell[]>([]);
+  const pendingEditKeysRef = useRef(new Set<number>());
+  const lastPaintCellRef = useRef<GridCell | null>(null);
+  const isPaintingRef = useRef(false);
+  const panPointerRef = useRef<{
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+  } | null>(null);
+  const navigationEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const previousTextureBeadsRef = useRef<readonly (BeadFill | null)[] | null>(
+    null,
+  );
+  const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { isStageMeasured, stageSize } = useStageSize({
     containerRef,
     initialViewport: viewport,
   });
-  const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
-  const [isPainting, setIsPainting] = useState(false);
   const {
     view,
+    getView,
     isTemporaryPan,
     isDraggable,
-    handleWheel,
-    handleDragEnd,
+    handleWheel: navigateWithWheel,
+    handlePan,
     handlePinchMove,
     resetPinch,
   } = useCanvasNavigation({
@@ -99,24 +145,6 @@ export function CanvasBoard(props: CanvasBoardProps) {
     resetViewAfterResizeSignal,
     resetViewSignal,
     tool,
-    stageRef,
-  });
-  const {
-    handleTouchPinch,
-    removeTouchPointer,
-    resetPinchIfIdle,
-    updateTouchPointer,
-  } = useTouchPinch({
-    containerRef,
-    onPinchMove: handlePinchMove,
-    onPinchStart: () => {
-      if (isPainting && props.mode === "editable") {
-        props.onEditEnd();
-        setIsPainting(false);
-      }
-      setHoveredCell(null);
-    },
-    stageRef,
   });
   const {
     beginSelection,
@@ -135,8 +163,38 @@ export function CanvasBoard(props: CanvasBoardProps) {
     resetSignal: selectionResetSignal,
     rows,
   });
+  const beadTexture = useMemo(() => document.createElement("canvas"), []);
+  const labelTexturePixelRatio = getLabelTexturePixelRatio(
+    view.scale,
+    window.devicePixelRatio,
+  );
+  const columnLabelTexture = useMemo(
+    () => createColumnLabelTexture(cols, boardTheme, labelTexturePixelRatio),
+    [boardTheme, cols, labelTexturePixelRatio],
+  );
+  const rowLabelTexture = useMemo(
+    () => createRowLabelTexture(rows, boardTheme, labelTexturePixelRatio),
+    [boardTheme, labelTexturePixelRatio, rows],
+  );
+  const {
+    handleTouchPinch,
+    removeTouchPointer,
+    resetPinchIfIdle,
+    updateTouchPointer,
+  } = useTouchPinch({
+    containerRef,
+    onPinchMove: (points) => {
+      markNavigationActivity();
+      handlePinchMove(points);
+    },
+    onPinchStart: () => {
+      panPointerRef.current = null;
+      finishPainting();
+      setHoveredCell(null);
+    },
+  });
   const gridOrigin = getGridOrigin();
-  const renderBeadCodes = useBeadCodeRendering(view.scale);
+  const renderBeadCodes = useBeadCodeRendering(view.scale) && !isNavigating;
   const showCellHover = shouldShowCellHover(tool, isTemporaryPan);
   const canvasCursor = getCanvasCursor({
     hoveredCell: showCellHover ? hoveredCell : null,
@@ -146,36 +204,79 @@ export function CanvasBoard(props: CanvasBoardProps) {
     tool,
   });
 
+  useLayoutEffect(() => {
+    syncBeadTexture({
+      beads: displayedBeads,
+      canvas: beadTexture,
+      cols,
+      previousBeads: previousTextureBeadsRef.current,
+      rows,
+    });
+    previousTextureBeadsRef.current = displayedBeads;
+    boardLayerRef.current?.batchDraw();
+  }, [beadTexture, cols, displayedBeads, rows]);
+
   useEffect(() => {
     if (!showCellHover) {
       setHoveredCell(null);
     }
   }, [showCellHover]);
 
-  function getCellFromPointer(): GridCell | null {
-    const stage = stageRef.current;
-    const pointer = stage?.getPointerPosition();
+  useEffect(
+    () => () => {
+      if (pendingEditFrameRef.current !== null) {
+        cancelAnimationFrame(pendingEditFrameRef.current);
+      }
 
-    if (!stage || !pointer) {
+      if (navigationEndTimerRef.current !== null) {
+        clearTimeout(navigationEndTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  function getPointFromPointer(
+    event: Pick<PointerEvent, "clientX" | "clientY">,
+  ) {
+    const container = containerRef.current;
+
+    if (!container) {
       return null;
     }
 
-    return getGridCellFromPoint({ point: pointer, view, rows, cols });
+    const rect = container.getBoundingClientRect();
+
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
   }
 
-  function editFromPointer() {
-    if (props.mode !== "editable") {
-      return;
+  function getCellFromPointer(
+    event: Pick<PointerEvent, "clientX" | "clientY">,
+  ) {
+    const point = getPointFromPointer(event);
+
+    if (!point) {
+      return null;
     }
 
-    const cell = getCellFromPointer();
+    return getGridCellFromPoint({
+      point,
+      view: getView(),
+      rows,
+      cols,
+    });
+  }
 
-    if (!cell) {
-      return;
-    }
+  function updateHoveredCell(cell: GridCell | null) {
+    setHoveredCell((current) => {
+      if (current && cell && isSameCell(current, cell)) {
+        return current;
+      }
 
-    setHoveredCell(cell);
-    props.onEditCell(cell);
+      return cell;
+    });
   }
 
   function moveSelection(nextBeads: CanvasState) {
@@ -184,10 +285,125 @@ export function CanvasBoard(props: CanvasBoardProps) {
     }
   }
 
-  function handlePointerDown(event: KonvaEventObject<PointerEvent>) {
-    updateTouchPointer(event.evt);
+  function queueEditCells(cells: readonly GridCell[]) {
+    if (props.mode !== "editable") {
+      return;
+    }
+
+    for (const cell of cells) {
+      const key = cell.row * cols + cell.column;
+
+      if (pendingEditKeysRef.current.has(key)) {
+        continue;
+      }
+
+      pendingEditKeysRef.current.add(key);
+      pendingEditCellsRef.current.push(cell);
+    }
+
+    if (
+      pendingEditCellsRef.current.length === 0 ||
+      pendingEditFrameRef.current !== null
+    ) {
+      return;
+    }
+
+    pendingEditFrameRef.current = requestAnimationFrame(() => {
+      pendingEditFrameRef.current = null;
+      flushPendingEditCells();
+    });
+  }
+
+  function flushPendingEditCells() {
+    if (props.mode !== "editable") {
+      return;
+    }
+
+    if (pendingEditFrameRef.current !== null) {
+      cancelAnimationFrame(pendingEditFrameRef.current);
+      pendingEditFrameRef.current = null;
+    }
+
+    const cells = pendingEditCellsRef.current;
+    pendingEditCellsRef.current = [];
+    pendingEditKeysRef.current.clear();
+
+    if (cells.length > 0) {
+      props.onEditCells(cells);
+    }
+  }
+
+  function finishPainting() {
+    if (!isPaintingRef.current || props.mode !== "editable") {
+      return;
+    }
+
+    flushPendingEditCells();
+    props.onEditEnd();
+    isPaintingRef.current = false;
+    lastPaintCellRef.current = null;
+  }
+
+  function paintThroughPointerSamples(event: PointerEvent) {
+    const samples = event.getCoalescedEvents?.() ?? [];
+    const pointerSamples = samples.length > 0 ? samples : [event];
+
+    for (const sample of pointerSamples) {
+      const cell = getCellFromPointer(sample);
+
+      if (!cell) {
+        lastPaintCellRef.current = null;
+        continue;
+      }
+
+      const previous = lastPaintCellRef.current;
+      const cells = previous
+        ? getGridLineCells(previous, cell).slice(1)
+        : [cell];
+
+      queueEditCells(cells);
+      lastPaintCellRef.current = cell;
+    }
+  }
+
+  function markNavigationActivity() {
+    setIsNavigating(true);
+
+    if (navigationEndTimerRef.current !== null) {
+      clearTimeout(navigationEndTimerRef.current);
+    }
+
+    navigationEndTimerRef.current = setTimeout(() => {
+      navigationEndTimerRef.current = null;
+      setIsNavigating(false);
+    }, 100);
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    const nativeEvent = event.nativeEvent;
+
+    updateTouchPointer(nativeEvent);
+
+    if (event.button === 0) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
 
     if (handleTouchPinch()) {
+      return;
+    }
+
+    if (event.button !== 0) {
+      return;
+    }
+
+    if (isDraggable) {
+      panPointerRef.current = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+      };
+      setIsNavigating(true);
+      setHoveredCell(null);
       return;
     }
 
@@ -196,7 +412,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
     }
 
     if (tool === "picker") {
-      const cell = getCellFromPointer();
+      const cell = getCellFromPointer(nativeEvent);
 
       if (cell) {
         props.onPickCell(cell);
@@ -206,7 +422,9 @@ export function CanvasBoard(props: CanvasBoardProps) {
     }
 
     if (tool === "select") {
-      handleSelectPointerDown(event);
+      const cell = getCellFromPointer(nativeEvent);
+      updateHoveredCell(cell);
+      beginSelection(cell);
       return;
     }
 
@@ -214,26 +432,37 @@ export function CanvasBoard(props: CanvasBoardProps) {
       return;
     }
 
-    if (event.evt.button !== 0) {
-      return;
-    }
-
-    setIsPainting(true);
+    isPaintingRef.current = true;
+    lastPaintCellRef.current = null;
     props.onEditStart();
-    editFromPointer();
+    paintThroughPointerSamples(nativeEvent);
   }
 
-  function handlePointerMove(event: KonvaEventObject<PointerEvent>) {
-    updateTouchPointer(event.evt);
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const nativeEvent = event.nativeEvent;
+
+    updateTouchPointer(nativeEvent);
 
     if (handleTouchPinch()) {
       return;
     }
 
-    const cell = getCellFromPointer();
+    const panPointer = panPointerRef.current;
+
+    if (panPointer?.pointerId === event.pointerId) {
+      handlePan({
+        x: event.clientX - panPointer.clientX,
+        y: event.clientY - panPointer.clientY,
+      });
+      panPointer.clientX = event.clientX;
+      panPointer.clientY = event.clientY;
+      return;
+    }
+
+    const cell = getCellFromPointer(nativeEvent);
 
     if (showCellHover) {
-      setHoveredCell(cell);
+      updateHoveredCell(cell);
     }
 
     if (props.mode !== "editable") {
@@ -245,164 +474,225 @@ export function CanvasBoard(props: CanvasBoardProps) {
       return;
     }
 
-    if (isEditTool(tool) && isPainting && cell) {
-      props.onEditCell(cell);
+    if (isEditTool(tool) && isPaintingRef.current) {
+      paintThroughPointerSamples(nativeEvent);
     }
   }
 
-  function handlePointerUp(event?: KonvaEventObject<PointerEvent>) {
-    if (event) {
-      removeTouchPointer(event.evt);
-    }
-
+  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    removeTouchPointer(event.nativeEvent);
     resetPinchIfIdle(resetPinch);
 
-    if (isPainting && props.mode === "editable") {
-      props.onEditEnd();
+    if (panPointerRef.current?.pointerId === event.pointerId) {
+      panPointerRef.current = null;
+      setIsNavigating(false);
     }
+
+    finishPainting();
 
     if (tool === "select") {
       finishSelection();
     }
 
-    setIsPainting(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
-  function handlePointerLeave(event: KonvaEventObject<PointerEvent>) {
-    removeTouchPointer(event.evt);
-    resetPinch();
+  function handlePointerLeave(event: ReactPointerEvent<HTMLDivElement>) {
     setHoveredCell(null);
 
-    if (isPainting && props.mode === "editable") {
-      props.onEditEnd();
-    }
-
-    setIsPainting(false);
-    clearGesture();
-  }
-
-  function handleSelectPointerDown(event: KonvaEventObject<PointerEvent>) {
-    if (event.evt.button !== 0 || isTemporaryPan) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       return;
     }
 
-    const cell = getCellFromPointer();
+    removeTouchPointer(event.nativeEvent);
+    resetPinch();
+    panPointerRef.current = null;
+    setIsNavigating(false);
+    finishPainting();
+    clearGesture();
+  }
 
-    if (cell) {
-      setHoveredCell(cell);
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const point = getPointFromPointer(event.nativeEvent);
+
+    if (!point) {
+      return;
     }
 
-    beginSelection(cell);
+    markNavigationActivity();
+    navigateWithWheel(event.nativeEvent, point);
   }
 
   return (
     <div
       className="h-full w-full touch-none overflow-hidden overscroll-none"
       ref={containerRef}
+      onPointerCancel={handlePointerUp}
+      onPointerDown={handlePointerDown}
+      onPointerLeave={handlePointerLeave}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onWheel={handleWheel}
     >
       <Stage
-        ref={stageRef}
         style={{
           cursor: canvasCursor,
           touchAction: "none",
         }}
         width={stageSize.width}
         height={stageSize.height}
-        x={view.x}
-        y={view.y}
-        scaleX={view.scale}
-        scaleY={view.scale}
-        draggable={isDraggable}
-        onDragEnd={handleDragEnd}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={handlePointerLeave}
-        onWheel={handleWheel}
       >
-        <Layer>
-          <Shape
-            listening={false}
-            sceneFunc={(context, shape) => {
-              drawBoard(context, rows, cols, displayedBeads, {
-                showBeadCodes: renderBeadCodes,
-                theme: boardTheme,
-              });
-              context.fillStrokeShape(shape);
-            }}
-          />
-          {showCellHover && hoveredCell ? (
-            <>
-              <Rect
-                x={gridOrigin.x + hoveredCell.column * cellSize + 1}
-                y={gridOrigin.y + hoveredCell.row * cellSize + 1}
-                width={cellSize - 2}
-                height={cellSize - 2}
-                stroke={interactionPalette.hoverOuterStroke}
-                strokeWidth={2}
-                listening={false}
-              />
-              <Rect
-                x={gridOrigin.x + hoveredCell.column * cellSize + 2.5}
-                y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
-                width={cellSize - 5}
-                height={cellSize - 5}
-                stroke={interactionPalette.hoverInnerStroke}
-                strokeWidth={1}
-                listening={false}
-              />
-            </>
-          ) : null}
-          {tool === "select" && selectionBox ? (
+        <Layer listening={false} ref={boardLayerRef}>
+          <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
             <Rect
-              {...getSelectionBoxRect(selectionBox)}
-              fill={interactionPalette.selectionFill}
-              stroke={interactionPalette.selectionStroke}
-              strokeWidth={1.5}
-              listening={false}
+              fill={drawingPalette.cellBackground}
+              height={rows * cellSize}
+              width={cols * cellSize}
+              x={gridOrigin.x}
+              y={gridOrigin.y}
             />
-          ) : null}
-          {tool === "select" && selection ? (
-            <Rect
-              {...getSelectionRect(
-                selection,
-                moveTargetOrigin ?? selection.origin,
-              )}
-              dash={[5, 4]}
-              fill={interactionPalette.activeSelectionFill}
-              stroke={
-                moveTargetOrigin &&
-                !isSelectionInBounds(selection, moveTargetOrigin, rows, cols)
-                  ? interactionPalette.invalidSelectionStroke
-                  : interactionPalette.selectionStroke
-              }
-              strokeWidth={1.5}
+            <Shape
               listening={false}
+              sceneFunc={(context) => {
+                drawBeadTexture(context, beadTexture, rows, cols);
+              }}
             />
-          ) : null}
-          {tool === "select" && selection && moveTargetOrigin
-            ? selection.items.map((item) => (
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                drawGridLines(context, rows, cols, boardTheme);
+              }}
+            />
+            <KonvaImage
+              height={cellSize}
+              image={columnLabelTexture}
+              width={(cols + 2) * cellSize}
+              x={0}
+              y={0}
+            />
+            <KonvaImage
+              height={cellSize}
+              image={columnLabelTexture}
+              width={(cols + 2) * cellSize}
+              x={0}
+              y={(rows + 1) * cellSize}
+            />
+            <KonvaImage
+              height={(rows + 2) * cellSize}
+              image={rowLabelTexture}
+              width={cellSize}
+              x={0}
+              y={0}
+            />
+            <KonvaImage
+              height={(rows + 2) * cellSize}
+              image={rowLabelTexture}
+              width={cellSize}
+              x={(cols + 1) * cellSize}
+              y={0}
+            />
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                drawLabelGridLines(context, rows, cols, boardTheme);
+              }}
+            />
+          </Group>
+        </Layer>
+        <Layer listening={false} visible={renderBeadCodes}>
+          <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                drawVisibleBeadCodes({
+                  beads: displayedBeads,
+                  cols,
+                  context,
+                  rows,
+                  view,
+                  viewport: stageSize,
+                });
+              }}
+            />
+          </Group>
+        </Layer>
+        <Layer listening={false}>
+          <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
+            {showCellHover && hoveredCell ? (
+              <>
                 <Rect
-                  fill={item.fill.hex}
-                  height={cellSize - 1}
-                  key={`${item.rowOffset}-${item.columnOffset}`}
-                  listening={false}
-                  opacity={0.72}
-                  width={cellSize - 1}
-                  x={
-                    gridOrigin.x +
-                    (moveTargetOrigin.column + item.columnOffset) * cellSize +
-                    1
-                  }
-                  y={
-                    gridOrigin.y +
-                    (moveTargetOrigin.row + item.rowOffset) * cellSize +
-                    1
-                  }
+                  x={gridOrigin.x + hoveredCell.column * cellSize + 1}
+                  y={gridOrigin.y + hoveredCell.row * cellSize + 1}
+                  width={cellSize - 2}
+                  height={cellSize - 2}
+                  stroke={interactionPalette.hoverOuterStroke}
+                  strokeWidth={2}
                 />
-              ))
-            : null}
+                <Rect
+                  x={gridOrigin.x + hoveredCell.column * cellSize + 2.5}
+                  y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
+                  width={cellSize - 5}
+                  height={cellSize - 5}
+                  stroke={interactionPalette.hoverInnerStroke}
+                  strokeWidth={1}
+                />
+              </>
+            ) : null}
+            {tool === "select" && selectionBox ? (
+              <Rect
+                {...getSelectionBoxRect(selectionBox)}
+                fill={interactionPalette.selectionFill}
+                stroke={interactionPalette.selectionStroke}
+                strokeWidth={1.5}
+              />
+            ) : null}
+            {tool === "select" && selection ? (
+              <Rect
+                {...getSelectionRect(
+                  selection,
+                  moveTargetOrigin ?? selection.origin,
+                )}
+                dash={[5, 4]}
+                fill={interactionPalette.activeSelectionFill}
+                stroke={
+                  moveTargetOrigin &&
+                  !isSelectionInBounds(selection, moveTargetOrigin, rows, cols)
+                    ? interactionPalette.invalidSelectionStroke
+                    : interactionPalette.selectionStroke
+                }
+                strokeWidth={1.5}
+              />
+            ) : null}
+            {tool === "select" && selection && moveTargetOrigin ? (
+              <Shape
+                listening={false}
+                sceneFunc={(context) => {
+                  context.save();
+                  context.globalAlpha = 0.72;
+
+                  for (const item of selection.items) {
+                    context.fillStyle = item.fill.hex;
+                    context.fillRect(
+                      gridOrigin.x +
+                        (moveTargetOrigin.column + item.columnOffset) *
+                          cellSize +
+                        1,
+                      gridOrigin.y +
+                        (moveTargetOrigin.row + item.rowOffset) * cellSize +
+                        1,
+                      cellSize - 1,
+                      cellSize - 1,
+                    );
+                  }
+
+                  context.restore();
+                }}
+              />
+            ) : null}
+          </Group>
         </Layer>
       </Stage>
     </div>

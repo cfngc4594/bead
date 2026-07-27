@@ -1,6 +1,10 @@
-import type Konva from "konva";
-import type { KonvaEventObject } from "konva/lib/Node";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import {
   getInitialScale,
@@ -23,7 +27,6 @@ type UseCanvasNavigationProps = {
   resetViewSignal: number;
   resetViewAfterResizeSignal: number;
   tool: CanvasTool;
-  stageRef: React.RefObject<Konva.Stage | null>;
 };
 
 export function useCanvasNavigation({
@@ -34,7 +37,6 @@ export function useCanvasNavigation({
   resetViewSignal,
   resetViewAfterResizeSignal,
   tool,
-  stageRef,
 }: UseCanvasNavigationProps) {
   const initializedViewKeyRef = useRef<string | null>(null);
   const handledResetSignalRef = useRef(0);
@@ -48,7 +50,40 @@ export function useCanvasNavigation({
   const [view, setView] = useState<CanvasView>(() =>
     getInitialView(rows, cols, viewport),
   );
+  const viewRef = useRef(view);
+  const viewFrameRef = useRef<number | null>(null);
   const minScale = getInitialScale(rows, cols, viewport);
+
+  const replaceView = useCallback((nextView: CanvasView) => {
+    viewRef.current = nextView;
+    setView(nextView);
+  }, []);
+
+  function updateView(
+    updater: (current: CanvasView) => CanvasView,
+    immediate = false,
+  ) {
+    viewRef.current = updater(viewRef.current);
+
+    if (immediate) {
+      if (viewFrameRef.current !== null) {
+        cancelAnimationFrame(viewFrameRef.current);
+        viewFrameRef.current = null;
+      }
+
+      setView(viewRef.current);
+      return;
+    }
+
+    if (viewFrameRef.current !== null) {
+      return;
+    }
+
+    viewFrameRef.current = requestAnimationFrame(() => {
+      viewFrameRef.current = null;
+      setView(viewRef.current);
+    });
+  }
 
   useLayoutEffect(() => {
     if (!isViewportMeasured) {
@@ -61,9 +96,9 @@ export function useCanvasNavigation({
       return;
     }
 
-    setView(getInitialView(rows, cols, viewport));
+    replaceView(getInitialView(rows, cols, viewport));
     initializedViewKeyRef.current = viewKey;
-  }, [cols, isViewportMeasured, rows, viewport]);
+  }, [cols, isViewportMeasured, rows, viewport, replaceView]);
 
   useEffect(() => {
     if (resetViewSignal === handledResetSignalRef.current) {
@@ -73,10 +108,10 @@ export function useCanvasNavigation({
     handledResetSignalRef.current = resetViewSignal;
 
     if (resetViewSignal > 0) {
-      setView(getInitialView(rows, cols, viewport));
+      replaceView(getInitialView(rows, cols, viewport));
       initializedViewKeyRef.current = `${rows}x${cols}`;
     }
-  }, [cols, resetViewSignal, rows, viewport]);
+  }, [cols, resetViewSignal, rows, viewport, replaceView]);
 
   useEffect(() => {
     if (
@@ -107,9 +142,9 @@ export function useCanvasNavigation({
     }
 
     pendingResizeResetRef.current = null;
-    setView(getInitialView(rows, cols, viewport));
+    replaceView(getInitialView(rows, cols, viewport));
     initializedViewKeyRef.current = `${rows}x${cols}`;
-  }, [cols, isViewportMeasured, rows, viewport]);
+  }, [cols, isViewportMeasured, rows, viewport, replaceView]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -136,39 +171,40 @@ export function useCanvasNavigation({
     };
   }, []);
 
-  function handleWheel(event: KonvaEventObject<WheelEvent>) {
-    event.evt.preventDefault();
+  useEffect(
+    () => () => {
+      if (viewFrameRef.current !== null) {
+        cancelAnimationFrame(viewFrameRef.current);
+      }
+    },
+    [],
+  );
 
-    const pointer = stageRef.current?.getPointerPosition();
-
-    if (!pointer) {
-      return;
-    }
-
-    if (!(event.evt.ctrlKey || event.evt.metaKey)) {
-      setView((current) => ({
+  function handleWheel(event: WheelEvent, pointer: { x: number; y: number }) {
+    if (!(event.ctrlKey || event.metaKey)) {
+      updateView((current) => ({
         ...current,
-        x: current.x - event.evt.deltaX,
-        y: current.y - event.evt.deltaY,
+        x: current.x - event.deltaX,
+        y: current.y - event.deltaY,
       }));
       return;
     }
 
-    setView((current) =>
+    updateView((current) =>
       getZoomedView({
         view: current,
         point: pointer,
-        deltaY: event.evt.deltaY,
+        deltaY: event.deltaY,
         minScale,
       }),
     );
   }
 
-  function handleDragEnd(event: KonvaEventObject<DragEvent>) {
-    setView((current) => ({
+  function handlePan(delta: { x: number; y: number }) {
+    updateView((current) => ({
       ...current,
-      x: event.target.x(),
-      y: event.target.y(),
+      x: current.x + delta.x,
+      y: current.y + delta.y,
     }));
   }
 
@@ -195,7 +231,7 @@ export function useCanvasNavigation({
       pinchScaleDistanceRef.current = gesture.distance;
     }
 
-    setView((current) =>
+    updateView((current) =>
       getPinchedView({
         view: current,
         previousCenter: previousGesture.center,
@@ -213,10 +249,11 @@ export function useCanvasNavigation({
 
   return {
     view,
+    getView: () => viewRef.current,
     isTemporaryPan: isSpacePressed,
     isDraggable: tool === "pan" || isSpacePressed,
     handleWheel,
-    handleDragEnd,
+    handlePan,
     handlePinchMove,
     resetPinch,
   };

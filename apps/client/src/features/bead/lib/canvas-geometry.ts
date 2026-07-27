@@ -1,6 +1,8 @@
 import type { CanvasView, GridCell, Viewport } from "@/features/bead/types";
 
 export const cellSize = 18;
+export const gridLineOffset = 0.5;
+export const cellVisualCenterOffset = cellSize / 2 + gridLineOffset;
 export const boardPadding = 24;
 export const labelCells = 1;
 export const boardOrigin = cellSize * labelCells;
