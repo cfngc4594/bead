@@ -1,3 +1,6 @@
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/quicksand";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
