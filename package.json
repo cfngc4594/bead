@@ -10,8 +10,9 @@
     "dev:client": "nx dev client",
     "dev:site": "nx dev site",
     "dev:api": "nx dev api",
+    "dev:inngest": "set -a && . ./.env && set +a && inngest-cli dev -u \"http://localhost:${PORT}/api/inngest\"",
     "dev:all": "nx run-many -t dev -p client site api",
-    "db:up": "docker compose up -d postgres",
+    "db:up": "docker compose up -d postgres minio",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v",
     "db:generate": "bun run --cwd apps/api --env-file=../../.env db:generate",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
+    "inngest-cli": "^1.38.1",
     "nx": "^23.0.1",
     "typescript": "^5"
   },
@@ -46,7 +48,8 @@
   ],
   "trustedDependencies": [
     "sharp",
-    "unrs-resolver"
+    "unrs-resolver",
+    "inngest-cli"
   ],
   "intent": {
     "skills": [
