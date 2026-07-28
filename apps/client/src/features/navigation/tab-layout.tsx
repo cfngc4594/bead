@@ -14,6 +14,13 @@ const tabIcons = {
   settings: Settings,
 } satisfies Record<(typeof appTabs)[number]["id"], LucideIcon>;
 
+const tabLinkClassName = cn(
+  "inline-flex flex-col items-center justify-center gap-0.5 rounded-lg px-2.5 py-1.5 text-muted-foreground text-[11px] outline-none transition-colors",
+  "hover:bg-muted hover:text-foreground",
+  "focus-visible:bg-muted focus-visible:text-foreground",
+  "data-[status=active]:bg-muted data-[status=active]:font-medium data-[status=active]:text-foreground",
+);
+
 export function TabLayout() {
   const isMobile = useIsMobile();
 
@@ -30,63 +37,45 @@ export function TabLayout() {
   );
 }
 
-function DesktopTabSidebar() {
-  return (
-    <aside className="flex h-full w-16 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
-      <nav
-        aria-label="主要导航"
-        className="flex flex-1 flex-col items-stretch gap-1 p-2"
-      >
-        {appMainTabs.map((tab) => (
-          <DesktopTabLink key={tab.id} tab={tab} />
-        ))}
-      </nav>
-      <nav aria-label="设置" className="flex flex-col items-stretch p-2">
-        <DesktopTabLink tab={appSettingsTab} />
-      </nav>
-    </aside>
-  );
-}
-
-function DesktopTabLink({ tab }: { tab: (typeof appTabs)[number] }) {
+function TabLink({ tab }: { tab: (typeof appTabs)[number] }) {
   const Icon = tabIcons[tab.id];
   const { label, ...linkProps } = tab;
 
   return (
-    <Link
-      {...linkProps}
-      aria-label={label}
-      className={cn(
-        "flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-2.5 text-muted-foreground text-xs outline-none transition-colors",
-        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        "focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground",
-        "data-[status=active]:bg-sidebar-accent data-[status=active]:font-medium data-[status=active]:text-sidebar-accent-foreground",
-      )}
-    >
+    <Link {...linkProps} aria-label={label} className={tabLinkClassName}>
       <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
       <span className="truncate">{label}</span>
     </Link>
   );
 }
 
+function DesktopTabSidebar() {
+  return (
+    <aside className="flex h-full w-16 shrink-0 flex-col border-r bg-background">
+      <nav
+        aria-label="主要导航"
+        className="flex flex-1 flex-col items-center gap-1 py-2"
+      >
+        {appMainTabs.map((tab) => (
+          <TabLink key={tab.id} tab={tab} />
+        ))}
+      </nav>
+      <nav aria-label="设置" className="flex flex-col items-center py-2">
+        <TabLink tab={appSettingsTab} />
+      </nav>
+    </aside>
+  );
+}
+
 function MobileTabNavigation() {
   return (
     <nav aria-label="主要导航" className="shrink-0 border-t bg-background">
-      <div className="mx-auto grid h-16 w-full max-w-md grid-cols-3 px-2">
-        {appTabs.map(({ id, label, ...linkProps }) => {
-          const Icon = tabIcons[id];
-
-          return (
-            <Link
-              {...linkProps}
-              className="flex min-w-0 flex-col items-center justify-center gap-1 text-muted-foreground text-xs outline-none transition-colors data-[status=active]:font-medium data-[status=active]:text-foreground focus-visible:bg-muted"
-              key={id}
-            >
-              <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
-              <span className="truncate">{label}</span>
-            </Link>
-          );
-        })}
+      <div className="mx-auto grid h-14 w-full max-w-md grid-cols-3">
+        {appTabs.map((tab) => (
+          <div className="grid place-items-center" key={tab.id}>
+            <TabLink tab={tab} />
+          </div>
+        ))}
       </div>
     </nav>
   );
