@@ -131,7 +131,6 @@ export function CanvasBoard(props: CanvasBoardProps) {
   const {
     view,
     getView,
-    isTemporaryPan,
     isDraggable,
     handleWheel: navigateWithWheel,
     handlePan,
@@ -195,7 +194,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
   });
   const gridOrigin = getGridOrigin();
   const renderBeadCodes = useBeadCodeRendering(view.scale) && !isNavigating;
-  const showCellHover = shouldShowCellHover(tool, isTemporaryPan);
+  const showCellHover = tool !== "pan";
   const canvasCursor = getCanvasCursor({
     hoveredCell: showCellHover ? hoveredCell : null,
     isDraggable,
@@ -428,7 +427,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
       return;
     }
 
-    if (!isEditTool(tool) || isTemporaryPan) {
+    if (!isEditTool(tool)) {
       return;
     }
 
@@ -697,10 +696,6 @@ export function CanvasBoard(props: CanvasBoardProps) {
       </Stage>
     </div>
   );
-}
-
-function shouldShowCellHover(tool: CanvasTool, isTemporaryPan: boolean) {
-  return tool !== "pan" && !isTemporaryPan;
 }
 
 function isEditTool(tool: CanvasTool) {

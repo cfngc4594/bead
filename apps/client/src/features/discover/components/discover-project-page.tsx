@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { discoverProjectQueryOptions } from "@/features/discover/api/discover-queries";
+import { DiscoverProjectHeaderSkeleton } from "@/features/discover/components/discover-project-page-skeleton";
 import {
-  DiscoverProjectCanvasSkeleton,
-  DiscoverProjectHeaderSkeleton,
-} from "@/features/discover/components/discover-project-page-skeleton";
-import { DiscoverProjectShell } from "@/features/discover/components/discover-project-shell";
+  DiscoverProjectBackButton,
+  DiscoverProjectShell,
+} from "@/features/discover/components/discover-project-shell";
 import { DiscoverProjectViewer } from "@/features/discover/components/discover-project-viewer";
 import {
   DiscoverProjectError,
@@ -25,16 +25,12 @@ export function DiscoverProjectPage() {
   } = useQuery(discoverProjectQueryOptions(projectId));
 
   if (isPending) {
-    return (
-      <DiscoverProjectShell header={<DiscoverProjectHeaderSkeleton />}>
-        <DiscoverProjectCanvasSkeleton />
-      </DiscoverProjectShell>
-    );
+    return <DiscoverProjectShell header={<DiscoverProjectHeaderSkeleton />} />;
   }
 
   if (isError) {
     return (
-      <DiscoverProjectShell header={null}>
+      <DiscoverProjectShell header={<DiscoverProjectBackButton />}>
         <DiscoverProjectError onRetry={() => void refetch()} />
       </DiscoverProjectShell>
     );
@@ -42,7 +38,14 @@ export function DiscoverProjectPage() {
 
   if (!project) {
     return (
-      <DiscoverProjectShell header={<DiscoverProjectNotFoundTitle />}>
+      <DiscoverProjectShell
+        header={
+          <>
+            <DiscoverProjectBackButton />
+            <DiscoverProjectNotFoundTitle />
+          </>
+        }
+      >
         <DiscoverProjectNotFoundPanel />
       </DiscoverProjectShell>
     );

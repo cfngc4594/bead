@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 type DiscoverProjectShellProps = {
   header: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 export function DiscoverProjectShell({
@@ -15,7 +15,6 @@ export function DiscoverProjectShell({
   return (
     <main className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-3 md:gap-3 md:px-5">
-        <DiscoverProjectBackButton />
         {header}
       </header>
 

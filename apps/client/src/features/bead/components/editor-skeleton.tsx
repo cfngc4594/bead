@@ -44,36 +44,19 @@ export function EditorSkeleton({ onBack }: { onBack?: () => void }) {
         <EditorToolbarSkeleton onBack={onBack} />
 
         <div className="relative min-h-0 flex-1 touch-none overflow-hidden overscroll-none bg-muted/30">
-          <CanvasBoardSkeleton />
+          <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
+            <div className="flex items-center gap-1.5 rounded-lg bg-card p-1.5 shadow-md">
+              {canvasToolSkeletons.map((item) => (
+                <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       <DesktopEditorSidebarSkeleton />
       <MobileEditorPanelSkeleton />
     </main>
-  );
-}
-
-export function CanvasBoardSkeleton() {
-  return (
-    <>
-      <div className="grid h-full w-full touch-none place-items-center overflow-hidden overscroll-none p-6">
-        <div className="flex w-full max-w-[min(78vw,520px)] flex-col items-center gap-4">
-          <Skeleton className="aspect-square w-full max-w-[min(72vh,520px)] rounded-lg" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="size-2 rounded-full" />
-            <Skeleton className="h-2 w-24 rounded-full" />
-          </div>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden justify-center px-4 md:flex">
-        <div className="flex items-center gap-1.5 rounded-lg bg-card p-1.5 shadow-md">
-          {canvasToolSkeletons.map((item) => (
-            <Skeleton className="size-7 shrink-0 rounded-lg" key={item} />
-          ))}
-        </div>
-      </div>
-    </>
   );
 }
 
@@ -108,11 +91,9 @@ function EditorToolbarSkeleton({ onBack }: { onBack?: () => void }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-        {[...toolbarViewSkeletons, ...toolbarHistorySkeletons.slice(0, 3)].map(
-          (item) => (
-            <ToolbarIconSkeleton key={item} />
-          ),
-        )}
+        {[...toolbarViewSkeletons, ...toolbarHistorySkeletons].map((item) => (
+          <ToolbarIconSkeleton key={item} />
+        ))}
         <ToolbarIconSkeleton />
       </div>
     </header>
