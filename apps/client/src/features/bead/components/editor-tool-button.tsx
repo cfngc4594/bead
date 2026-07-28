@@ -13,7 +13,7 @@ type EditorToolButtonProps = {
   icon: LucideIcon;
   isActive: boolean;
   disabled?: boolean;
-  ariaExpanded?: boolean;
+  withTooltip?: boolean;
   onClick: () => void;
 };
 
@@ -22,28 +22,31 @@ export function EditorToolButton({
   icon: Icon,
   isActive,
   disabled = false,
-  ariaExpanded,
+  withTooltip = true,
   onClick,
 }: EditorToolButtonProps) {
+  const button = (
+    <Button
+      aria-label={label}
+      aria-pressed={isActive}
+      disabled={disabled}
+      onClick={onClick}
+      size="icon-sm"
+      type="button"
+      variant={isActive ? "default" : "outline"}
+    >
+      <Icon />
+    </Button>
+  );
+
+  if (!withTooltip) {
+    return button;
+  }
+
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-expanded={ariaExpanded}
-          aria-label={label}
-          aria-pressed={isActive}
-          disabled={disabled}
-          onClick={onClick}
-          size="icon-sm"
-          type="button"
-          variant={isActive ? "default" : "outline"}
-        >
-          <Icon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent className="hidden md:block" side="top">
-        {label}
-      </TooltipContent>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="top">{label}</TooltipContent>
     </Tooltip>
   );
 }

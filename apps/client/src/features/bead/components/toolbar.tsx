@@ -163,11 +163,7 @@ export function EditorToolbar({
       onClick: onExportTemplate,
     },
   ];
-  const compactToolbarActions = [
-    ...viewActions,
-    ...historyActions,
-    ...fileActions,
-  ];
+  const mobilePrimaryActions = [...viewActions, ...historyActions];
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
@@ -191,7 +187,7 @@ export function EditorToolbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-        {compactToolbarActions.slice(0, 5).map((action) => (
+        {mobilePrimaryActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
         <MobileMoreTools actions={fileActions} />
