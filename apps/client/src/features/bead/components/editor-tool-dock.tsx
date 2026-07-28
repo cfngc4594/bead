@@ -19,16 +19,14 @@ export function EditorToolDock({
   onSelectTool,
   tool,
 }: EditorToolDockProps) {
+  const isDesktop = layout === "desktop";
   const toolbar = (
     <div
       className={cn(
-        layout === "desktop"
-          ? cn(
-              editorToolSurfaceClassName,
-              "pointer-events-auto flex items-center gap-1.5",
-            )
-          : "flex max-w-[min(100%,17.5rem)] shrink-0 items-center gap-1.5 overflow-x-auto",
-        layout === "mobile" && className,
+        "flex items-center gap-1.5",
+        isDesktop
+          ? cn(editorToolSurfaceClassName, "pointer-events-auto")
+          : "shrink-0",
       )}
       role="toolbar"
       aria-label="画布工具"
@@ -40,12 +38,13 @@ export function EditorToolDock({
           key={definition.tool}
           label={definition.label}
           onClick={() => onSelectTool(definition.tool)}
+          withTooltip={isDesktop}
         />
       ))}
     </div>
   );
 
-  if (layout === "mobile") {
+  if (!isDesktop) {
     return toolbar;
   }
 

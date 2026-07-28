@@ -56,14 +56,16 @@ export function MobileEditorPanel({
         )}
       >
         {isModelPreviewOpen ? (
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
               <Rotate3D aria-hidden="true" className="size-4" />
             </span>
             <p className="min-w-0 truncate text-sm font-medium">3D 预览</p>
           </div>
         ) : (
-          <CurrentColor color={selectedColor} />
+          <div className="min-w-0 flex-1">
+            <CurrentColor color={selectedColor} />
+          </div>
         )}
         <div className="flex shrink-0 items-center gap-1.5">
           {isModelPreviewOpen ? null : (

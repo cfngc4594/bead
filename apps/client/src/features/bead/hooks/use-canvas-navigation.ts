@@ -46,7 +46,6 @@ export function useCanvasNavigation({
   } | null>(null);
   const pinchGestureRef = useRef<TwoTouchGesture | null>(null);
   const pinchScaleDistanceRef = useRef<number | null>(null);
-  const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [view, setView] = useState<CanvasView>(() =>
     getInitialView(rows, cols, viewport),
   );
@@ -146,31 +145,6 @@ export function useCanvasNavigation({
     initializedViewKeyRef.current = `${rows}x${cols}`;
   }, [cols, isViewportMeasured, rows, viewport, replaceView]);
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.code !== "Space" || isEditableTarget(event.target)) {
-        return;
-      }
-
-      event.preventDefault();
-      setIsSpacePressed(true);
-    }
-
-    function handleKeyUp(event: KeyboardEvent) {
-      if (event.code === "Space") {
-        setIsSpacePressed(false);
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
   useEffect(
     () => () => {
       if (viewFrameRef.current !== null) {
@@ -250,22 +224,10 @@ export function useCanvasNavigation({
   return {
     view,
     getView: () => viewRef.current,
-    isTemporaryPan: isSpacePressed,
-    isDraggable: tool === "pan" || isSpacePressed,
+    isDraggable: tool === "pan",
     handleWheel,
     handlePan,
     handlePinchMove,
     resetPinch,
   };
-}
-
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  return (
-    target.isContentEditable ||
-    target.matches("input, textarea, select, [role='textbox']")
-  );
 }

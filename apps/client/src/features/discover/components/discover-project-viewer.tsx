@@ -8,7 +8,10 @@ import { getCanvasSize } from "@/config/canvas-sizes";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
-import { DiscoverProjectShell } from "@/features/discover/components/discover-project-shell";
+import {
+  DiscoverProjectBackButton,
+  DiscoverProjectShell,
+} from "@/features/discover/components/discover-project-shell";
 import { trackEvent } from "@/lib/analytics";
 
 export function DiscoverProjectViewer({
@@ -68,6 +71,7 @@ export function DiscoverProjectViewer({
     <DiscoverProjectShell
       header={
         <>
+          <DiscoverProjectBackButton />
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <h1 className="truncate font-medium text-sm" title={project.title}>
               {project.title}
