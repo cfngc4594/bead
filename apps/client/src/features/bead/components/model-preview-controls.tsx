@@ -1,7 +1,6 @@
-import { Button } from "@bead/ui/components/button";
 import { Slider } from "@bead/ui/components/slider";
 import { cn } from "@bead/ui/lib/utils";
-import { Check, CircleDot, LoaderCircle, PawPrint, Square } from "lucide-react";
+import { Check, CircleDot } from "lucide-react";
 import {
   type ModelPreviewMode,
   type ModelPreviewSettings,
@@ -9,13 +8,6 @@ import {
 } from "@/features/bead/lib/model-preview-config";
 
 export type ModelPreviewControlsBinding = {
-  pet?: {
-    canStart: boolean;
-    isBusy: boolean;
-    isRunning: boolean;
-    onStart: () => void;
-    onStop: () => void;
-  };
   mode: ModelPreviewMode;
   settings: ModelPreviewSettings;
   onModeChange: (mode: ModelPreviewMode) => void;
@@ -29,7 +21,6 @@ type ModelPreviewControlsProps = ModelPreviewControlsBinding & {
 
 export function ModelPreviewControls({
   className,
-  pet,
   layout,
   mode,
   settings,
@@ -151,60 +142,6 @@ export function ModelPreviewControls({
           </>
         ) : null}
       </section>
-
-      {pet ? (
-        <section
-          aria-labelledby={`${layout}-pet-heading`}
-          className="space-y-3 border-t pt-5"
-        >
-          <div className="space-y-1">
-            <h2 className="text-sm font-medium" id={`${layout}-pet-heading`}>
-              桌面宠物
-            </h2>
-          </div>
-          <div
-            className={cn(
-              "gap-2",
-              layout === "mobile" ? "grid grid-cols-2" : "flex",
-            )}
-          >
-            <Button
-              className={cn(
-                "min-w-0",
-                layout === "desktop" && "flex-1",
-                layout === "mobile" && !pet.isRunning && "col-span-2",
-              )}
-              disabled={!pet.canStart || pet.isBusy}
-              onClick={pet.onStart}
-              size="sm"
-              type="button"
-            >
-              {pet.isBusy ? (
-                <LoaderCircle aria-hidden="true" className="animate-spin" />
-              ) : (
-                <PawPrint aria-hidden="true" />
-              )}
-              {pet.isRunning ? "更新桌宠" : "设为桌宠"}
-            </Button>
-            {pet.isRunning ? (
-              <Button
-                className="min-w-0"
-                disabled={pet.isBusy}
-                onClick={pet.onStop}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <Square aria-hidden="true" />
-                关闭桌宠
-              </Button>
-            ) : null}
-          </div>
-          {!pet.canStart ? (
-            <p className="text-xs text-muted-foreground">请先铺上豆子</p>
-          ) : null}
-        </section>
-      ) : null}
     </div>
   );
 }
