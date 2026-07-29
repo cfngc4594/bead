@@ -1,7 +1,7 @@
 import {
   CreateBucketCommand,
+  GetObjectCommand,
   HeadBucketCommand,
-  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -48,16 +48,18 @@ export async function putObject(
   return key;
 }
 
-export async function objectExists(key: string) {
-  try {
-    await s3.send(
-      new HeadObjectCommand({
-        Bucket: s3Env.S3_BUCKET,
-        Key: key,
-      }),
-    );
-    return true;
-  } catch {
-    return false;
+export async function getObject(key: string) {
+  const response = await s3.send(
+    new GetObjectCommand({
+      Bucket: s3Env.S3_BUCKET,
+      Key: key,
+    }),
+  );
+
+  const body = await response.Body?.transformToByteArray();
+  if (!body) {
+    throw new Error(`Empty object body: ${key}`);
   }
+
+  return body;
 }
