@@ -56,11 +56,22 @@ export function stylizeOutputSize(sizeId: CanvasSizeId): `${number}x${number}` {
 function stylizePrompt(sizeId: CanvasSizeId) {
   const { rows, cols } = getCanvasSizeDefinition(sizeId);
   const beads = rows * cols;
+  const isTiny = rows <= 16;
+
+  const budget = isTiny
+    ? [
+        `CRITICAL: final craft is ONLY ${rows}×${cols} beads (${beads} total).`,
+        "Design a tiny fuse-bead sprite: eyes 1 bead or 2–3 stacked; drop rings/fingers/thin lines.",
+        "Keep about 6 flat colors plus black and white. Silhouette must stay readable when tiny.",
+      ]
+    : [
+        `Target a chunky ${rows}×${cols} bead look (${beads} beads).`,
+        "Simplify into hard flat regions that survive coarse sampling.",
+      ];
 
   return [
-    "Edit this matted subject into a fuse-bead ready pixel illustration on a solid pure white (#FFFFFF) background.",
-    `Keep the subject clearly recognizable — preserve distinctive silhouette, ear/limb shapes, and signature colors.`,
-    `Target a chunky look suitable for later reduction to about ${rows}×${cols} beads (${beads} beads), but do not destroy identity.`,
+    "Edit this matted subject into a fuse-bead ready illustration on a solid pure white (#FFFFFF) background.",
+    ...budget,
     "Use hard flat color blocks with strong contrast. Avoid gradients, soft shading, fine texture, and photographic detail.",
     "Add a clean solid black outline around the subject silhouette and major features.",
     "Fill most of the frame with the subject; center it; no props, text, grid lines, shadows, or extra objects.",

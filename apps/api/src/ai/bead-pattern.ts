@@ -41,23 +41,21 @@ function patternPrompt(sizeId: CanvasSizeId) {
   const isTiny = rows <= 16;
 
   return [
-    "The attached image is already a pixel-art illustration of the subject.",
-    `Quantize it into an EXACT ${rows}×${cols} fuse-bead grid (${beads} cells).`,
-    "Preserve the subject's identity and distinctive features as much as the bead budget allows.",
+    `Design an EXACT ${rows}×${cols} fuse-bead sprite (${beads} cells).`,
     'Return palette symbols and lines only. Use "." for empty/background cells.',
     "Each lines[i] must have exactly the same length as cols.",
     "Pick at most 12 MARD codes in palette; every non-dot character in lines must appear in palette.",
     isTiny
       ? [
-          "Budget rules: eyes 1 bead or 2–3 stacked; merge thin accessories into larger shapes;",
-          "keep the unique silhouette (e.g. long ear-tails, head shape) even if details simplify;",
-          "black outline about 1 bead thick; subject fills most of the grid.",
+          "This is a tiny sprite: eyes are 1 bead or 2–3 beads stacked vertically.",
+          "Use large silhouette blocks. Drop thin rings, fingers, and whiskers.",
+          "Black outline about 1 bead thick where needed. Subject fills most of the grid.",
         ].join(" ")
       : [
-          "Simplify thin lines into solid bead blocks; avoid single-bead noise;",
-          "major features should stay several beads wide.",
+          "Simplify into readable bead shapes with a clear silhouette.",
+          "Avoid single-bead noise; keep major features several beads wide.",
         ].join(" "),
-    `Example MARD codes: ${mardColors
+    `Example MARD codes you may use: ${mardColors
       .slice(0, 40)
       .map((c) => c.code)
       .join(", ")}, … (full MARD set allowed).`,
@@ -141,10 +139,10 @@ export async function generateBeadPattern({
       {
         role: "system",
         content: [
-          "You convert a pixel-art subject image into an exact fuse-bead character grid.",
-          "Preserve identity; only simplify to fit the bead budget.",
+          "You convert a subject image into a fuse-bead pixel grid.",
           "Output a tiny symbol palette plus a character grid (PIXL-style).",
           '"." means empty. Every other character must map to a MARD bead code.',
+          "Prefer readable sprites over photographic detail.",
         ].join(" "),
       },
       {
