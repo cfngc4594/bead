@@ -2,6 +2,9 @@ import {
   CreateBucketCommand,
   GetObjectCommand,
   HeadBucketCommand,
+  HeadObjectCommand,
+  NoSuchKey,
+  NotFound,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -62,4 +65,21 @@ export async function getObject(key: string) {
   }
 
   return body;
+}
+
+export async function objectExists(key: string) {
+  try {
+    await s3.send(
+      new HeadObjectCommand({
+        Bucket: s3Env.S3_BUCKET,
+        Key: key,
+      }),
+    );
+    return true;
+  } catch (error) {
+    if (error instanceof NoSuchKey || error instanceof NotFound) {
+      return false;
+    }
+    throw error;
+  }
 }

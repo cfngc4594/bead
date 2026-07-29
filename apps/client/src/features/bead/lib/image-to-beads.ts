@@ -32,6 +32,8 @@ export type ImageToBeadsOptions = {
   rows: number;
   cols: number;
   palette: readonly BeadColor[];
+  /** Prefer crisp edges (AI grid / already pixelated sources). */
+  smoothing?: boolean;
 };
 
 const transparentCellThreshold = 0.16;
@@ -42,9 +44,10 @@ export async function generateBeadsFromImageFile({
   rows,
   cols,
   palette,
+  smoothing = true,
 }: ImageToBeadsOptions): Promise<(BeadFill | null)[]> {
   const image = await loadImageFile(file);
-  const imageData = renderImageToCanvas(image, rows / cols);
+  const imageData = renderImageToCanvas(image, rows / cols, { smoothing });
   const activePalette = createPaletteEntries(palette);
 
   if (activePalette.length === 0) {

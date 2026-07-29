@@ -1,14 +1,9 @@
-import { fileTypeFromBuffer } from "file-type";
 import { NonRetriableError } from "inngest";
 import { toFile } from "openai";
 import { GPT_IMAGE_2, openai } from "../openai/client.js";
-import { getObject, putObject } from "../storage/s3.js";
-
-/**
- * AI pipeline upload contract (OpenAI gpt-image input).
- * Clients should normalize device photos to one of these before upload.
- */
-const AI_INPUT_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+import { putObject } from "../storage/s3.js";
+import { loadAiImageObject } from "./image-input.js";
+import { mattedObjectKey } from "./object-keys.js";
 
 /** gpt-image-2 cannot emit alpha; isolate the subject on solid white instead. */
 const MATTING_PROMPT = [
@@ -18,28 +13,19 @@ const MATTING_PROMPT = [
   "Do not crop, restyle, or invent parts of the subject.",
 ].join(" ");
 
-export function mattedObjectKey(jobId: string) {
-  return `ai/${jobId}/matted.png`;
-}
-
 /**
- * Isolate the subject from `sourceObjectKey` via gpt-image-2 edits, then store
- * the result under `ai/{jobId}/matted.png`. Returns only the object key (never
- * image bytes) so Inngest step memoization stays small.
+ * Isolate the subject via gpt-image-2 edits and store under `ai/{jobId}/matted.png`.
+ * Returns only the object key so Inngest step memoization stays small.
  */
 export async function mattImage(jobId: string, sourceObjectKey: string) {
-  const source = await getObject(sourceObjectKey);
-  const detected = await fileTypeFromBuffer(source);
-
-  if (!detected || !AI_INPUT_MIME_TYPES.has(detected.mime)) {
-    throw new NonRetriableError(
-      `Unsupported image for matting: ${detected?.mime ?? "unknown"} (expected png, jpeg, or webp)`,
-    );
-  }
-
-  const image = await toFile(Buffer.from(source), `source.${detected.ext}`, {
-    type: detected.mime,
-  });
+  const source = await loadAiImageObject(sourceObjectKey);
+  const image = await toFile(
+    Buffer.from(source.bytes),
+    `source.${source.ext}`,
+    {
+      type: source.mime,
+    },
+  );
 
   const result = await openai.images.edit({
     model: GPT_IMAGE_2,

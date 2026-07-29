@@ -2,17 +2,23 @@ import { mardColors } from "@bead/core/colors";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
+import {
+  startAiImagePipeline,
+  waitForAiJobSample,
+} from "@/features/bead/api/ai-api";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
 import {
   createBeadImageBlob,
   exportBeadImage,
 } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
+import { hardPixelateImageFile } from "@/features/bead/lib/hard-pixelate-image";
 import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
+import { prepareAiUploadFile } from "@/features/bead/lib/prepare-ai-upload-file";
 import type { CanvasTool } from "@/features/bead/types";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
@@ -204,23 +210,39 @@ export function useEditorActions({
   async function importImageFile(file: File) {
     setIsGeneratingFromImage(true);
     trackEvent("image_import_started", getCanvasSizeProperties());
+    const loadingToastId = toast.loading("正在 AI 生成豆图...");
 
     try {
+      const uploadFile = await prepareAiUploadFile(file);
+      const jobId = await startAiImagePipeline({
+        file: uploadFile,
+        sizeId: size.id,
+      });
+      const sampleFile = await waitForAiJobSample(jobId);
+      const gridFile = await hardPixelateImageFile(
+        sampleFile,
+        size.rows,
+        size.cols,
+      );
       const generatedBeads = await generateBeadsFromImageFile({
         cols: size.cols,
-        file,
+        file: gridFile,
         palette: mardColors,
         rows: size.rows,
+        smoothing: false,
       });
 
       resetSelection();
       commitBeads(generatedBeads);
       trackEvent("image_import_succeeded", getCanvasSizeProperties());
-      toast.success("已生成豆图");
+      toast.success("已生成豆图", { id: loadingToastId });
     } catch (error) {
       console.error("Unable to generate bead image", error);
       trackEvent("image_import_failed", getCanvasSizeProperties());
-      toast.error("图片生成失败");
+      toast.error(
+        error instanceof Error ? error.message : "图片生成失败",
+        { id: loadingToastId },
+      );
     } finally {
       setIsGeneratingFromImage(false);
     }

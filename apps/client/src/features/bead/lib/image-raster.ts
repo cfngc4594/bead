@@ -24,6 +24,7 @@ export async function loadImageFile(file: File): Promise<HTMLImageElement> {
 export function renderImageToCanvas(
   image: HTMLImageElement,
   targetAspectRatio: number,
+  { smoothing = true }: { smoothing?: boolean } = {},
 ): ImageData {
   const sourceWidth = Math.max(1, image.naturalWidth);
   const sourceHeight = Math.max(1, image.naturalHeight);
@@ -59,8 +60,10 @@ export function renderImageToCanvas(
     throw new Error("Unable to create canvas.");
   }
 
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
+  context.imageSmoothingEnabled = smoothing;
+  if (smoothing) {
+    context.imageSmoothingQuality = "high";
+  }
   context.clearRect(0, 0, canvasWidth, canvasHeight);
   context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 
