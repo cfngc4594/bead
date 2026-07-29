@@ -30,7 +30,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: path.resolve(__dirname, "index.html"),
-        pet: path.resolve(__dirname, "pet.html"),
       },
     },
   },
