@@ -3,10 +3,12 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
+  fetchAiJobSampleFile,
   startAiImagePipeline,
-  waitForAiJobSample,
+  waitForAiJobResult,
 } from "@/features/bead/api/ai-api";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
+import { canvasSnapshotToBeads } from "@/features/bead/lib/canvas-snapshot-to-beads";
 import {
   createBeadImageBlob,
   exportBeadImage,
@@ -218,19 +220,22 @@ export function useEditorActions({
         file: uploadFile,
         sizeId: size.id,
       });
-      const sampleFile = await waitForAiJobSample(jobId);
-      const gridFile = await hardPixelateImageFile(
-        sampleFile,
-        size.rows,
-        size.cols,
-      );
-      const generatedBeads = await generateBeadsFromImageFile({
-        cols: size.cols,
-        file: gridFile,
-        palette: mardColors,
-        rows: size.rows,
-        smoothing: false,
-      });
+      const job = await waitForAiJobResult(jobId);
+
+      const generatedBeads =
+        job.kind === "pattern"
+          ? canvasSnapshotToBeads(job.snapshot, size.rows * size.cols)
+          : await generateBeadsFromImageFile({
+              cols: size.cols,
+              file: await hardPixelateImageFile(
+                await fetchAiJobSampleFile(jobId),
+                size.rows,
+                size.cols,
+              ),
+              palette: mardColors,
+              rows: size.rows,
+              smoothing: false,
+            });
 
       resetSelection();
       commitBeads(generatedBeads);

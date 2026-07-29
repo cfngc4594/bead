@@ -1,12 +1,21 @@
 import { NoSuchKey } from "@aws-sdk/client-s3";
+import { canvasSnapshotSchema } from "@bead/core/canvas-snapshot";
 import { canvasSizeIdSchema } from "@bead/core/canvas-sizes";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { sampleObjectKey, sourceObjectKey } from "../../ai/object-keys.js";
+import {
+  beadPatternObjectKey,
+  sampleObjectKey,
+  sourceObjectKey,
+} from "../../ai/object-keys.js";
 import { aiImagePipelineRequested } from "../../inngest/events.js";
 import { inngest } from "../../inngest/index.js";
-import { getObject, objectExists, putObject } from "../../storage/s3.js";
+import {
+  getObject,
+  objectExists,
+  putObject,
+} from "../../storage/s3.js";
 
 const startPipelineBodySchema = z.object({
   sizeId: canvasSizeIdSchema,
@@ -53,10 +62,26 @@ export const aiRoutes = new Hono()
   )
   .get("/jobs/:jobId", zValidator("param", jobParamSchema), async (c) => {
     const { jobId } = c.req.valid("param");
-    const ready = await objectExists(sampleObjectKey(jobId));
-    return c.json({
-      status: ready ? ("completed" as const) : ("pending" as const),
-    });
+
+    if (await objectExists(beadPatternObjectKey(jobId))) {
+      const bytes = await getObject(beadPatternObjectKey(jobId));
+      const json: unknown = JSON.parse(new TextDecoder().decode(bytes));
+      const snapshot = canvasSnapshotSchema.parse(json);
+      return c.json({
+        status: "completed" as const,
+        kind: "pattern" as const,
+        snapshot,
+      });
+    }
+
+    if (await objectExists(sampleObjectKey(jobId))) {
+      return c.json({
+        status: "completed" as const,
+        kind: "sample" as const,
+      });
+    }
+
+    return c.json({ status: "pending" as const });
   })
   .get(
     "/jobs/:jobId/sample",

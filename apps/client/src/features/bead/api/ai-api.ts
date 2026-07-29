@@ -1,3 +1,4 @@
+import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import type { CanvasSizeId } from "@bead/core/canvas-sizes";
 import { api } from "@/lib/api";
 
@@ -20,6 +21,11 @@ export async function startAiImagePipeline({
   return body.jobId;
 }
 
+export type AiJobResult =
+  | { status: "pending" }
+  | { status: "completed"; kind: "pattern"; snapshot: CanvasSnapshot }
+  | { status: "completed"; kind: "sample" };
+
 export async function fetchAiJob(jobId: string) {
   const response = await api.ai.jobs[":jobId"].$get({
     param: { jobId },
@@ -29,9 +35,7 @@ export async function fetchAiJob(jobId: string) {
     return throwResponseError(response, "查询 AI 任务失败");
   }
 
-  return response.json() as Promise<
-    { status: "pending" } | { status: "completed" }
-  >;
+  return response.json() as Promise<AiJobResult>;
 }
 
 export async function fetchAiJobSampleFile(jobId: string) {
@@ -47,11 +51,10 @@ export async function fetchAiJobSampleFile(jobId: string) {
   return new File([blob], "sample.png", { type: "image/png" });
 }
 
-export async function waitForAiJobSample(
+export async function waitForAiJobResult(
   jobId: string,
   {
     intervalMs = 2000,
-    /** Matting + stylize on slow proxies can exceed 10 minutes. */
     timeoutMs = 20 * 60 * 1000,
   }: { intervalMs?: number; timeoutMs?: number } = {},
 ) {
@@ -60,7 +63,7 @@ export async function waitForAiJobSample(
   while (Date.now() < deadline) {
     const job = await fetchAiJob(jobId);
     if (job.status === "completed") {
-      return fetchAiJobSampleFile(jobId);
+      return job;
     }
     await sleep(intervalMs);
   }

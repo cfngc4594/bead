@@ -6,6 +6,8 @@ export const openaiEnv = createEnv({
     OPENAI_API_KEY: z.string().min(1),
     /** OpenAI API base URL (or OpenAI-compatible proxy / gateway). */
     OPENAI_BASE_URL: z.url(),
+    /** Multimodal model for small-canvas structured bead grids. */
+    OPENAI_VISION_MODEL: z.string().min(1),
   },
   clientPrefix: "",
   client: {},

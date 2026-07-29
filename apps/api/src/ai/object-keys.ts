@@ -10,7 +10,12 @@ export function stylizedObjectKey(jobId: string) {
   return `ai/${jobId}/stylized.png`;
 }
 
-/** Final image the client samples into beads. */
+/** Final image the client samples into beads (large canvases). */
 export function sampleObjectKey(jobId: string) {
   return `ai/${jobId}/sample.png`;
+}
+
+/** Structured bead pattern for small canvases. */
+export function beadPatternObjectKey(jobId: string) {
+  return `ai/${jobId}/pattern.json`;
 }
