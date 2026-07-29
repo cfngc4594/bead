@@ -23,12 +23,22 @@ export const aiImagePipeline = inngest.createFunction(
 
     logger.info("ai-matting complete", { jobId, objectKey, mattedKey });
 
+    const stylizedKey = await step.run("ai-stylize", async () =>
+      runAiStep(mattedKey, () => stylizeImage(jobId, mattedKey, sizeId)),
+    );
+
+    logger.info("ai-stylize complete", {
+      jobId,
+      sizeId,
+      stylizedObjectKey: stylizedKey,
+    });
+
     if (shouldUseStructuredBeadPattern(sizeId)) {
       const patternKey = await step.run("ai-bead-pattern", async () =>
-        runAiStep(mattedKey, () =>
+        runAiStep(stylizedKey, () =>
           generateBeadPattern({
             jobId,
-            imageObjectKey: mattedKey,
+            imageObjectKey: stylizedKey,
             sizeId,
           }),
         ),
@@ -46,19 +56,10 @@ export const aiImagePipeline = inngest.createFunction(
         sizeId,
         mode: "pattern" as const,
         mattedObjectKey: mattedKey,
+        stylizedObjectKey: stylizedKey,
         patternObjectKey: patternKey,
       };
     }
-
-    const stylizedKey = await step.run("ai-stylize", async () =>
-      runAiStep(mattedKey, () => stylizeImage(jobId, mattedKey, sizeId)),
-    );
-
-    logger.info("ai-stylize complete", {
-      jobId,
-      sizeId,
-      stylizedObjectKey: stylizedKey,
-    });
 
     const sampleKey = await step.run("ai-publish-sample", async () => {
       const bytes = await getObject(stylizedKey);
