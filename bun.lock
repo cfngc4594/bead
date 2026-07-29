@@ -32,7 +32,6 @@
       "name": "@bead/client",
       "dependencies": {
         "@bead/core": "workspace:*",
-        "@bead/pet": "workspace:*",
         "@bead/ui": "workspace:*",
         "@capacitor-community/media": "^9.1.0",
         "@capacitor/android": "^8.4.0",
@@ -114,13 +113,6 @@
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "typescript": "^5",
-      },
-    },
-    "packages/pet": {
-      "name": "@bead/pet",
-      "version": "0.1.0",
-      "peerDependencies": {
-        "@capacitor/core": ">=8.0.0",
       },
     },
     "packages/ui": {
@@ -226,8 +218,6 @@
     "@bead/client": ["@bead/client@workspace:apps/client"],
 
     "@bead/core": ["@bead/core@workspace:packages/core"],
-
-    "@bead/pet": ["@bead/pet@workspace:packages/pet"],
 
     "@bead/site": ["@bead/site@workspace:apps/site"],
 
