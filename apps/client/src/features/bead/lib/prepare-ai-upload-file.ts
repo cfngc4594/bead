@@ -1,24 +1,31 @@
-import { loadImageFile } from "@/features/bead/lib/image-raster";
+const MAX_IMAGE_EDGE = 2048;
 
-const AI_UPLOAD_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
-
-/** Normalize any browser-decodable image into an AI-pipeline upload file. */
 export async function prepareAiUploadFile(file: File): Promise<File> {
-  if (AI_UPLOAD_TYPES.has(file.type)) {
-    return file;
+  if (file.type && !file.type.startsWith("image/")) {
+    throw new Error("请选择图片文件");
   }
 
-  const image = await loadImageFile(file);
+  const image = await createImageBitmap(file);
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_EDGE / Math.max(image.width, image.height),
+  );
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, image.naturalWidth);
-  canvas.height = Math.max(1, image.naturalHeight);
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
 
   const context = canvas.getContext("2d");
   if (!context) {
-    throw new Error("Unable to create canvas.");
+    image.close();
+    throw new Error("无法处理图片");
   }
 
-  context.drawImage(image, 0, 0);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  image.close();
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -27,12 +34,12 @@ export async function prepareAiUploadFile(file: File): Promise<File> {
           resolve(value);
           return;
         }
-        reject(new Error("Unable to encode image."));
+        reject(new Error("无法编码图片"));
       },
       "image/jpeg",
-      0.92,
+      0.9,
     );
   });
 
-  return new File([blob], "upload.jpg", { type: "image/jpeg" });
+  return new File([blob], "ai-input.jpg", { type: "image/jpeg" });
 }

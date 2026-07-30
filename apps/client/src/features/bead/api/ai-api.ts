@@ -1,8 +1,7 @@
-import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import type { CanvasSizeId } from "@bead/core/canvas-sizes";
 import { api } from "@/lib/api";
 
-export async function startAiImagePipeline({
+export async function startAiImageJob({
   file,
   sizeId,
 }: {
@@ -21,51 +20,42 @@ export async function startAiImagePipeline({
   return body.jobId;
 }
 
-export type AiJobResult =
-  | { status: "pending" }
-  | { status: "completed"; kind: "pattern"; snapshot: CanvasSnapshot }
-  | { status: "completed"; kind: "sample" };
-
-export async function fetchAiJob(jobId: string) {
-  const response = await api.ai.jobs[":jobId"].$get({
-    param: { jobId },
-  });
+export async function fetchAiImageJob(jobId: string, signal?: AbortSignal) {
+  const response = await api.ai.jobs[":jobId"].$get(
+    { param: { jobId } },
+    { init: { signal } },
+  );
 
   if (!response.ok) {
     return throwResponseError(response, "查询 AI 任务失败");
   }
 
-  return response.json() as Promise<AiJobResult>;
+  return response.json();
 }
 
-export async function fetchAiJobSampleFile(jobId: string) {
-  const response = await api.ai.jobs[":jobId"].sample.$get({
-    param: { jobId },
-  });
-
-  if (!response.ok) {
-    return throwResponseError(response, "下载采样图失败");
-  }
-
-  const blob = await response.blob();
-  return new File([blob], "sample.png", { type: "image/png" });
-}
-
-export async function waitForAiJobResult(
+export async function waitForAiImageJob(
   jobId: string,
   {
     intervalMs = 2000,
     timeoutMs = 20 * 60 * 1000,
-  }: { intervalMs?: number; timeoutMs?: number } = {},
+    signal,
+  }: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  } = {},
 ) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    const job = await fetchAiJob(jobId);
+    const job = await fetchAiImageJob(jobId, signal);
     if (job.status === "completed") {
-      return job;
+      return job.snapshot;
     }
-    await sleep(intervalMs);
+    if (job.status === "failed") {
+      throw new Error(job.error);
+    }
+    await sleep(intervalMs, signal);
   }
 
   throw new Error("AI 生成超时，请稍后重试");
@@ -94,6 +84,21 @@ async function throwResponseError(
   throw new Error(message);
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+
+    const handleAbort = () => {
+      clearTimeout(timeout);
+      reject(signal?.reason);
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", handleAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", handleAbort, { once: true });
+  });
 }

@@ -1,21 +1,15 @@
 import { mardColors } from "@bead/core/colors";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
-import {
-  fetchAiJobSampleFile,
-  startAiImagePipeline,
-  waitForAiJobResult,
-} from "@/features/bead/api/ai-api";
-import type { CanvasState } from "@/features/bead/lib/canvas-state";
+import { startAiImageJob, waitForAiImageJob } from "@/features/bead/api/ai-api";
 import { canvasSnapshotToBeads } from "@/features/bead/lib/canvas-snapshot-to-beads";
+import type { CanvasState } from "@/features/bead/lib/canvas-state";
 import {
   createBeadImageBlob,
   exportBeadImage,
 } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
-import { hardPixelateImageFile } from "@/features/bead/lib/hard-pixelate-image";
-import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
@@ -43,6 +37,7 @@ export function useEditorActions({
 }: UseEditorActionsProps) {
   const importInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const activeImageJobRef = useRef<AbortController | null>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -52,6 +47,13 @@ export function useEditorActions({
   const [selectionResetSignal, setSelectionResetSignal] = useState(0);
   const [isExportingImage, setIsExportingImage] = useState(false);
   const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
+
+  useEffect(
+    () => () => {
+      activeImageJobRef.current?.abort();
+    },
+    [],
+  );
 
   function resetSelection() {
     setSelectionResetSignal((value) => value + 1);
@@ -210,46 +212,48 @@ export function useEditorActions({
   }
 
   async function importImageFile(file: File) {
+    activeImageJobRef.current?.abort();
+    const controller = new AbortController();
+    activeImageJobRef.current = controller;
     setIsGeneratingFromImage(true);
     trackEvent("image_import_started", getCanvasSizeProperties());
     const loadingToastId = toast.loading("正在 AI 生成豆图...");
 
     try {
       const uploadFile = await prepareAiUploadFile(file);
-      const jobId = await startAiImagePipeline({
+      const jobId = await startAiImageJob({
         file: uploadFile,
         sizeId: size.id,
       });
-      const job = await waitForAiJobResult(jobId);
-
-      const generatedBeads =
-        job.kind === "pattern"
-          ? canvasSnapshotToBeads(job.snapshot, size.rows * size.cols)
-          : await generateBeadsFromImageFile({
-              cols: size.cols,
-              file: await hardPixelateImageFile(
-                await fetchAiJobSampleFile(jobId),
-                size.rows,
-                size.cols,
-              ),
-              palette: mardColors,
-              rows: size.rows,
-              smoothing: false,
-            });
+      const snapshot = await waitForAiImageJob(jobId, {
+        signal: controller.signal,
+      });
+      const generatedBeads = canvasSnapshotToBeads(
+        snapshot,
+        size.rows * size.cols,
+      );
 
       resetSelection();
       commitBeads(generatedBeads);
       trackEvent("image_import_succeeded", getCanvasSizeProperties());
       toast.success("已生成豆图", { id: loadingToastId });
     } catch (error) {
+      if (controller.signal.aborted) {
+        toast.dismiss(loadingToastId);
+        return;
+      }
       console.error("Unable to generate bead image", error);
       trackEvent("image_import_failed", getCanvasSizeProperties());
-      toast.error(
-        error instanceof Error ? error.message : "图片生成失败",
-        { id: loadingToastId },
-      );
+      toast.error(error instanceof Error ? error.message : "图片生成失败", {
+        id: loadingToastId,
+      });
     } finally {
-      setIsGeneratingFromImage(false);
+      if (activeImageJobRef.current === controller) {
+        activeImageJobRef.current = null;
+        if (!controller.signal.aborted) {
+          setIsGeneratingFromImage(false);
+        }
+      }
     }
   }
 

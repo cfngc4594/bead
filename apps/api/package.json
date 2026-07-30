@@ -26,6 +26,7 @@
     "inngest": "^4.13.0",
     "openai": "^7.1.0",
     "postgres": "^3.4.9",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -1,24 +1,24 @@
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { getMardColor } from "@bead/core/colors";
-import type { BeadFill } from "@/features/bead/types";
+import {
+  type CanvasState,
+  createEmptyCanvas,
+} from "@/features/bead/lib/canvas-state";
 
 export function canvasSnapshotToBeads(
   snapshot: CanvasSnapshot,
   cellCount: number,
-): (BeadFill | null)[] {
-  const beads: (BeadFill | null)[] = Array.from(
-    { length: cellCount },
-    () => null,
-  );
+): CanvasState {
+  const beads = createEmptyCanvas(cellCount);
 
   for (const [index, code] of snapshot.cells) {
     if (index < 0 || index >= cellCount) {
-      continue;
+      throw new Error(`Canvas snapshot index is out of range: ${index}`);
     }
 
     const color = getMardColor(code);
     if (!color) {
-      continue;
+      throw new Error(`Canvas snapshot contains an unknown color: ${code}`);
     }
 
     beads[index] = { code: color.code, hex: color.hex };

@@ -2,7 +2,7 @@ import { NoSuchKey } from "@aws-sdk/client-s3";
 import { NonRetriableError } from "inngest";
 import { APIError } from "openai";
 
-const NON_RETRIABLE_HTTP_STATUSES = new Set([400, 401, 403, 404, 422]);
+const RETRIABLE_CLIENT_STATUSES = new Set([408, 409, 429]);
 
 export async function runAiStep<T>(
   objectKey: string,
@@ -32,14 +32,20 @@ function isNonRetriableAiError(error: unknown) {
   if (error instanceof NoSuchKey) return true;
 
   if (error instanceof APIError) {
-    return (
-      error.status !== undefined &&
-      NON_RETRIABLE_HTTP_STATUSES.has(error.status)
-    );
+    return isNonRetriableHttpStatus(error.status);
   }
 
   const status = httpStatusOf(error);
-  return status !== undefined && NON_RETRIABLE_HTTP_STATUSES.has(status);
+  return isNonRetriableHttpStatus(status);
+}
+
+function isNonRetriableHttpStatus(status: number | undefined) {
+  return (
+    status !== undefined &&
+    status >= 400 &&
+    status < 500 &&
+    !RETRIABLE_CLIENT_STATUSES.has(status)
+  );
 }
 
 function httpStatusOf(error: unknown) {

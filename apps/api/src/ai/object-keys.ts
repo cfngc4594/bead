@@ -1,21 +1,15 @@
-export function sourceObjectKey(jobId: string, ext: string) {
-  return `ai/${jobId}/source.${ext}`;
-}
-
-export function mattedObjectKey(jobId: string) {
-  return `ai/${jobId}/matted.png`;
+export function sourceObjectKey(jobId: string) {
+  return `ai/${jobId}/source.jpg`;
 }
 
 export function stylizedObjectKey(jobId: string) {
   return `ai/${jobId}/stylized.png`;
 }
 
-/** Final image the client samples into beads (large canvases). */
-export function sampleObjectKey(jobId: string) {
-  return `ai/${jobId}/sample.png`;
+export function resultObjectKey(jobId: string) {
+  return `ai/${jobId}/result.json`;
 }
 
-/** Structured bead pattern for small canvases. */
-export function beadPatternObjectKey(jobId: string) {
-  return `ai/${jobId}/pattern.json`;
+export function jobObjectKey(jobId: string) {
+  return `ai/${jobId}/job.json`;
 }

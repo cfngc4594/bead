@@ -1,10 +1,7 @@
 import { runAiStep } from "../../ai/errors.js";
-import { generateBeadPattern } from "../../ai/bead-pattern.js";
-import { mattImage } from "../../ai/matting.js";
-import { sampleObjectKey } from "../../ai/object-keys.js";
-import { shouldUseStructuredBeadPattern } from "../../ai/pipeline-mode.js";
+import { writeAiJob } from "../../ai/job-store.js";
+import { rasterizeBeadPattern } from "../../ai/rasterize.js";
 import { stylizeImage } from "../../ai/stylize.js";
-import { getObject, putObject } from "../../storage/s3.js";
 import { inngest } from "../client.js";
 import { aiImagePipelineRequested } from "../events.js";
 
@@ -12,19 +9,28 @@ export const aiImagePipeline = inngest.createFunction(
   {
     id: "ai-image-pipeline",
     name: "AI Image Pipeline",
+    idempotency: "event.data.jobId",
+    retries: 2,
     triggers: [aiImagePipelineRequested],
+    onFailure: async ({ event, error, logger }) => {
+      const { jobId, sizeId } = event.data.event.data;
+      logger.error("AI image pipeline failed", { error, jobId, sizeId });
+      await writeAiJob(jobId, {
+        status: "failed",
+        sizeId,
+        error: "AI 生成失败，请更换图片后重试",
+      });
+    },
   },
   async ({ event, step, logger }) => {
     const { jobId, objectKey, sizeId } = event.data;
 
-    const mattedKey = await step.run("ai-matting", async () =>
-      runAiStep(objectKey, () => mattImage(jobId, objectKey)),
+    await step.run("mark-processing", () =>
+      writeAiJob(jobId, { status: "processing", sizeId }),
     );
 
-    logger.info("ai-matting complete", { jobId, objectKey, mattedKey });
-
     const stylizedKey = await step.run("ai-stylize", async () =>
-      runAiStep(mattedKey, () => stylizeImage(jobId, mattedKey, sizeId)),
+      runAiStep(objectKey, () => stylizeImage(jobId, objectKey, sizeId)),
     );
 
     logger.info("ai-stylize complete", {
@@ -33,47 +39,26 @@ export const aiImagePipeline = inngest.createFunction(
       stylizedObjectKey: stylizedKey,
     });
 
-    if (shouldUseStructuredBeadPattern(sizeId)) {
-      const patternKey = await step.run("ai-bead-pattern", async () =>
-        runAiStep(stylizedKey, () =>
-          generateBeadPattern({
-            jobId,
-            imageObjectKey: stylizedKey,
-            sizeId,
-          }),
-        ),
-      );
+    const resultKey = await step.run("rasterize-bead-pattern", () =>
+      runAiStep(stylizedKey, () =>
+        rasterizeBeadPattern({
+          jobId,
+          imageObjectKey: stylizedKey,
+          sizeId,
+        }),
+      ),
+    );
 
-      logger.info("ai-bead-pattern complete", {
-        jobId,
-        sizeId,
-        patternObjectKey: patternKey,
-      });
-
-      return {
-        jobId,
-        objectKey,
-        sizeId,
-        mode: "pattern" as const,
-        mattedObjectKey: mattedKey,
-        stylizedObjectKey: stylizedKey,
-        patternObjectKey: patternKey,
-      };
-    }
-
-    const sampleKey = await step.run("ai-publish-sample", async () => {
-      const bytes = await getObject(stylizedKey);
-      return putObject(sampleObjectKey(jobId), bytes, "image/png");
-    });
+    await step.run("mark-completed", () =>
+      writeAiJob(jobId, { status: "completed", sizeId, resultKey }),
+    );
 
     return {
       jobId,
       objectKey,
       sizeId,
-      mode: "sample" as const,
-      mattedObjectKey: mattedKey,
       stylizedObjectKey: stylizedKey,
-      sampleObjectKey: sampleKey,
+      resultObjectKey: resultKey,
     };
   },
 );
