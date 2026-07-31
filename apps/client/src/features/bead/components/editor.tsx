@@ -1,4 +1,4 @@
-import { getMardColor, mardColors } from "@bead/core/colors";
+import { getBeadColor, getRequiredColorScheme } from "@bead/core/colors";
 import { Capacitor } from "@capacitor/core";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -29,10 +29,6 @@ type EditorProps = {
   onBack: () => void;
 };
 
-const colorLetters = Array.from(
-  new Set(mardColors.map((color) => color.code[0])),
-);
-
 export function Editor({ projectId, size, title, onBack }: EditorProps) {
   return (
     <EditorContent
@@ -60,7 +56,9 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     clear,
     canUndo,
     canRedo,
+    colorSchemeId,
   } = useProjectCanvas({ projectId, size });
+  const colorScheme = getRequiredColorScheme(colorSchemeId);
   const modelPreview = useModelPreview({
     onClose: () => trackEvent("model_preview_closed", getCanvasProperties()),
     onError: () => trackEvent("model_preview_failed", getCanvasProperties()),
@@ -85,16 +83,28 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     tool,
   } = useEditorActions({
     beads,
+    colorScheme,
     commitBeads,
     size,
     onClear: clear,
     onRedo: redo,
     onUndo: undo,
   });
-  const mixedBeadBrush = useMixedBeadBrush({ beads, size });
+  const mixedBeadBrush = useMixedBeadBrush({
+    beads,
+    palette: colorScheme.colors,
+    size,
+  });
+  const colorLetters = useMemo(
+    () => Array.from(new Set(colorScheme.colors.map((color) => color.code[0]))),
+    [colorScheme],
+  );
   const filteredColors = useMemo(
-    () => mardColors.filter((color) => color.code.startsWith(selectedLetter)),
-    [selectedLetter],
+    () =>
+      colorScheme.colors.filter((color) =>
+        color.code.startsWith(selectedLetter),
+      ),
+    [colorScheme, selectedLetter],
   );
   const hasBeads = beads.some(Boolean);
   const isExportImageSheetEnabled = Capacitor.getPlatform() === "android";
@@ -149,7 +159,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       return;
     }
 
-    const color = getMardColor(bead.code);
+    const color = getBeadColor(colorScheme.id, bead.code);
 
     if (!color) {
       return;

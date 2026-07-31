@@ -1,6 +1,12 @@
 import type { CanvasSizeId } from "@bead/core/canvas-sizes";
+import { colorSchemes, DEFAULT_COLOR_SCHEME_ID } from "@bead/core/colors";
 import { Button } from "@bead/ui/components/button";
 import { Card, CardContent } from "@bead/ui/components/card";
+import { Label } from "@bead/ui/components/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@bead/ui/components/native-select";
 import { cn } from "@bead/ui/lib/utils";
 import { useState } from "react";
 import { canvasSizes, getCanvasSize } from "@/config/canvas-sizes";
@@ -22,6 +28,9 @@ export function SizePicker({
   onProjectCreated,
 }: SizePickerProps) {
   const [selected, setSelected] = useState<CanvasSizeId>(initialSize);
+  const [selectedColorSchemeId, setSelectedColorSchemeId] = useState(
+    DEFAULT_COLOR_SCHEME_ID,
+  );
   const [isCreating, setIsCreating] = useState(false);
 
   async function handleCreateProject() {
@@ -33,12 +42,16 @@ export function SizePicker({
     setIsCreating(true);
 
     try {
-      const project = await createStoredProject(selected);
+      const project = await createStoredProject(
+        selected,
+        selectedColorSchemeId,
+      );
 
       trackEvent("project_created", {
         cols: size.cols,
         rows: size.rows,
         sizeId: size.id,
+        colorSchemeId: selectedColorSchemeId,
       });
       onProjectCreated(project);
     } finally {
@@ -91,6 +104,23 @@ export function SizePicker({
           );
         })}
       </div>
+
+      {colorSchemes.length > 1 ? (
+        <div className="mx-auto flex w-full max-w-sm items-center justify-between gap-4 rounded-xl border bg-card px-4 py-3">
+          <Label htmlFor="color-scheme">色卡方案</Label>
+          <NativeSelect
+            id="color-scheme"
+            onChange={(event) => setSelectedColorSchemeId(event.target.value)}
+            value={selectedColorSchemeId}
+          >
+            {colorSchemes.map((scheme) => (
+              <NativeSelectOption key={scheme.id} value={scheme.id}>
+                {scheme.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </div>
+      ) : null}
 
       <div className="flex flex-col items-center gap-2">
         <Button

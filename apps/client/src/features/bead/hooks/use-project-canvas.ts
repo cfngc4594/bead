@@ -1,3 +1,4 @@
+import { DEFAULT_COLOR_SCHEME_ID } from "@bead/core/colors";
 import { eq, useLiveQuery } from "@tanstack/react-db";
 import { useRef, useState } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
@@ -49,6 +50,9 @@ export function useProjectCanvas({
   );
   const project = projects[0];
   const cellCount = size.rows * size.cols;
+  const colorSchemeId =
+    project?.snapshots[project.currentIndex].colorSchemeId ??
+    DEFAULT_COLOR_SCHEME_ID;
   const persistedBeads = project
     ? getCurrentCanvas({ cellCount, project })
     : createEmptyCanvas(cellCount);
@@ -113,7 +117,10 @@ export function useProjectCanvas({
     setDraftBeads(null);
   }
 
-  function commitBeads(nextBeads: CanvasState) {
+  function commitBeads(
+    nextBeads: CanvasState,
+    nextColorSchemeId = colorSchemeId,
+  ) {
     const currentProject = projectsCollection.get(projectId) ?? project;
 
     if (!currentProject) {
@@ -129,7 +136,13 @@ export function useProjectCanvas({
     draftRef.current = null;
     setDraftBeads(null);
 
-    if (isSameCanvas(nextBeads, currentBeads)) {
+    const currentColorSchemeId =
+      currentProject.snapshots[baseIndex].colorSchemeId;
+
+    if (
+      isSameCanvas(nextBeads, currentBeads) &&
+      nextColorSchemeId === currentColorSchemeId
+    ) {
       return;
     }
 
@@ -137,6 +150,7 @@ export function useProjectCanvas({
       saveCanvasSnapshot({
         beads: cloneCanvas(nextBeads),
         baseIndex,
+        colorSchemeId: nextColorSchemeId,
         projectId,
       }),
     );
@@ -167,6 +181,7 @@ export function useProjectCanvas({
     undo,
     redo,
     clear,
+    colorSchemeId,
     canUndo: project ? canUndo(project) : false,
     canRedo: project ? canRedo(project) : false,
   };

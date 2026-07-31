@@ -1,5 +1,5 @@
-import { mardColors } from "@bead/core/colors";
-import { useRef, useState } from "react";
+import type { BeadColor, ColorScheme } from "@bead/core/colors";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
@@ -18,7 +18,8 @@ import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 type UseEditorActionsProps = {
   beads: CanvasState;
-  commitBeads: (beads: CanvasState) => void;
+  colorScheme: ColorScheme;
+  commitBeads: (beads: CanvasState, colorSchemeId?: string) => void;
   size: CanvasSize;
   onClear: () => void;
   onRedo: () => void;
@@ -27,6 +28,7 @@ type UseEditorActionsProps = {
 
 export function useEditorActions({
   beads,
+  colorScheme,
   commitBeads,
   size,
   onClear,
@@ -35,7 +37,9 @@ export function useEditorActions({
 }: UseEditorActionsProps) {
   const importInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [selectedColor, setSelectedColor] = useState(mardColors[0]);
+  const [selectedColor, setSelectedColor] = useState<BeadColor>(() =>
+    getInitialColor(colorScheme),
+  );
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
   const [resetViewSignal, setResetViewSignal] = useState(0);
@@ -44,6 +48,12 @@ export function useEditorActions({
   const [selectionResetSignal, setSelectionResetSignal] = useState(0);
   const [isExportingImage, setIsExportingImage] = useState(false);
   const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
+
+  useEffect(() => {
+    const initialColor = getInitialColor(colorScheme);
+    setSelectedColor(initialColor);
+    setSelectedLetter(initialColor.code[0]);
+  }, [colorScheme]);
 
   function resetSelection() {
     setSelectionResetSignal((value) => value + 1);
@@ -61,7 +71,7 @@ export function useEditorActions({
     setTool(nextTool);
   }
 
-  function selectColor(color: (typeof mardColors)[number]) {
+  function selectColor(color: BeadColor) {
     setSelectedColor(color);
     setSelectedLetter(color.code[0]);
   }
@@ -99,6 +109,7 @@ export function useEditorActions({
         rows: size.rows,
         cols: size.cols,
         beads,
+        colorSchemeId: colorScheme.id,
         filename: `bead-${size.id}.png`,
       });
       trackEvent("image_export_succeeded", getImageExportProperties());
@@ -129,6 +140,7 @@ export function useEditorActions({
         rows: size.rows,
         cols: size.cols,
         beads,
+        colorSchemeId: colorScheme.id,
       });
 
       trackEvent("image_export_succeeded", {
@@ -154,6 +166,7 @@ export function useEditorActions({
     exportBeadTemplate({
       size,
       beads,
+      colorSchemeId: colorScheme.id,
       filename: `bead-${size.id}.bead.json`,
     })
       .then(() => {
@@ -182,13 +195,13 @@ export function useEditorActions({
     trackEvent("template_import_started", getCanvasSizeProperties());
 
     try {
-      const importedBeads = parseBeadTemplateFile({
+      const importedTemplate = parseBeadTemplateFile({
         text: await file.text(),
         size,
       });
 
       resetSelection();
-      commitBeads(importedBeads);
+      commitBeads(importedTemplate.beads, importedTemplate.colorSchemeId);
       trackEvent("template_import_succeeded", getCanvasSizeProperties());
       toast.success("模板已导入");
     } catch (error) {
@@ -209,7 +222,7 @@ export function useEditorActions({
       const generatedBeads = await generateBeadsFromImageFile({
         cols: size.cols,
         file,
-        palette: mardColors,
+        palette: colorScheme.colors,
         rows: size.rows,
       });
 
@@ -308,4 +321,14 @@ function waitForNextFrame() {
   return new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve());
   });
+}
+
+function getInitialColor(colorScheme: ColorScheme) {
+  const color = colorScheme.colors[0];
+
+  if (!color) {
+    throw new Error(`Color scheme is empty: ${colorScheme.id}`);
+  }
+
+  return color;
 }

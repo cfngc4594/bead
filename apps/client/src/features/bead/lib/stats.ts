@@ -1,11 +1,14 @@
-import { getMardColorIndex } from "@bead/core/colors";
+import { getBeadColorIndex } from "@bead/core/colors";
 import type { BeadFill } from "@/features/bead/types";
 
 export type BeadStat = BeadFill & {
   count: number;
 };
 
-export function getBeadStats(beads: readonly (BeadFill | null)[]) {
+export function getBeadStats(
+  beads: readonly (BeadFill | null)[],
+  colorSchemeId: string,
+) {
   const statsByCode = new Map<string, BeadStat>();
 
   for (const bead of beads) {
@@ -27,15 +30,15 @@ export function getBeadStats(beads: readonly (BeadFill | null)[]) {
     });
   }
 
-  return Array.from(statsByCode.values()).sort(compareBeadStats);
+  return Array.from(statsByCode.values()).sort(
+    (a, b) =>
+      getColorSortIndex(colorSchemeId, a.code) -
+      getColorSortIndex(colorSchemeId, b.code),
+  );
 }
 
-function compareBeadStats(a: BeadStat, b: BeadStat) {
-  return getColorSortIndex(a.code) - getColorSortIndex(b.code);
-}
-
-function getColorSortIndex(code: string) {
-  const index = getMardColorIndex(code);
+function getColorSortIndex(colorSchemeId: string, code: string) {
+  const index = getBeadColorIndex(colorSchemeId, code);
 
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }

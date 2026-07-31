@@ -1,5 +1,5 @@
-import { mardColors } from "@bead/core/colors";
-import { useRef } from "react";
+import type { BeadColor } from "@bead/core/colors";
+import { useMemo, useRef } from "react";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { createPaletteEntries } from "@/features/bead/lib/color-match";
 import {
@@ -8,15 +8,19 @@ import {
 } from "@/features/bead/lib/tv-static-brush";
 import type { BeadFill } from "@/features/bead/types";
 
-const mardPaletteEntries = createPaletteEntries(mardColors);
-
 export function useMixedBeadBrush({
   beads,
+  palette,
   size,
 }: {
   beads: readonly (BeadFill | null)[];
+  palette: readonly BeadColor[];
   size: CanvasSize;
 }) {
+  const paletteEntries = useMemo(
+    () => createPaletteEntries(palette),
+    [palette],
+  );
   const strokeBeadsRef = useRef<(BeadFill | null)[] | null>(null);
   const strokeCellsRef = useRef(new Map<number, BeadFill | null>());
   const samplerRef = useRef<ReturnType<typeof createTvStaticSampler> | null>(
@@ -45,7 +49,7 @@ export function useMixedBeadBrush({
       beads: strokeBeadsRef.current ?? beads,
       cols: size.cols,
       index,
-      palette: mardPaletteEntries,
+      palette: paletteEntries,
       rows: size.rows,
       sampler,
     });

@@ -7,12 +7,14 @@ import type { BeadFill } from "@/features/bead/types";
 type ExportBeadTemplateOptions = {
   size: CanvasSize;
   beads: readonly (BeadFill | null)[];
+  colorSchemeId: string;
   filename: string;
 };
 
 export function exportBeadTemplate({
   size,
   beads,
+  colorSchemeId,
   filename,
 }: ExportBeadTemplateOptions) {
   const template: BeadTemplateFile = {
@@ -20,7 +22,7 @@ export function exportBeadTemplate({
     type: "bead-template",
     createdAt: new Date().toISOString(),
     title: `bead-${size.id}`,
-    palette: "mard",
+    palette: colorSchemeId,
     size: {
       id: size.id,
       title: size.title,
@@ -28,7 +30,7 @@ export function exportBeadTemplate({
       cols: size.cols,
     },
     beads: [...beads],
-    stats: getBeadStats(beads),
+    stats: getBeadStats(beads, colorSchemeId),
   };
 
   return downloadTextFile({

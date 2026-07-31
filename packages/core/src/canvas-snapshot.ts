@@ -1,18 +1,39 @@
 import { z } from "zod";
-import { mardColorCodeSchema } from "./colors";
+import {
+  colorSchemeIdSchema,
+  DEFAULT_COLOR_SCHEME_ID,
+  getBeadColor,
+  getColorScheme,
+} from "./colors";
 
 const nonnegativeIntSchema = z.number().int().nonnegative();
 
 export const canvasSnapshotCellSchema = z.tuple([
   nonnegativeIntSchema,
-  mardColorCodeSchema,
+  z.string().trim().min(1),
 ]);
 
 export const canvasSnapshotSchema = z
   .object({
+    colorSchemeId: colorSchemeIdSchema.default(DEFAULT_COLOR_SCHEME_ID),
     cells: z.array(canvasSnapshotCellSchema),
   })
-  .strict();
+  .strict()
+  .superRefine((snapshot, ctx) => {
+    if (!getColorScheme(snapshot.colorSchemeId)) {
+      return;
+    }
+
+    snapshot.cells.forEach(([, code], index) => {
+      if (!getBeadColor(snapshot.colorSchemeId, code)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Unknown bead color code for the selected color scheme",
+          path: ["cells", index, 1],
+        });
+      }
+    });
+  });
 
 export type CanvasSnapshotCell = z.infer<typeof canvasSnapshotCellSchema>;
 export type CanvasSnapshot = z.infer<typeof canvasSnapshotSchema>;

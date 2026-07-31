@@ -7,7 +7,10 @@ test("createPublishInput copies only the current project snapshot", () => {
     id: "local-project",
     title: "Demo",
     sizeId: "16x16",
-    snapshots: [{ cells: [[0, "A1"]] }, { cells: [[1, "B2"]] }],
+    snapshots: [
+      { colorSchemeId: "mard-291", cells: [[0, "A1"]] },
+      { colorSchemeId: "mard-291", cells: [[1, "B2"]] },
+    ],
     currentIndex: 1,
     updatedAt: 42,
   };
@@ -15,6 +18,6 @@ test("createPublishInput copies only the current project snapshot", () => {
   expect(createPublishInput(project)).toEqual({
     title: "Demo",
     sizeId: "16x16",
-    snapshot: { cells: [[1, "B2"]] },
+    snapshot: { colorSchemeId: "mard-291", cells: [[1, "B2"]] },
   });
 });

@@ -3,6 +3,7 @@ import {
   getCanvasSizeDefinition,
 } from "@bead/core/canvas-sizes";
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
+import { DEFAULT_COLOR_SCHEME_ID } from "@bead/core/colors";
 import {
   BasicIndex,
   createCollection,
@@ -65,19 +66,26 @@ export function canRedo(project: Project) {
 export function saveCanvasSnapshot({
   beads,
   baseIndex,
+  colorSchemeId,
   projectId,
 }: {
   beads: CanvasState;
   baseIndex: number;
+  colorSchemeId?: string;
   projectId: ProjectId;
 }) {
   const project = getRequiredProject(projectId);
+  const baseSnapshot = project.snapshots[baseIndex];
+  const nextColorSchemeId = colorSchemeId ?? baseSnapshot.colorSchemeId;
   const currentCanvas = expandSnapshot({
     cellCount: beads.length,
-    snapshot: project.snapshots[baseIndex],
+    snapshot: baseSnapshot,
   });
 
-  if (isSameCanvas(beads, currentCanvas)) {
+  if (
+    isSameCanvas(beads, currentCanvas) &&
+    nextColorSchemeId === baseSnapshot.colorSchemeId
+  ) {
     return Promise.resolve();
   }
 
@@ -86,7 +94,7 @@ export function saveCanvasSnapshot({
       const branchIndex = Math.min(baseIndex, draft.snapshots.length - 1);
       const snapshots = draft.snapshots.slice(0, branchIndex + 1);
 
-      snapshots.push(compactCanvas(beads));
+      snapshots.push(compactCanvas(beads, nextColorSchemeId));
       draft.snapshots = snapshots;
       draft.currentIndex = snapshots.length - 1;
       draft.updatedAt = Date.now();
@@ -179,13 +187,18 @@ export function renameProject({
   });
 }
 
-export async function createProject(sizeId: CanvasSizeId) {
+export async function createProject(
+  sizeId: CanvasSizeId,
+  colorSchemeId = DEFAULT_COLOR_SCHEME_ID,
+) {
   const size = getCanvasSizeDefinition(sizeId);
   const project: Project = {
     id: createProjectId(),
     title: DEFAULT_PROJECT_TITLE,
     sizeId,
-    snapshots: [compactCanvas(createEmptyCanvas(size.rows * size.cols))],
+    snapshots: [
+      compactCanvas(createEmptyCanvas(size.rows * size.cols), colorSchemeId),
+    ],
     currentIndex: 0,
     updatedAt: Date.now(),
   };

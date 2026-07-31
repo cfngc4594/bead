@@ -1,4 +1,5 @@
 import { canvasSizeIdSchema } from "@bead/core/canvas-sizes";
+import { colorSchemeIdSchema } from "@bead/core/colors";
 import { z } from "zod";
 
 export const beadFillSchema = z
@@ -20,7 +21,7 @@ export const beadTemplateSchema = z
     type: z.literal("bead-template"),
     createdAt: z.string(),
     title: z.string(),
-    palette: z.literal("mard"),
+    palette: colorSchemeIdSchema,
     size: z
       .object({
         id: canvasSizeIdSchema,

@@ -13,6 +13,7 @@ describe("publishDiscoverProjectSchema", () => {
       publishDiscoverProjectSchema.safeParse(
         createPublishInput({
           snapshot: {
+            colorSchemeId: "mard-291",
             cells: [
               [0, "A1"],
               [0, "B2"],
@@ -27,7 +28,12 @@ describe("publishDiscoverProjectSchema", () => {
   test("rejects bead color codes outside the shared catalog", () => {
     expect(
       publishDiscoverProjectSchema.safeParse(
-        createPublishInput({ snapshot: { cells: [[0, "UNKNOWN"]] } }),
+        createPublishInput({
+          snapshot: {
+            colorSchemeId: "mard-291",
+            cells: [[0, "UNKNOWN"]],
+          },
+        }),
       ).success,
     ).toBe(false);
   });
@@ -35,7 +41,9 @@ describe("publishDiscoverProjectSchema", () => {
   test("rejects an empty snapshot", () => {
     expect(
       publishDiscoverProjectSchema.safeParse(
-        createPublishInput({ snapshot: { cells: [] } }),
+        createPublishInput({
+          snapshot: { colorSchemeId: "mard-291", cells: [] },
+        }),
       ).success,
     ).toBe(false);
   });
@@ -54,6 +62,9 @@ function createBasePublishInput() {
   return {
     title: "Demo",
     sizeId: "16x16" as const,
-    snapshot: { cells: [[0, "A1"]] as [number, string][] },
+    snapshot: {
+      colorSchemeId: "mard-291",
+      cells: [[0, "A1"]] as [number, string][],
+    },
   };
 }

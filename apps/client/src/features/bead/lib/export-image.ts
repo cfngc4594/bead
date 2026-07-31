@@ -14,6 +14,7 @@ type ExportBeadImageOptions = {
   rows: number;
   cols: number;
   beads: readonly (BeadFill | null)[];
+  colorSchemeId: string;
 };
 
 type DownloadBeadImageOptions = ExportBeadImageOptions & {
@@ -47,9 +48,10 @@ export function createBeadImageBlob({
   rows,
   cols,
   beads,
+  colorSchemeId,
 }: ExportBeadImageOptions) {
   const boardSize = getBoardSize(rows, cols);
-  const stats = getBeadStats(beads);
+  const stats = getBeadStats(beads, colorSchemeId);
   const statsWidth = cols * cellSize;
   const imageWidth = boardSize.width + exportHorizontalPadding * 2;
   const statsLayout = getStatsLayout({

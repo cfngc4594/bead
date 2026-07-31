@@ -8,6 +8,17 @@ test("projectSchema accepts the current project shape", () => {
   expect(projectSchema.safeParse(createProject()).success).toBe(true);
 });
 
+test("projectSchema assigns the default color scheme to legacy snapshots", () => {
+  const legacyProject = {
+    ...createProject(),
+    snapshots: [{ cells: [[0, "A1"]] }],
+  };
+
+  expect(projectSchema.parse(legacyProject).snapshots[0].colorSchemeId).toBe(
+    "mard-291",
+  );
+});
+
 test("projectSchema rejects invalid structure", () => {
   expect(
     projectSchema.safeParse(createProject({ snapshots: [] })).success,
@@ -58,9 +69,10 @@ test("compactCanvas round-trips a canvas snapshot", () => {
     { code: "B2", hex: "#63F347" },
   ];
 
-  const snapshot = compactCanvas(beads);
+  const snapshot = compactCanvas(beads, "mard");
 
   expect(snapshot).toEqual({
+    colorSchemeId: "mard-291",
     cells: [
       [0, "A1"],
       [2, "B2"],
@@ -94,6 +106,7 @@ function createProject(overrides: Partial<Project> = {}): Project {
     sizeId: "16x16",
     snapshots: [
       {
+        colorSchemeId: "mard-291",
         cells: [
           [0, "A1"],
           [5, "B2"],

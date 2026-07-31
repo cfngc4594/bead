@@ -1,5 +1,6 @@
 import {
   type DiscoverProject,
+  discoverProjectSchema,
   MAX_DISCOVER_FEED_PAGE_SIZE,
   type PublishDiscoverProject,
 } from "@bead/core/discover";
@@ -10,10 +11,10 @@ import { discoverProjects } from "../../db/schema.js";
 type DiscoverProjectRow = typeof discoverProjects.$inferSelect;
 
 function toDiscoverProject(project: DiscoverProjectRow): DiscoverProject {
-  return {
+  return discoverProjectSchema.parse({
     ...project,
     publishedAt: project.publishedAt.getTime(),
-  };
+  });
 }
 
 export async function listDiscoverProjects(): Promise<DiscoverProject[]> {

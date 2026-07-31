@@ -2,15 +2,25 @@ import type {
   CanvasSnapshot,
   CanvasSnapshotCell,
 } from "@bead/core/canvas-snapshot";
-import { getMardColor } from "@bead/core/colors";
+import {
+  DEFAULT_COLOR_SCHEME_ID,
+  getBeadColor,
+  getRequiredColorScheme,
+} from "@bead/core/colors";
 import {
   type CanvasState,
   createEmptyCanvas,
 } from "@/features/bead/lib/canvas-state";
 import type { BeadFill } from "@/features/bead/types";
 
-export function compactCanvas(beads: CanvasState): CanvasSnapshot {
+export function compactCanvas(
+  beads: CanvasState,
+  colorSchemeId = DEFAULT_COLOR_SCHEME_ID,
+): CanvasSnapshot {
+  const colorScheme = getRequiredColorScheme(colorSchemeId);
+
   return {
+    colorSchemeId: colorScheme.id,
     cells: compactBeads(beads),
   };
 }
@@ -23,6 +33,7 @@ export function expandSnapshot({
   snapshot: CanvasSnapshot;
 }): CanvasState {
   const beads = createEmptyCanvas(cellCount);
+  const colorSchemeId = snapshot.colorSchemeId ?? DEFAULT_COLOR_SCHEME_ID;
 
   for (const cell of snapshot.cells) {
     const index = cell[0];
@@ -31,7 +42,7 @@ export function expandSnapshot({
       throw new Error(`Snapshot cell index is outside the canvas: ${index}`);
     }
 
-    beads[index] = getFillByCode(cell[1]);
+    beads[index] = getFillByCode(colorSchemeId, cell[1]);
   }
 
   return beads;
@@ -42,7 +53,12 @@ export function getSnapshotFilledCount(snapshot: CanvasSnapshot) {
 }
 
 export function cloneSnapshot(snapshot: CanvasSnapshot): CanvasSnapshot {
+  const colorScheme = getRequiredColorScheme(
+    snapshot.colorSchemeId ?? DEFAULT_COLOR_SCHEME_ID,
+  );
+
   return {
+    colorSchemeId: colorScheme.id,
     cells: snapshot.cells.map(([index, code]) => [index, code]),
   };
 }
@@ -61,11 +77,13 @@ function compactBeads(beads: CanvasState): CanvasSnapshotCell[] {
   return snapshot;
 }
 
-function getFillByCode(code: string): BeadFill {
-  const color = getMardColor(code);
+function getFillByCode(colorSchemeId: string, code: string): BeadFill {
+  const color = getBeadColor(colorSchemeId, code);
 
   if (!color) {
-    throw new Error(`Unknown bead color code: ${code}`);
+    throw new Error(
+      `Unknown bead color code for scheme ${colorSchemeId}: ${code}`,
+    );
   }
 
   return {

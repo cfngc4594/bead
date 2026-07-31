@@ -1,4 +1,7 @@
-import { mardColors } from "@bead/core/colors";
+import {
+  DEFAULT_COLOR_SCHEME_ID,
+  getRequiredColorScheme,
+} from "@bead/core/colors";
 import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { Skeleton } from "@bead/ui/components/skeleton";
@@ -25,8 +28,9 @@ const desktopToolbarActionGroups = [
   toolbarHistorySkeletons,
   toolbarFileSkeletons,
 ];
+const defaultColorScheme = getRequiredColorScheme(DEFAULT_COLOR_SCHEME_ID);
 const letterSkeletons = Array.from(
-  new Set(mardColors.map((color) => color.code[0])),
+  new Set(defaultColorScheme.colors.map((color) => color.code[0])),
 );
 const desktopColorSkeletons = Array.from(
   { length: 35 },

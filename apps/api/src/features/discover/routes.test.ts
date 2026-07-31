@@ -85,7 +85,7 @@ function createPublishProject(title: string): PublishDiscoverProject {
   return {
     title,
     sizeId: "16x16",
-    snapshot: { cells: [[0, "A1"]] },
+    snapshot: { colorSchemeId: "mard-291", cells: [[0, "A1"]] },
   };
 }
 

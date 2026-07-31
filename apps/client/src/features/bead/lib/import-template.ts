@@ -1,4 +1,4 @@
-import { getMardColor } from "@bead/core/colors";
+import { getBeadColor } from "@bead/core/colors";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import {
   type BeadTemplateFile,
@@ -48,17 +48,21 @@ export function parseBeadTemplateFile({
     throw new BeadTemplateImportError("模板与画布不匹配");
   }
 
-  return template.beads.map(normalizeBead);
+  return {
+    beads: template.beads.map((bead) => normalizeBead(template.palette, bead)),
+    colorSchemeId: template.palette,
+  };
 }
 
 function normalizeBead(
+  colorSchemeId: string,
   bead: BeadTemplateFile["beads"][number],
 ): BeadFill | null {
   if (bead === null) {
     return null;
   }
 
-  const color = getMardColor(bead.code);
+  const color = getBeadColor(colorSchemeId, bead.code);
 
   if (!color) {
     throw new BeadTemplateImportError(`不支持的颜色：${bead.code}`);
