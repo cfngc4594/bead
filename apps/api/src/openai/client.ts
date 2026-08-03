@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import { openaiEnv } from "../openai-env.js";
 
 export const openai = new OpenAI({
