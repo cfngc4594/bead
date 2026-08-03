@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build ./src/colors.ts ./src/canvas-sizes.ts ./src/canvas-snapshot.ts ./src/discover.ts --outdir ./dist --format esm --target node --packages external",
+    "build": "bun build ./src/colors.ts ./src/canvas-sizes.ts ./src/canvas-snapshot.ts ./src/bead-image-svg.ts ./src/discover.ts --outdir ./dist --format esm --target node --packages external",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
@@ -30,6 +30,12 @@
       "bun": "./src/canvas-snapshot.ts",
       "node": "./dist/canvas-snapshot.js",
       "default": "./src/canvas-snapshot.ts"
+    },
+    "./bead-image-svg": {
+      "types": "./src/bead-image-svg.ts",
+      "bun": "./src/bead-image-svg.ts",
+      "node": "./dist/bead-image-svg.js",
+      "default": "./src/bead-image-svg.ts"
     }
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import type { RgbColor } from "@/features/bead/lib/color-match";
+import type { RgbColor } from "@bead/core/colors";
 
 export type SampleMode = "average" | "dominant";
 

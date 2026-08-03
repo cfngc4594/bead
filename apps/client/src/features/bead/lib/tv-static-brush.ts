@@ -2,8 +2,7 @@ import {
   findNearestPaletteColor,
   type PaletteEntry,
   type RgbColor,
-  toBeadFill,
-} from "@/features/bead/lib/color-match";
+} from "@bead/core/colors";
 import type { BeadFill } from "@/features/bead/types";
 
 const darkSnowMax = 0.34;
@@ -74,13 +73,13 @@ export function pickTvStaticBeadFill({
     });
 
     if (canPlaceCandidate(candidate.code, neighbors)) {
-      return toBeadFill(candidate);
+      return { code: candidate.code, hex: candidate.hex };
     }
 
     fallback = constrainedCandidate ?? candidate;
   }
 
-  return toBeadFill(fallback);
+  return { code: fallback.code, hex: fallback.hex };
 }
 
 function findNearestPlaceablePaletteColor({

@@ -1,7 +1,4 @@
-import {
-  oklabDistance,
-  type PaletteEntry,
-} from "@/features/bead/lib/color-match";
+import { oklabDistance, type PaletteEntry } from "@bead/core/colors";
 import type { BeadFill } from "@/features/bead/types";
 
 const cleanupMaxRegionSize = 3;

@@ -68,12 +68,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   });
   const {
     actions,
-    handleImageFileChange,
+    aiImageInputRef,
+    algorithmImageInputRef,
+    handleAiImageFileChange,
+    handleAlgorithmImageFileChange,
     handleImportFileChange,
-    imageInputRef,
     importInputRef,
     isExportingImage,
-    isGeneratingFromImage,
+    isGeneratingAiImage,
+    isGeneratingAlgorithmImage,
     resetViewAfterResizeSignal,
     resetViewSignal,
     selectedColor,
@@ -246,13 +249,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onClearDraft={actions.clearDraft}
           onExportImage={handleExportImage}
           onExportTemplate={actions.exportTemplate}
-          onImportImage={actions.importImage}
+          onImportAiImage={actions.importAiImage}
+          onImportAlgorithmImage={actions.importAlgorithmImage}
           onImportTemplate={actions.importTemplate}
           onBack={onBack}
           onRenameProject={handleRenameProject}
           onUndo={actions.undoEdit}
           isExportingImage={isExportingImage}
-          isImportingImage={isGeneratingFromImage}
+          isGeneratingAiImage={isGeneratingAiImage}
+          isGeneratingAlgorithmImage={isGeneratingAlgorithmImage}
         />
         <ExportImageSheet
           blob={exportImageBlob}
@@ -272,8 +277,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         <input
           accept="image/*"
           className="hidden"
-          onChange={handleImageFileChange}
-          ref={imageInputRef}
+          onChange={handleAiImageFileChange}
+          ref={aiImageInputRef}
+          type="file"
+        />
+        <input
+          accept="image/*"
+          className="hidden"
+          onChange={handleAlgorithmImageFileChange}
+          ref={algorithmImageInputRef}
           type="file"
         />
 

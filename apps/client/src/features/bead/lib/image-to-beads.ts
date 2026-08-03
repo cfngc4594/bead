@@ -1,12 +1,11 @@
-import type { BeadColor } from "@bead/core/colors";
 import {
+  type BeadColor,
   createPaletteEntries,
   findNearestPaletteColor,
   oklabDistance,
   type PaletteEntry,
   rgbToOklab,
-  toBeadFill,
-} from "@/features/bead/lib/color-match";
+} from "@bead/core/colors";
 import {
   type SampledCell,
   type SampleMode,
@@ -112,4 +111,11 @@ function scoreCandidate(
 
   const isolatedPenalty = countTinyRegions(beads, rows, cols, 1);
   return colorError / Math.max(1, activeCount) + isolatedPenalty * 1.2;
+}
+
+function toBeadFill(color: BeadColor): BeadFill {
+  return {
+    code: color.code,
+    hex: color.hex,
+  };
 }
