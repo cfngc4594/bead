@@ -1,7 +1,6 @@
 import type Konva from "konva";
 import {
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -18,6 +17,7 @@ import {
 } from "react-konva";
 import { useTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
+import { useCanvasWheel } from "@/features/bead/hooks/use-canvas-wheel";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
@@ -190,6 +190,19 @@ export function CanvasBoard(props: CanvasBoardProps) {
       panPointerRef.current = null;
       finishPainting();
       setHoveredCell(null);
+    },
+  });
+  useCanvasWheel({
+    containerRef,
+    onWheel: (event) => {
+      const point = getPointFromPointer(event);
+
+      if (!point) {
+        return;
+      }
+
+      markNavigationActivity();
+      navigateWithWheel(event, point);
     },
   });
   const gridOrigin = getGridOrigin();
@@ -513,18 +526,6 @@ export function CanvasBoard(props: CanvasBoardProps) {
     clearGesture();
   }
 
-  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const point = getPointFromPointer(event.nativeEvent);
-
-    if (!point) {
-      return;
-    }
-
-    markNavigationActivity();
-    navigateWithWheel(event.nativeEvent, point);
-  }
-
   return (
     <div
       className="h-full w-full touch-none overflow-hidden overscroll-none"
@@ -534,7 +535,6 @@ export function CanvasBoard(props: CanvasBoardProps) {
       onPointerLeave={handlePointerLeave}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onWheel={handleWheel}
     >
       <Stage
         style={{

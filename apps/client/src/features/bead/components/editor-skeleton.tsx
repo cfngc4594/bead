@@ -15,7 +15,8 @@ const canvasToolSkeletons = [
 ];
 const toolbarHistorySkeletons = ["undo", "redo", "clear"];
 const toolbarFileSkeletons = [
-  "image-import",
+  "ai-image-import",
+  "algorithm-image-import",
   "image-export",
   "template-import",
   "template-export",

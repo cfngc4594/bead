@@ -9,7 +9,9 @@ import {
 } from "@/features/bead/lib/canvas-state";
 import type { BeadFill } from "@/features/bead/types";
 
-export function compactCanvas(beads: CanvasState): CanvasSnapshot {
+export function compactCanvas(
+  beads: readonly (BeadFill | null)[],
+): CanvasSnapshot {
   return {
     cells: compactBeads(beads),
   };
@@ -47,7 +49,9 @@ export function cloneSnapshot(snapshot: CanvasSnapshot): CanvasSnapshot {
   };
 }
 
-function compactBeads(beads: CanvasState): CanvasSnapshotCell[] {
+function compactBeads(
+  beads: readonly (BeadFill | null)[],
+): CanvasSnapshotCell[] {
   const snapshot: CanvasSnapshotCell[] = [];
 
   for (let index = 0; index < beads.length; index += 1) {

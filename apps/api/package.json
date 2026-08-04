@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --cwd ../.. --env-file=.env --hot apps/api/src/dev.ts",
+    "dev": "INNGEST_DEV=1 bun --cwd ../.. --env-file=.env --hot apps/api/src/dev.ts",
     "build": "bun run build:deps && bun run typecheck",
     "build:deps": "bun run --cwd ../../packages/core build",
     "release": "bun run db:migrate && bun run build",
@@ -16,12 +16,17 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1096.0",
     "@bead/core": "workspace:*",
     "@hono/zod-validator": "^0.9.0",
     "@t3-oss/env-core": "^0.13.11",
     "drizzle-orm": "^0.45.2",
+    "file-type": "^22.0.1",
     "hono": "^4.12.27",
+    "inngest": "^4.13.0",
+    "openai": "^7.1.0",
     "postgres": "^3.4.9",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

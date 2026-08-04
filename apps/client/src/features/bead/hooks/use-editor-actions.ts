@@ -1,7 +1,9 @@
 import { mardColors } from "@bead/core/colors";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
+import { startAiImageJob, waitForAiImageJob } from "@/features/bead/api/ai-api";
+import { canvasSnapshotToBeads } from "@/features/bead/lib/canvas-snapshot-to-beads";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
 import {
   createBeadImageBlob,
@@ -13,6 +15,7 @@ import {
   BeadTemplateImportError,
   parseBeadTemplateFile,
 } from "@/features/bead/lib/import-template";
+import { prepareAiUploadFile } from "@/features/bead/lib/prepare-ai-upload-file";
 import type { CanvasTool } from "@/features/bead/types";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
@@ -34,7 +37,9 @@ export function useEditorActions({
   onUndo,
 }: UseEditorActionsProps) {
   const importInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const aiImageInputRef = useRef<HTMLInputElement>(null);
+  const algorithmImageInputRef = useRef<HTMLInputElement>(null);
+  const activeImageJobRef = useRef<AbortController | null>(null);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -43,7 +48,18 @@ export function useEditorActions({
     useState(0);
   const [selectionResetSignal, setSelectionResetSignal] = useState(0);
   const [isExportingImage, setIsExportingImage] = useState(false);
-  const [isGeneratingFromImage, setIsGeneratingFromImage] = useState(false);
+  const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
+  const [isGeneratingAlgorithmImage, setIsGeneratingAlgorithmImage] =
+    useState(false);
+  const isGeneratingFromImage =
+    isGeneratingAiImage || isGeneratingAlgorithmImage;
+
+  useEffect(
+    () => () => {
+      activeImageJobRef.current?.abort();
+    },
+    [],
+  );
 
   function resetSelection() {
     setSelectionResetSignal((value) => value + 1);
@@ -170,12 +186,20 @@ export function useEditorActions({
     importInputRef.current?.click();
   }
 
-  function importImage() {
+  function importAiImage() {
     if (isGeneratingFromImage) {
       return;
     }
 
-    imageInputRef.current?.click();
+    aiImageInputRef.current?.click();
+  }
+
+  function importAlgorithmImage() {
+    if (isGeneratingFromImage) {
+      return;
+    }
+
+    algorithmImageInputRef.current?.click();
   }
 
   async function importTemplateFile(file: File) {
@@ -201,11 +225,71 @@ export function useEditorActions({
     }
   }
 
-  async function importImageFile(file: File) {
-    setIsGeneratingFromImage(true);
-    trackEvent("image_import_started", getCanvasSizeProperties());
+  async function importAiImageFile(file: File) {
+    activeImageJobRef.current?.abort();
+    const controller = new AbortController();
+    activeImageJobRef.current = controller;
+    setIsGeneratingAiImage(true);
+    trackEvent("image_import_started", {
+      ...getCanvasSizeProperties(),
+      method: "ai",
+    });
+    const loadingToastId = toast.loading("正在 AI 生成豆图...");
 
     try {
+      const uploadFile = await prepareAiUploadFile(file);
+      const jobId = await startAiImageJob({
+        file: uploadFile,
+        sizeId: size.id,
+      });
+      const snapshot = await waitForAiImageJob(jobId, {
+        signal: controller.signal,
+      });
+      const generatedBeads = canvasSnapshotToBeads(
+        snapshot,
+        size.rows * size.cols,
+      );
+
+      resetSelection();
+      commitBeads(generatedBeads);
+      trackEvent("image_import_succeeded", {
+        ...getCanvasSizeProperties(),
+        method: "ai",
+      });
+      toast.success("AI 豆图已生成", { id: loadingToastId });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        toast.dismiss(loadingToastId);
+        return;
+      }
+      console.error("Unable to generate bead image", error);
+      trackEvent("image_import_failed", {
+        ...getCanvasSizeProperties(),
+        method: "ai",
+      });
+      toast.error(error instanceof Error ? error.message : "图片生成失败", {
+        id: loadingToastId,
+      });
+    } finally {
+      if (activeImageJobRef.current === controller) {
+        activeImageJobRef.current = null;
+        if (!controller.signal.aborted) {
+          setIsGeneratingAiImage(false);
+        }
+      }
+    }
+  }
+
+  async function importAlgorithmImageFile(file: File) {
+    setIsGeneratingAlgorithmImage(true);
+    trackEvent("image_import_started", {
+      ...getCanvasSizeProperties(),
+      method: "algorithm",
+    });
+    const loadingToastId = toast.loading("正在用算法生成豆图...");
+
+    try {
+      await waitForNextFrame();
       const generatedBeads = await generateBeadsFromImageFile({
         cols: size.cols,
         file,
@@ -215,14 +299,25 @@ export function useEditorActions({
 
       resetSelection();
       commitBeads(generatedBeads);
-      trackEvent("image_import_succeeded", getCanvasSizeProperties());
-      toast.success("已生成豆图");
+      trackEvent("image_import_succeeded", {
+        ...getCanvasSizeProperties(),
+        method: "algorithm",
+      });
+      toast.success("算法豆图已生成", { id: loadingToastId });
     } catch (error) {
-      console.error("Unable to generate bead image", error);
-      trackEvent("image_import_failed", getCanvasSizeProperties());
-      toast.error("图片生成失败");
+      console.error(
+        "Unable to generate bead image with local algorithm",
+        error,
+      );
+      trackEvent("image_import_failed", {
+        ...getCanvasSizeProperties(),
+        method: "algorithm",
+      });
+      toast.error("算法生成失败，请更换图片后重试", {
+        id: loadingToastId,
+      });
     } finally {
-      setIsGeneratingFromImage(false);
+      setIsGeneratingAlgorithmImage(false);
     }
   }
 
@@ -237,7 +332,7 @@ export function useEditorActions({
     void importTemplateFile(file);
   }
 
-  function handleImageFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleAiImageFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
 
@@ -245,7 +340,20 @@ export function useEditorActions({
       return;
     }
 
-    void importImageFile(file);
+    void importAiImageFile(file);
+  }
+
+  function handleAlgorithmImageFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    void importAlgorithmImageFile(file);
   }
 
   function getCanvasSizeProperties() {
@@ -264,12 +372,15 @@ export function useEditorActions({
   }
 
   return {
-    handleImageFileChange,
+    aiImageInputRef,
+    algorithmImageInputRef,
+    handleAiImageFileChange,
+    handleAlgorithmImageFileChange,
     handleImportFileChange,
-    imageInputRef,
     importInputRef,
     isExportingImage,
-    isGeneratingFromImage,
+    isGeneratingAiImage,
+    isGeneratingAlgorithmImage,
     resetViewAfterResizeSignal,
     resetViewSignal,
     selectedColor,
@@ -285,7 +396,8 @@ export function useEditorActions({
       createExportImageBlob,
       exportImage,
       exportTemplate,
-      importImage,
+      importAiImage,
+      importAlgorithmImage,
       importTemplate,
       redoEdit,
       resetSelection,

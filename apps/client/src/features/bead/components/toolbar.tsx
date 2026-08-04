@@ -23,6 +23,7 @@ import {
   Redo2,
   Rotate3D,
   RotateCcw,
+  Sparkles,
   Undo2,
 } from "lucide-react";
 import { useState } from "react";
@@ -44,12 +45,14 @@ type EditorToolbarProps = {
   onClearDraft: () => void;
   onExportImage: () => void;
   onExportTemplate: () => void;
-  onImportImage: () => void;
+  onImportAiImage: () => void;
+  onImportAlgorithmImage: () => void;
   onImportTemplate: () => void;
   onUndo: () => void;
   onRedo: () => void;
   isExportingImage?: boolean;
-  isImportingImage?: boolean;
+  isGeneratingAiImage?: boolean;
+  isGeneratingAlgorithmImage?: boolean;
   isPreparingModelPreview?: boolean;
 };
 
@@ -86,15 +89,19 @@ export function EditorToolbar({
   onClearDraft,
   onExportImage,
   onExportTemplate,
-  onImportImage,
+  onImportAiImage,
+  onImportAlgorithmImage,
   onImportTemplate,
   onUndo,
   onRedo,
   isExportingImage = false,
-  isImportingImage = false,
+  isGeneratingAiImage = false,
+  isGeneratingAlgorithmImage = false,
   isPreparingModelPreview = false,
 }: EditorToolbarProps) {
   const disableCanvasEditActions = isModelPreviewOpen;
+  const isGeneratingFromImage =
+    isGeneratingAiImage || isGeneratingAlgorithmImage;
   const resetViewAction: ToolbarAction = {
     icon: Focus,
     label: "居中显示",
@@ -137,10 +144,19 @@ export function EditorToolbar({
   const fileActions: ToolbarAction[] = [
     {
       closeSheetOnClick: true,
-      disabled: isImportingImage,
+      disabled: isGeneratingFromImage,
+      icon: Sparkles,
+      label: isGeneratingAiImage ? "AI 生成中" : "AI 生成豆图",
+      loading: isGeneratingAiImage,
+      onClick: onImportAiImage,
+    },
+    {
+      closeSheetOnClick: true,
+      disabled: isGeneratingFromImage,
       icon: ImageUp,
-      label: isImportingImage ? "导入中" : "导入图片",
-      onClick: onImportImage,
+      label: isGeneratingAlgorithmImage ? "算法生成中" : "算法生成豆图",
+      loading: isGeneratingAlgorithmImage,
+      onClick: onImportAlgorithmImage,
     },
     {
       closeSheetOnClick: !isExportImageSheetEnabled,

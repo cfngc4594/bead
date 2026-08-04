@@ -6,7 +6,7 @@
   "targets": {
     "dev": {
       "cache": false,
-      "command": "bun --env-file=.env --hot apps/api/src/dev.ts"
+      "command": "bun run --cwd apps/api dev"
     },
     "build": {
       "cache": true,
