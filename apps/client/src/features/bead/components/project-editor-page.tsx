@@ -1,5 +1,5 @@
 import { eq, useLiveQuery } from "@tanstack/react-db";
-import { getRouteApi, Navigate } from "@tanstack/react-router";
+import { getRouteApi, Navigate, useRouter } from "@tanstack/react-router";
 import { getCanvasSize } from "@/config/canvas-sizes";
 import { Editor } from "@/features/bead/components/editor";
 import { EditorSkeleton } from "@/features/bead/components/editor-skeleton";
@@ -8,6 +8,7 @@ import { projectsCollection } from "@/features/bead/storage/projects";
 const routeApi = getRouteApi("/projects/$projectId");
 
 export function ProjectEditorPage() {
+  const router = useRouter();
   const navigate = routeApi.useNavigate();
   const { projectId } = routeApi.useParams();
   const { data: projects, isReady } = useLiveQuery(
@@ -23,9 +24,17 @@ export function ProjectEditorPage() {
     [projectId],
   );
   const project = projects?.[0];
+  const returnToProjects = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    void navigate({ to: "/projects", replace: true });
+  };
 
   if (!isReady) {
-    return <EditorSkeleton onBack={() => navigate({ to: "/projects" })} />;
+    return <EditorSkeleton onBack={returnToProjects} />;
   }
 
   if (!project) {
@@ -37,7 +46,7 @@ export function ProjectEditorPage() {
       projectId={projectId}
       size={getCanvasSize(project.sizeId)}
       title={project.title}
-      onBack={() => navigate({ to: "/projects" })}
+      onBack={returnToProjects}
     />
   );
 }
