@@ -1,5 +1,5 @@
 import { Button } from "@bead/ui/components/button";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Apple, Globe2, Smartphone } from "lucide-react";
 import { siteLinks } from "@/config/links";
 
@@ -103,12 +103,12 @@ function SiteHeader() {
   return (
     <header className="h-16">
       <div className="container mx-auto flex h-full items-center justify-between px-4 sm:justify-around sm:px-6 lg:px-8">
-        <a href="/" className="flex items-center gap-2 font-semibold">
+        <Link to="/" className="flex items-center gap-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             B
           </span>
           <span>Bead</span>
-        </a>
+        </Link>
         <Button asChild variant="ghost" size="icon">
           <a
             href={siteLinks.github}

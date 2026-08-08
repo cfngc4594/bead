@@ -24,16 +24,7 @@ export function DiscoverProjectShell({
 }
 
 export function DiscoverProjectBackButton() {
-  const router = useRouter();
-
-  const returnToDiscover = () => {
-    if (router.history.canGoBack()) {
-      router.history.back();
-      return;
-    }
-
-    void router.navigate({ to: "/discover", replace: true });
-  };
+  const returnToDiscover = useReturnToDiscover();
 
   return (
     <Button
@@ -45,4 +36,28 @@ export function DiscoverProjectBackButton() {
       <ArrowLeft />
     </Button>
   );
+}
+
+export function DiscoverProjectReturnButton() {
+  const returnToDiscover = useReturnToDiscover();
+
+  return (
+    <Button onClick={returnToDiscover}>
+      <ArrowLeft aria-hidden="true" />
+      返回发现
+    </Button>
+  );
+}
+
+function useReturnToDiscover() {
+  const router = useRouter();
+
+  return () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    void router.navigate({ to: "/discover", replace: true });
+  };
 }

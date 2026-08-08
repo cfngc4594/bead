@@ -8,8 +8,9 @@ import {
   ScrollArea,
   ScrollAreaViewport,
 } from "@bead/ui/components/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
+import type { ReactNode } from "react";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
 import { DiscoverListSkeleton } from "@/features/discover/components/discover-list-skeleton";
@@ -20,6 +21,30 @@ const DISCOVER_SCROLL_RESTORATION_ID = "discover-list";
 
 export function DiscoverListPage() {
   return (
+    <DiscoverListShell>
+      <DiscoverListContent />
+    </DiscoverListShell>
+  );
+}
+
+export function DiscoverListPendingPage() {
+  return (
+    <DiscoverListShell>
+      <DiscoverListSkeleton />
+    </DiscoverListShell>
+  );
+}
+
+export function DiscoverListErrorPage({ onRetry }: { onRetry: () => void }) {
+  return (
+    <DiscoverListShell>
+      <DiscoverListError onRetry={onRetry} />
+    </DiscoverListShell>
+  );
+}
+
+function DiscoverListShell({ children }: { children: ReactNode }) {
+  return (
     <main
       aria-label="发现"
       className="flex h-full min-h-0 flex-col bg-background"
@@ -28,26 +53,13 @@ export function DiscoverListPage() {
         <h1 className="font-semibold text-lg tracking-tight">发现</h1>
       </header>
 
-      <DiscoverListContent />
+      {children}
     </main>
   );
 }
 
 function DiscoverListContent() {
-  const {
-    data: projects,
-    isPending,
-    isError,
-    refetch,
-  } = useQuery(discoverProjectsQueryOptions);
-
-  if (isPending) {
-    return <DiscoverListSkeleton />;
-  }
-
-  if (isError) {
-    return <DiscoverListError onRetry={() => void refetch()} />;
-  }
+  const { data: projects } = useSuspenseQuery(discoverProjectsQueryOptions);
 
   if (projects.length === 0) {
     return (
