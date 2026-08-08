@@ -3,7 +3,6 @@ import { cn } from "@bead/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
-import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 
 export const Route = createFileRoute("/_tabs/settings")({
   component: SettingsPage,
@@ -39,7 +38,7 @@ function SettingsPage() {
         <h1 className="font-semibold text-lg tracking-tight">设置</h1>
       </header>
 
-      <ScrollArea className="min-h-0 flex-1" id={TAB_CONTENT_ID}>
+      <ScrollArea className="min-h-0 flex-1">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 md:px-8">
           <section aria-labelledby="theme-title" className="space-y-4">
             <h2 className="font-medium text-base" id="theme-title">
