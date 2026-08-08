@@ -1,5 +1,5 @@
 import { Button } from "@bead/ui/components/button";
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -24,11 +24,25 @@ export function DiscoverProjectShell({
 }
 
 export function DiscoverProjectBackButton() {
+  const router = useRouter();
+
+  const returnToDiscover = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    void router.navigate({ to: "/discover", replace: true });
+  };
+
   return (
-    <Button asChild size="icon-sm" variant="outline">
-      <Link aria-label="返回发现" to="/discover">
-        <ArrowLeft />
-      </Link>
+    <Button
+      aria-label="返回发现"
+      onClick={returnToDiscover}
+      size="icon-sm"
+      variant="outline"
+    >
+      <ArrowLeft />
     </Button>
   );
 }

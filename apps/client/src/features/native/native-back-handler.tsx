@@ -15,6 +15,8 @@ export function NativeBackHandler() {
     matchRoute({ to: "/projects/new", fuzzy: false }) !== false;
   const isProjectEditorRoute =
     matchRoute({ to: "/projects/$projectId", fuzzy: false }) !== false;
+  const isDiscoverProjectRoute =
+    matchRoute({ to: "/discover/$projectId", fuzzy: false }) !== false;
   const isSecondaryTabRoute = appSecondaryTabs.some(
     ({ to }) => matchRoute({ to, fuzzy: false }) !== false,
   );
@@ -31,6 +33,19 @@ export function NativeBackHandler() {
         return;
       }
 
+      if (
+        (isProjectEditorRoute || isDiscoverProjectRoute) &&
+        router.history.canGoBack()
+      ) {
+        router.history.back();
+        return;
+      }
+
+      if (isDiscoverProjectRoute) {
+        router.navigate({ to: "/discover", replace: true });
+        return;
+      }
+
       if (shouldReturnToStartTab) {
         router.navigate({ to: appStartTab.to, replace: true });
         return;
@@ -42,7 +57,12 @@ export function NativeBackHandler() {
     return () => {
       listener.then((handle) => handle.remove());
     };
-  }, [router, shouldReturnToStartTab]);
+  }, [
+    isDiscoverProjectRoute,
+    isProjectEditorRoute,
+    router,
+    shouldReturnToStartTab,
+  ]);
 
   return null;
 }
