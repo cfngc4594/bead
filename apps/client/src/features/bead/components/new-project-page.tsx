@@ -1,11 +1,21 @@
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, useRouter } from "@tanstack/react-router";
 import { canvasSizes } from "@/config/canvas-sizes";
 import { SizePicker } from "@/features/bead/components/size-picker";
 
 const routeApi = getRouteApi("/projects/new");
 
 export function NewProjectPage() {
+  const router = useRouter();
   const navigate = routeApi.useNavigate();
+
+  const returnToProjects = () => {
+    if (router.history.canGoBack()) {
+      router.history.back();
+      return;
+    }
+
+    void navigate({ to: "/projects", replace: true });
+  };
 
   return (
     <main className="flex h-full min-h-0 flex-col overflow-y-auto bg-background">
@@ -18,7 +28,7 @@ export function NewProjectPage() {
 
         <SizePicker
           initialSize={canvasSizes[0].id}
-          onCancel={() => navigate({ to: "/projects" })}
+          onCancel={returnToProjects}
           onProjectCreated={(project) =>
             navigate({
               to: "/projects/$projectId",

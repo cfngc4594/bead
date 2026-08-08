@@ -7,8 +7,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@bead/ui/components/empty";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, RefreshCw, SearchX, WifiOff } from "lucide-react";
+import { RefreshCw, SearchX, WifiOff } from "lucide-react";
+import { DiscoverProjectReturnButton } from "@/features/discover/components/discover-project-shell";
 
 export function DiscoverListError({ onRetry }: { onRetry: () => void }) {
   return (
@@ -69,12 +69,7 @@ export function DiscoverProjectNotFoundPanel() {
             <EmptyDescription>可能已删除</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button asChild>
-              <Link to="/discover">
-                <ArrowLeft aria-hidden="true" />
-                返回发现
-              </Link>
-            </Button>
+            <DiscoverProjectReturnButton />
           </EmptyContent>
         </Empty>
       </div>
