@@ -1,6 +1,6 @@
 import { getMardColor, mardColors } from "@bead/core/colors";
 import { Capacitor } from "@capacitor/core";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
@@ -14,12 +14,13 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import { canvasToolDefinitions } from "@/features/bead/lib/canvas-tool-definitions";
 import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
-import type { GridCell } from "@/features/bead/types";
+import type { CanvasTool, GridCell } from "@/features/bead/types";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 type EditorProps = {
@@ -32,6 +33,7 @@ type EditorProps = {
 const colorLetters = Array.from(
   new Set(mardColors.map((color) => color.code[0])),
 );
+const mobileToolHintDurationMs = 1400;
 
 export function Editor({ projectId, size, title, onBack }: EditorProps) {
   return (
@@ -47,8 +49,12 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
+  const mobileToolHintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
+  const [mobileToolHint, setMobileToolHint] = useState<string | null>(null);
   const {
     beads,
     beginEdit,
@@ -102,6 +108,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasBeads = beads.some(Boolean);
   const isExportImageSheetEnabled = Capacitor.getPlatform() === "android";
   const exportImageFilename = `bead-${size.id}.png`;
+
+  useEffect(
+    () => () => {
+      if (mobileToolHintTimeoutRef.current) {
+        clearTimeout(mobileToolHintTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   function beginCellEdit() {
     if (tool === "mix") {
@@ -160,6 +175,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
 
     actions.selectColor(color);
     actions.selectTool("paint");
+    showMobileToolHint("paint");
   }
 
   function moveSelection(nextBeads: typeof beads) {
@@ -192,6 +208,31 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     setIsExportSheetOpen(true);
     trackEvent("android_export_sheet_opened", getCanvasProperties());
     createExportImage();
+  }
+
+  function selectMobileTool(nextTool: CanvasTool) {
+    actions.selectTool(nextTool);
+    showMobileToolHint(nextTool);
+  }
+
+  function showMobileToolHint(nextTool: CanvasTool) {
+    const label = canvasToolDefinitions.find(
+      (definition) => definition.tool === nextTool,
+    )?.label;
+
+    if (!label) {
+      return;
+    }
+
+    if (mobileToolHintTimeoutRef.current) {
+      clearTimeout(mobileToolHintTimeoutRef.current);
+    }
+
+    setMobileToolHint(label);
+    mobileToolHintTimeoutRef.current = setTimeout(() => {
+      setMobileToolHint(null);
+      mobileToolHintTimeoutRef.current = null;
+    }, mobileToolHintDurationMs);
   }
 
   function changeModelPreviewMode(mode: ModelPreviewMode) {
@@ -324,6 +365,9 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
               />
             </>
           )}
+          {!modelPreview.isOpen && mobileToolHint ? (
+            <MobileToolHint label={mobileToolHint} />
+          ) : null}
         </div>
       </section>
 
@@ -339,7 +383,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       <MobileEditorPanel
         colors={filteredColors}
         letters={colorLetters}
-        onSelectTool={actions.selectTool}
+        onSelectTool={selectMobileTool}
         modelPreviewControls={modelPreviewControls}
         onResetViewAfterResize={() =>
           setResetViewAfterResizeSignal((value) => value + 1)
@@ -351,5 +395,19 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         tool={tool}
       />
     </main>
+  );
+}
+
+function MobileToolHint({ label }: { label: string }) {
+  return (
+    <output
+      aria-atomic="true"
+      aria-live="polite"
+      className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center px-4 md:hidden"
+    >
+      <div className="animate-in rounded-md bg-foreground px-2.5 py-1.5 font-medium text-background text-xs shadow-md duration-150 fade-in slide-in-from-bottom-1 motion-reduce:animate-none">
+        {label}
+      </div>
+    </output>
   );
 }
