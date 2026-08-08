@@ -1,5 +1,5 @@
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui";
-import type * as React from "react";
+import * as React from "react";
 
 import { cn } from "../lib/utils";
 
@@ -8,21 +8,43 @@ function ScrollArea({
   children,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+  const hasViewportChild = React.Children.toArray(children).some(
+    (child) => React.isValidElement(child) && child.type === ScrollAreaViewport,
+  );
+
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
       className={cn("relative", className)}
       {...props}
     >
-      <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
-      >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
+      {hasViewportChild ? (
+        children
+      ) : (
+        <ScrollAreaViewport>{children}</ScrollAreaViewport>
+      )}
       <ScrollBar />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
+  );
+}
+
+function ScrollAreaViewport({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Viewport>) {
+  return (
+    <ScrollAreaPrimitive.Viewport
+      data-slot="scroll-area-viewport"
+      className={cn(
+        "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </ScrollAreaPrimitive.Viewport>
   );
 }
 
@@ -50,4 +72,4 @@ function ScrollBar({
   );
 }
 
-export { ScrollArea, ScrollBar };
+export { ScrollArea, ScrollAreaViewport, ScrollBar };
