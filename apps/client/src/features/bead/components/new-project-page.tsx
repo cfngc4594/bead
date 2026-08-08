@@ -23,6 +23,7 @@ export function NewProjectPage() {
             navigate({
               to: "/projects/$projectId",
               params: { projectId: project.id },
+              replace: true,
             })
           }
         />

@@ -33,6 +33,14 @@ export function NativeBackHandler() {
         return;
       }
 
+      if (
+        (isProjectEditorRoute || isDiscoverProjectRoute) &&
+        router.history.canGoBack()
+      ) {
+        router.history.back();
+        return;
+      }
+
       if (isDiscoverProjectRoute) {
         router.navigate({ to: "/discover", replace: true });
         return;
@@ -49,7 +57,12 @@ export function NativeBackHandler() {
     return () => {
       listener.then((handle) => handle.remove());
     };
-  }, [isDiscoverProjectRoute, router, shouldReturnToStartTab]);
+  }, [
+    isDiscoverProjectRoute,
+    isProjectEditorRoute,
+    router,
+    shouldReturnToStartTab,
+  ]);
 
   return null;
 }
