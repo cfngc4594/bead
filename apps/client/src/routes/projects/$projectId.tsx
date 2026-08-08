@@ -3,8 +3,6 @@ import { ProjectEditorPage } from "@/features/bead/components/project-editor-pag
 import { projectsCollection } from "@/features/bead/storage/projects";
 
 export const Route = createFileRoute("/projects/$projectId")({
-  loader: () => {
-    void projectsCollection.preload();
-  },
+  loader: () => projectsCollection.preload(),
   component: ProjectEditorPage,
 });
