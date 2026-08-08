@@ -1,9 +1,5 @@
 import { linkOptions } from "@tanstack/react-router";
 
-export const TAB_CONTENT_ID = "tab-content";
-
-export const TAB_CONTENT_SELECTOR = `#${TAB_CONTENT_ID} [data-slot="scroll-area-viewport"]`;
-
 export const appTabs = linkOptions([
   {
     activeOptions: { exact: true },

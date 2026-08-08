@@ -9,14 +9,10 @@ import {
 } from "@bead/ui/components/empty";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, RefreshCw, SearchX, WifiOff } from "lucide-react";
-import { TAB_CONTENT_ID } from "@/features/navigation/tab-config";
 
 export function DiscoverListError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div
-      className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8"
-      id={TAB_CONTENT_ID}
-    >
+    <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col px-4 py-6 md:px-8">
       <Empty className="flex-1 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
