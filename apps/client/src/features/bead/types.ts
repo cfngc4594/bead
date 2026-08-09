@@ -3,6 +3,7 @@ export type CanvasTool =
   | "paint"
   | "mix"
   | "erase"
+  | "fill"
   | "picker"
   | "select";
 

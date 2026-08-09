@@ -47,7 +47,7 @@ export function MobileEditorPanel({
             <p className="min-w-0 truncate text-sm font-medium">3D 预览</p>
           </div>
         ) : (
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <CurrentColor color={selectedColor} />
           </div>
         )}
