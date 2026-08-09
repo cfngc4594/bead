@@ -14,6 +14,7 @@ type EditorToolButtonProps = {
   isActive: boolean;
   disabled?: boolean;
   withTooltip?: boolean;
+  tooltipOpen?: boolean;
   onClick: () => void;
 };
 
@@ -23,6 +24,7 @@ export function EditorToolButton({
   isActive,
   disabled = false,
   withTooltip = true,
+  tooltipOpen,
   onClick,
 }: EditorToolButtonProps) {
   const button = (
@@ -44,7 +46,7 @@ export function EditorToolButton({
   }
 
   return (
-    <Tooltip>
+    <Tooltip open={tooltipOpen}>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent side="top">{label}</TooltipContent>
     </Tooltip>

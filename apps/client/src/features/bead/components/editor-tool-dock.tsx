@@ -1,10 +1,13 @@
 import { cn } from "@bead/ui/lib/utils";
+import { useEffect, useState } from "react";
 import {
   EditorToolButton,
   editorToolSurfaceClassName,
 } from "@/features/bead/components/editor-tool-button";
 import { canvasToolDefinitions } from "@/features/bead/lib/canvas-tool-definitions";
 import type { CanvasTool } from "@/features/bead/types";
+
+const MOBILE_TOOL_TOOLTIP_DURATION_MS = 1500;
 
 type EditorToolDockProps = {
   className?: string;
@@ -20,6 +23,31 @@ export function EditorToolDock({
   tool,
 }: EditorToolDockProps) {
   const isDesktop = layout === "desktop";
+  const [mobileTooltip, setMobileTooltip] = useState<{
+    tool: CanvasTool;
+  } | null>(null);
+
+  useEffect(() => {
+    if (mobileTooltip === null) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setMobileTooltip(null);
+    }, MOBILE_TOOL_TOOLTIP_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [mobileTooltip]);
+
+  const handleSelectTool = (nextTool: CanvasTool) => {
+    onSelectTool(nextTool);
+    if (!isDesktop) {
+      setMobileTooltip({ tool: nextTool });
+    }
+  };
+
   const toolbar = (
     <div
       className={cn(
@@ -37,8 +65,10 @@ export function EditorToolDock({
           isActive={tool === definition.tool}
           key={definition.tool}
           label={definition.label}
-          onClick={() => onSelectTool(definition.tool)}
-          withTooltip={isDesktop}
+          onClick={() => handleSelectTool(definition.tool)}
+          tooltipOpen={
+            isDesktop ? undefined : mobileTooltip?.tool === definition.tool
+          }
         />
       ))}
     </div>
