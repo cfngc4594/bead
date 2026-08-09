@@ -1,3 +1,4 @@
+import type { BeadImageDisplayOptions } from "@bead/core/bead-image-svg";
 import { mardColors } from "@bead/core/colors";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -5,10 +6,7 @@ import type { CanvasSize } from "@/config/canvas-sizes";
 import { startAiImageJob, waitForAiImageJob } from "@/features/bead/api/ai-api";
 import { canvasSnapshotToBeads } from "@/features/bead/lib/canvas-snapshot-to-beads";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
-import {
-  createBeadImageBlob,
-  exportBeadImage,
-} from "@/features/bead/lib/export-image";
+import { createBeadImageBlob } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
 import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
@@ -40,6 +38,7 @@ export function useEditorActions({
   const aiImageInputRef = useRef<HTMLInputElement>(null);
   const algorithmImageInputRef = useRef<HTMLInputElement>(null);
   const activeImageJobRef = useRef<AbortController | null>(null);
+  const isExportingImageRef = useRef(false);
   const [selectedColor, setSelectedColor] = useState(mardColors[0]);
   const [selectedLetter, setSelectedLetter] = useState(selectedColor.code[0]);
   const [tool, setTool] = useState<CanvasTool>("pan");
@@ -100,43 +99,19 @@ export function useEditorActions({
     trackEvent("redo_used", getCanvasProperties());
   }
 
-  async function exportImage() {
-    if (isExportingImage) {
-      return;
-    }
-
-    const loadingToastId = toast.loading("正在生成图片...");
-    setIsExportingImage(true);
-    trackEvent("image_export_started", getImageExportProperties());
-
-    try {
-      await waitForNextFrame();
-      await exportBeadImage({
-        rows: size.rows,
-        cols: size.cols,
-        beads,
-        filename: `bead-${size.id}.png`,
-      });
-      trackEvent("image_export_succeeded", getImageExportProperties());
-      toast.dismiss(loadingToastId);
-    } catch (error) {
-      console.error("Unable to export image", error);
-      trackEvent("image_export_failed", getImageExportProperties());
-      toast.error("导出图片失败", { id: loadingToastId });
-    } finally {
-      setIsExportingImage(false);
-    }
-  }
-
-  async function createExportImageBlob() {
-    if (isExportingImage) {
+  async function createExportImageBlob(
+    displayOptions: BeadImageDisplayOptions,
+  ) {
+    if (isExportingImageRef.current) {
       return null;
     }
 
+    isExportingImageRef.current = true;
     setIsExportingImage(true);
     trackEvent("image_export_started", {
       ...getImageExportProperties(),
-      destination: "android_sheet",
+      ...displayOptions,
+      destination: "export_panel",
     });
 
     try {
@@ -145,22 +120,26 @@ export function useEditorActions({
         rows: size.rows,
         cols: size.cols,
         beads,
+        displayOptions,
       });
 
       trackEvent("image_export_succeeded", {
         ...getImageExportProperties(),
-        destination: "android_sheet",
+        ...displayOptions,
+        destination: "export_panel",
       });
       return blob;
     } catch (error) {
       console.error("Unable to create export image", error);
       trackEvent("image_export_failed", {
         ...getImageExportProperties(),
-        destination: "android_sheet",
+        ...displayOptions,
+        destination: "export_panel",
       });
       toast.error("图片生成失败");
       return null;
     } finally {
+      isExportingImageRef.current = false;
       setIsExportingImage(false);
     }
   }
@@ -394,7 +373,6 @@ export function useEditorActions({
     actions: {
       clearDraft,
       createExportImageBlob,
-      exportImage,
       exportTemplate,
       importAiImage,
       importAlgorithmImage,

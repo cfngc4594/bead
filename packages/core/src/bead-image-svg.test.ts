@@ -1,5 +1,8 @@
 import { expect, test } from "bun:test";
-import { createBeadImageSvg } from "./bead-image-svg";
+import {
+  createBeadImageSvg,
+  defaultBeadImageDisplayOptions,
+} from "./bead-image-svg";
 
 test("creates one complete export document with labels, bead codes, and stats", () => {
   const image = createBeadImageSvg({
@@ -38,6 +41,75 @@ test("combines repeated colors in the export stats", () => {
 
   expect(image.svg).toContain(">C7 (2)</text>");
   expect(image.svg).not.toContain(">C7 (1)</text>");
+});
+
+test("can hide the color legend", () => {
+  const image = createBeadImageSvg({
+    cols: 1,
+    displayOptions: {
+      ...defaultBeadImageDisplayOptions,
+      showColorLegend: false,
+    },
+    rows: 1,
+    snapshot: { cells: [[0, "A1"]] },
+  });
+
+  expect(image.svg).toContain(">A1</text>");
+  expect(image.svg).not.toContain(">A1 (1)</text>");
+});
+
+test("can hide bead codes while retaining the color legend", () => {
+  const image = createBeadImageSvg({
+    cols: 1,
+    displayOptions: {
+      ...defaultBeadImageDisplayOptions,
+      showBeadCodes: false,
+    },
+    rows: 1,
+    snapshot: { cells: [[0, "A1"]] },
+  });
+
+  expect(image.svg).not.toContain(">A1</text>");
+  expect(image.svg).toContain(">A1 (1)</text>");
+});
+
+test("always includes coordinates when auxiliary guides are hidden", () => {
+  const image = createBeadImageSvg({
+    cols: 12,
+    displayOptions: {
+      ...defaultBeadImageDisplayOptions,
+      showGuides: false,
+    },
+    rows: 12,
+    snapshot: { cells: [] },
+  });
+
+  expect(image.width).toBe(272);
+  expect(image.svg).toContain(`fill="#f3f4f6"`);
+  expect(image.svg.match(/>1<\/text>/g)).toHaveLength(4);
+  expect(image.svg).not.toContain('data-guide-interval="5"');
+  expect(image.svg).not.toContain('data-guide-interval="10"');
+});
+
+test("draws dashed five-cell guides and solid ten-cell guides", () => {
+  const image = createBeadImageSvg({
+    cols: 12,
+    rows: 12,
+    snapshot: { cells: [] },
+  });
+
+  expect(image.svg).toContain(
+    '<line x1="108.5" y1="18.5" x2="108.5" y2="234.5" stroke="#64748b" stroke-width="1" stroke-dasharray="4 3"/>',
+  );
+  expect(image.svg).toContain(
+    '<line x1="18.5" y1="108.5" x2="234.5" y2="108.5" stroke="#64748b" stroke-width="1" stroke-dasharray="4 3"/>',
+  );
+  expect(image.svg).toContain(
+    '<line x1="198.5" y1="18.5" x2="198.5" y2="234.5" stroke="#334155" stroke-width="1.5"/>',
+  );
+  expect(image.svg).toContain(
+    '<line x1="18.5" y1="198.5" x2="234.5" y2="198.5" stroke="#334155" stroke-width="1.5"/>',
+  );
 });
 
 test("rejects invalid snapshot indexes", () => {
