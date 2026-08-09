@@ -1,6 +1,6 @@
 import { getMardColor, mardColors } from "@bead/core/colors";
 import { Capacitor } from "@capacitor/core";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
@@ -20,6 +20,11 @@ import {
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
 import type { GridCell } from "@/features/bead/types";
+import { EditorOnboardingTour } from "@/features/onboarding/components/editor-onboarding-tour";
+import {
+  createEditorOnboardingController,
+  type EditorOnboardingController,
+} from "@/features/onboarding/lib/editor-onboarding";
 import { getFilledCellCount, trackEvent } from "@/lib/analytics";
 
 type EditorProps = {
@@ -48,7 +53,26 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
   const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
+  const onboardingRef = useRef<EditorOnboardingController | null>(null);
+
+  if (!onboardingRef.current) {
+    onboardingRef.current = createEditorOnboardingController({
+      onOpenChange: setIsOnboardingOpen,
+      schedule: (callback, delayMs) => {
+        const timeoutId = window.setTimeout(callback, delayMs);
+        return () => window.clearTimeout(timeoutId);
+      },
+      storage: {
+        getItem: (key) => window.localStorage.getItem(key),
+        setItem: (key, value) => window.localStorage.setItem(key, value),
+      },
+      track: trackEvent,
+    });
+  }
+
+  const onboarding = onboardingRef.current;
   const {
     beads,
     beginEdit,
@@ -102,6 +126,8 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasBeads = beads.some(Boolean);
   const isExportImageSheetEnabled = Capacitor.getPlatform() === "android";
   const exportImageFilename = `bead-${size.id}.png`;
+
+  useEffect(() => onboarding.scheduleAutomaticStart(), [onboarding]);
 
   function beginCellEdit() {
     if (tool === "mix") {
@@ -194,6 +220,22 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     createExportImage();
   }
 
+  function startOnboarding() {
+    if (modelPreview.isOpen) {
+      modelPreview.toggle();
+    }
+
+    onboarding.startManual();
+  }
+
+  function completeOnboarding() {
+    onboarding.complete();
+  }
+
+  function dismissOnboarding(stepIndex: number) {
+    onboarding.dismiss(stepIndex);
+  }
+
   function changeModelPreviewMode(mode: ModelPreviewMode) {
     modelPreview.setMode(mode);
     trackEvent("model_preview_mode_changed", {
@@ -252,6 +294,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onImportAiImage={actions.importAiImage}
           onImportAlgorithmImage={actions.importAlgorithmImage}
           onImportTemplate={actions.importTemplate}
+          onStartOnboarding={startOnboarding}
           onBack={onBack}
           onRenameProject={handleRenameProject}
           onUndo={actions.undoEdit}
@@ -289,7 +332,10 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           type="file"
         />
 
-        <div className="relative min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30">
+        <div
+          className="relative min-h-0 flex-1 overflow-hidden overscroll-none bg-muted/30"
+          data-onboarding="editor-canvas"
+        >
           {modelPreview.isOpen ? (
             <BeadModelPreview
               beads={beads}
@@ -349,6 +395,12 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         selectedColor={selectedColor}
         selectedLetter={selectedLetter}
         tool={tool}
+      />
+      <EditorOnboardingTour
+        onComplete={completeOnboarding}
+        onDismiss={dismissOnboarding}
+        onStepViewed={onboarding.viewStep}
+        open={isOnboardingOpen}
       />
     </main>
   );

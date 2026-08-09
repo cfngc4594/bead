@@ -11,6 +11,7 @@ import {
 } from "@bead/ui/components/tooltip";
 import {
   ArrowLeft,
+  CircleHelp,
   Download,
   FileDown,
   FileUp,
@@ -48,6 +49,7 @@ type EditorToolbarProps = {
   onImportAiImage: () => void;
   onImportAlgorithmImage: () => void;
   onImportTemplate: () => void;
+  onStartOnboarding: () => void;
   onUndo: () => void;
   onRedo: () => void;
   isExportingImage?: boolean;
@@ -92,6 +94,7 @@ export function EditorToolbar({
   onImportAiImage,
   onImportAlgorithmImage,
   onImportTemplate,
+  onStartOnboarding,
   onUndo,
   onRedo,
   isExportingImage = false,
@@ -179,10 +182,19 @@ export function EditorToolbar({
       onClick: onExportTemplate,
     },
   ];
+  const onboardingAction: ToolbarAction = {
+    closeSheetOnClick: true,
+    icon: CircleHelp,
+    label: "新手引导",
+    onClick: onStartOnboarding,
+  };
   const mobilePrimaryActions = [...viewActions, ...historyActions];
 
   return (
-    <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5">
+    <header
+      className="flex h-16 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b px-3 md:gap-3 md:px-5"
+      data-onboarding="editor-toolbar"
+    >
       <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
         <ToolbarIconButton icon={ArrowLeft} label="返回作品" onClick={onBack} />
         <ProjectTitleEditor
@@ -193,20 +205,22 @@ export function EditorToolbar({
       </div>
 
       <div className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex">
-        {[viewActions, historyActions, fileActions].map((actions, index) => (
-          <ToolbarActionGroup
-            actions={actions}
-            key={actions.map((action) => action.label).join("-")}
-            withSeparator={index > 0}
-          />
-        ))}
+        {[viewActions, historyActions, fileActions, [onboardingAction]].map(
+          (actions, index) => (
+            <ToolbarActionGroup
+              actions={actions}
+              key={actions.map((action) => action.label).join("-")}
+              withSeparator={index > 0}
+            />
+          ),
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 md:hidden">
         {mobilePrimaryActions.map((action) => (
           <ToolbarIconButton key={action.label} {...action} />
         ))}
-        <MobileMoreTools actions={fileActions} />
+        <MobileMoreTools actions={[...fileActions, onboardingAction]} />
       </div>
     </header>
   );

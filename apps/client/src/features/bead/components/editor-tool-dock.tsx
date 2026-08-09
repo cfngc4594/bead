@@ -50,6 +50,7 @@ export function EditorToolDock({
 
   const toolbar = (
     <div
+      data-onboarding={`editor-tools-${layout}`}
       className={cn(
         "flex items-center gap-1.5",
         isDesktop

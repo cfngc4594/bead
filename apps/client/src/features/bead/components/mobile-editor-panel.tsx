@@ -44,6 +44,7 @@ export function MobileEditorPanel({
 
   return (
     <section
+      data-onboarding="editor-colors-mobile"
       className={cn(
         "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden",
         isExpanded ? "h-auto max-h-[50vh]" : "h-14",
