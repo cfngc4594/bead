@@ -7,8 +7,21 @@ export type BeadImageSvg = {
   width: number;
 };
 
+export type BeadImageDisplayOptions = Readonly<{
+  showBeadCodes: boolean;
+  showColorLegend: boolean;
+  showGuides: boolean;
+}>;
+
+export const defaultBeadImageDisplayOptions = {
+  showBeadCodes: true,
+  showColorLegend: true,
+  showGuides: true,
+} as const satisfies BeadImageDisplayOptions;
+
 type BeadImageSvgOptions = {
   cols: number;
+  displayOptions?: BeadImageDisplayOptions;
   rows: number;
   snapshot: CanvasSnapshot;
 };
@@ -18,6 +31,8 @@ type BeadStat = {
   count: number;
   hex: string;
 };
+
+type GuideInterval = 5 | 10;
 
 type StatsLayout = {
   columns: number;
@@ -50,6 +65,7 @@ const palette = {
 
 export function createBeadImageSvg({
   cols,
+  displayOptions = defaultBeadImageDisplayOptions,
   rows,
   snapshot,
 }: BeadImageSvgOptions): BeadImageSvg {
@@ -87,24 +103,38 @@ export function createBeadImageSvg({
     (left, right) =>
       getMardColorIndex(left.code) - getMardColorIndex(right.code),
   );
-  const boardWidth = (cols + 2) * cellSize;
-  const boardHeight = (rows + 2) * cellSize;
+  const boardWidth = cols * cellSize + boardOrigin * 2;
+  const boardHeight = rows * cellSize + boardOrigin * 2;
   const width = boardWidth + exportHorizontalPadding * 2;
   const statsWidth = cols * cellSize;
-  const statsLayout = getStatsLayout({
-    boardHeight,
-    statsCount: stats.length,
-    statsWidth,
-    totalWidth: width,
-  });
-  const statsY = boardHeight + statsBoardGap;
+  const statsLayout = displayOptions.showColorLegend
+    ? getStatsLayout({
+        boardHeight,
+        statsCount: stats.length,
+        statsWidth,
+        totalWidth: width,
+      })
+    : null;
+  const statsY = boardHeight + (statsLayout ? statsBoardGap : 0);
   const height =
-    statsY + statsLayout.height + exportTopPadding + exportBottomPadding;
+    statsY +
+    (statsLayout?.height ?? 0) +
+    exportTopPadding +
+    exportBottomPadding;
   const elements = [
     `<rect width="${width}" height="${height}" fill="${palette.background}"/>`,
     `<g transform="translate(${exportHorizontalPadding} ${exportTopPadding})">`,
-    ...createBoardElements(rows, cols, beads),
-    ...createStatsElements(stats, boardOrigin, statsY, statsLayout),
+    ...createBoardElements({
+      beads,
+      boardOrigin,
+      cols,
+      rows,
+      showBeadCodes: displayOptions.showBeadCodes,
+      showGuides: displayOptions.showGuides,
+    }),
+    ...(statsLayout
+      ? createStatsElements(stats, boardOrigin, statsY, statsLayout)
+      : []),
     "</g>",
   ];
 
@@ -120,14 +150,24 @@ export function createBeadImageSvg({
   };
 }
 
-function createBoardElements(
-  rows: number,
-  cols: number,
-  beads: ReadonlyMap<number, BeadStat>,
-) {
+function createBoardElements({
+  beads,
+  boardOrigin,
+  cols,
+  rows,
+  showBeadCodes,
+  showGuides,
+}: {
+  beads: ReadonlyMap<number, BeadStat>;
+  boardOrigin: number;
+  cols: number;
+  rows: number;
+  showBeadCodes: boolean;
+  showGuides: boolean;
+}) {
   const elements: string[] = [
     '<g shape-rendering="crispEdges">',
-    ...createLabelElements(rows, cols),
+    ...createLabelElements(rows, cols, boardOrigin),
   ];
 
   for (let row = 0; row < rows; row += 1) {
@@ -150,6 +190,14 @@ function createBoardElements(
   }
   elements.push("</g>");
 
+  if (showGuides) {
+    elements.push(...createGuideElements(rows, cols, boardOrigin));
+  }
+
+  if (!showBeadCodes) {
+    return elements;
+  }
+
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
       const bead = beads.get(row * cols + col);
@@ -168,7 +216,60 @@ function createBoardElements(
   return elements;
 }
 
-function createLabelElements(rows: number, cols: number) {
+function createGuideElements(rows: number, cols: number, boardOrigin: number) {
+  const fiveCellGuides: string[] = [];
+  const tenCellGuides: string[] = [];
+  const boardRight = boardOrigin + cols * cellSize + 0.5;
+  const boardBottom = boardOrigin + rows * cellSize + 0.5;
+  const boardStart = boardOrigin + 0.5;
+
+  for (let col = 5; col < cols; col += 5) {
+    const x = boardOrigin + col * cellSize + 0.5;
+    const interval: GuideInterval = col % 10 === 0 ? 10 : 5;
+    const target = interval === 10 ? tenCellGuides : fiveCellGuides;
+    target.push(createGuideLine(x, boardStart, x, boardBottom, interval));
+  }
+
+  for (let row = 5; row < rows; row += 5) {
+    const y = boardOrigin + row * cellSize + 0.5;
+    const interval: GuideInterval = row % 10 === 0 ? 10 : 5;
+    const target = interval === 10 ? tenCellGuides : fiveCellGuides;
+    target.push(createGuideLine(boardStart, y, boardRight, y, interval));
+  }
+
+  return [
+    '<g data-guide-interval="5">',
+    ...fiveCellGuides,
+    "</g>",
+    '<g data-guide-interval="10">',
+    ...tenCellGuides,
+    "</g>",
+  ];
+}
+
+function createGuideLine(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  interval: GuideInterval,
+) {
+  const coordinates = `x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"`;
+
+  if (interval === 10) {
+    return [
+      `<line ${coordinates} stroke="#ffffff" stroke-width="2.5"/>`,
+      `<line ${coordinates} stroke="#334155" stroke-width="1.5"/>`,
+    ].join("");
+  }
+
+  return [
+    `<line ${coordinates} stroke="#ffffff" stroke-width="1.75" stroke-dasharray="4 3"/>`,
+    `<line ${coordinates} stroke="#64748b" stroke-width="1" stroke-dasharray="4 3"/>`,
+  ].join("");
+}
+
+function createLabelElements(rows: number, cols: number, boardOrigin: number) {
   const elements: string[] = [];
   const bottomY = (rows + 1) * cellSize;
   const rightX = (cols + 1) * cellSize;

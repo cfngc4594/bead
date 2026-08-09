@@ -37,7 +37,6 @@ type EditorToolbarProps = {
   canClear: boolean;
   projectTitle: string;
   isModelPreviewOpen: boolean;
-  isExportImageSheetEnabled: boolean;
   onBack: () => void;
   onRenameProject: (title: string) => void;
   onResetView: () => void;
@@ -81,7 +80,6 @@ export function EditorToolbar({
   canClear,
   projectTitle,
   isModelPreviewOpen,
-  isExportImageSheetEnabled,
   onBack,
   onRenameProject,
   onResetView,
@@ -159,7 +157,7 @@ export function EditorToolbar({
       onClick: onImportAlgorithmImage,
     },
     {
-      closeSheetOnClick: !isExportImageSheetEnabled,
+      closeSheetOnClick: true,
       disabled: isExportingImage,
       icon: Download,
       label: isExportingImage ? "导出中" : "导出图片",
