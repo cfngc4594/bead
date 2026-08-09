@@ -107,7 +107,7 @@ export function ExportImageSheet({
             {previewUrl ? (
               <img
                 alt="导出的豆图预览"
-                className="h-full w-full object-contain"
+                className="absolute inset-0 h-full w-full object-contain"
                 src={previewUrl}
               />
             ) : isCreating ? (
