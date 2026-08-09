@@ -1,12 +1,15 @@
+import {
+  type BeadImageDisplayOptions,
+  defaultBeadImageDisplayOptions,
+} from "@bead/core/bead-image-svg";
 import { getMardColor, mardColors } from "@bead/core/colors";
-import { Capacitor } from "@capacitor/core";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
 import { DesktopEditorSidebar } from "@/features/bead/components/desktop-editor-sidebar";
 import { EditorToolDock } from "@/features/bead/components/editor-tool-dock";
-import { ExportImageSheet } from "@/features/bead/components/export-image-sheet";
+import { ExportImagePanel } from "@/features/bead/components/export-image-panel";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
@@ -47,8 +50,10 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
-  const [isExportSheetOpen, setIsExportSheetOpen] = useState(false);
+  const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
   const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
+  const [exportImageDisplayOptions, setExportImageDisplayOptions] =
+    useState<BeadImageDisplayOptions>(defaultBeadImageDisplayOptions);
   const {
     beads,
     beginEdit,
@@ -100,7 +105,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     [selectedLetter],
   );
   const hasBeads = beads.some(Boolean);
-  const isExportImageSheetEnabled = Capacitor.getPlatform() === "android";
   const exportImageFilename = `bead-${size.id}.png`;
 
   function beginCellEdit() {
@@ -174,8 +178,8 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     });
   }
 
-  function createExportImage() {
-    actions.createExportImageBlob().then((blob) => {
+  function createExportImage(displayOptions: BeadImageDisplayOptions) {
+    void actions.createExportImageBlob(displayOptions).then((blob) => {
       if (blob) {
         setExportImageBlob(blob);
       }
@@ -183,15 +187,18 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   }
 
   function handleExportImage() {
-    if (!isExportImageSheetEnabled) {
-      actions.exportImage();
-      return;
-    }
-
     setExportImageBlob(null);
-    setIsExportSheetOpen(true);
-    trackEvent("android_export_sheet_opened", getCanvasProperties());
-    createExportImage();
+    setIsExportPanelOpen(true);
+    trackEvent("export_image_panel_opened", getCanvasProperties());
+    createExportImage(exportImageDisplayOptions);
+  }
+
+  function changeExportImageDisplayOptions(
+    displayOptions: BeadImageDisplayOptions,
+  ) {
+    setExportImageDisplayOptions(displayOptions);
+    setExportImageBlob(null);
+    createExportImage(displayOptions);
   }
 
   function changeModelPreviewMode(mode: ModelPreviewMode) {
@@ -239,7 +246,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           canClear={hasBeads}
           canRedo={canRedo}
           canUndo={canUndo}
-          isExportImageSheetEnabled={isExportImageSheetEnabled}
           isModelPreviewOpen={modelPreview.isOpen}
           isPreparingModelPreview={modelPreview.isPreparing}
           projectTitle={title}
@@ -259,13 +265,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           isGeneratingAiImage={isGeneratingAiImage}
           isGeneratingAlgorithmImage={isGeneratingAlgorithmImage}
         />
-        <ExportImageSheet
+        <ExportImagePanel
           blob={exportImageBlob}
+          displayOptions={exportImageDisplayOptions}
           filename={exportImageFilename}
           isCreating={isExportingImage}
-          open={isExportSheetOpen}
+          open={isExportPanelOpen}
           onCreateImage={createExportImage}
-          onOpenChange={setIsExportSheetOpen}
+          onDisplayOptionsChange={changeExportImageDisplayOptions}
+          onOpenChange={setIsExportPanelOpen}
         />
         <input
           accept=".bead.json,application/json"

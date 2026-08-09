@@ -1,4 +1,5 @@
 import {
+  type BeadImageDisplayOptions,
   type BeadImageSvg,
   createBeadImageSvg,
 } from "@bead/core/bead-image-svg";
@@ -7,9 +8,10 @@ import { compactCanvas } from "@/features/bead/storage/project-snapshots";
 import type { BeadFill } from "@/features/bead/types";
 
 type ExportBeadImageOptions = {
-  rows: number;
-  cols: number;
   beads: readonly (BeadFill | null)[];
+  cols: number;
+  displayOptions: BeadImageDisplayOptions;
+  rows: number;
 };
 
 type DownloadBeadImageOptions = ExportBeadImageOptions & {
@@ -22,10 +24,12 @@ export function createBeadImageBlob({
   rows,
   cols,
   beads,
+  displayOptions,
 }: ExportBeadImageOptions) {
   const image = createBeadImageSvg({
     rows,
     cols,
+    displayOptions,
     snapshot: compactCanvas(beads),
   });
 

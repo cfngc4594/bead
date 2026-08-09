@@ -2,7 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { env } from "@/env";
 
 type AnalyticsEventName =
-  | "android_export_sheet_opened"
+  | "export_image_panel_opened"
   | "canvas_edited"
   | "canvas_cleared"
   | "discover_project_opened"
