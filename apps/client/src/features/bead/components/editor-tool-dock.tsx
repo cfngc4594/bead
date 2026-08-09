@@ -1,17 +1,21 @@
 import { cn } from "@bead/ui/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   EditorToolButton,
   editorToolSurfaceClassName,
 } from "@/features/bead/components/editor-tool-button";
 import { canvasToolDefinitions } from "@/features/bead/lib/canvas-tool-definitions";
+import {
+  type CanvasToolLayout,
+  shouldShowTransientCanvasToolHint,
+} from "@/features/bead/lib/canvas-tool-hint";
 import type { CanvasTool } from "@/features/bead/types";
 
-const MOBILE_TOOL_TOOLTIP_DURATION_MS = 1500;
+const TRANSIENT_TOOL_TOOLTIP_DURATION_MS = 1500;
 
 type EditorToolDockProps = {
   className?: string;
-  layout: "desktop" | "mobile";
+  layout: CanvasToolLayout;
   onSelectTool: (tool: CanvasTool) => void;
   tool: CanvasTool;
 };
@@ -23,28 +27,40 @@ export function EditorToolDock({
   tool,
 }: EditorToolDockProps) {
   const isDesktop = layout === "desktop";
-  const [mobileTooltip, setMobileTooltip] = useState<{
+  const pointerTypeRef = useRef<string | null>(null);
+  const showTransientTooltipForClickRef = useRef(false);
+  const [usesTransientTooltips, setUsesTransientTooltips] = useState(
+    !isDesktop,
+  );
+  const [transientTooltip, setTransientTooltip] = useState<{
     tool: CanvasTool;
   } | null>(null);
 
   useEffect(() => {
-    if (mobileTooltip === null) {
+    if (transientTooltip === null) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setMobileTooltip(null);
-    }, MOBILE_TOOL_TOOLTIP_DURATION_MS);
+      setTransientTooltip(null);
+    }, TRANSIENT_TOOL_TOOLTIP_DURATION_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [mobileTooltip]);
+  }, [transientTooltip]);
 
   const handleSelectTool = (nextTool: CanvasTool) => {
     onSelectTool(nextTool);
-    if (!isDesktop) {
-      setMobileTooltip({ tool: nextTool });
+
+    const showTransientTooltip = showTransientTooltipForClickRef.current;
+    showTransientTooltipForClickRef.current = false;
+    setUsesTransientTooltips(showTransientTooltip);
+
+    if (showTransientTooltip) {
+      setTransientTooltip({ tool: nextTool });
+    } else {
+      setTransientTooltip(null);
     }
   };
 
@@ -56,6 +72,30 @@ export function EditorToolDock({
           ? cn(editorToolSurfaceClassName, "pointer-events-auto")
           : "shrink-0",
       )}
+      onClickCapture={() => {
+        showTransientTooltipForClickRef.current =
+          shouldShowTransientCanvasToolHint({
+            layout,
+            pointerType: pointerTypeRef.current,
+          });
+        pointerTypeRef.current = null;
+      }}
+      onPointerCancelCapture={() => {
+        pointerTypeRef.current = null;
+      }}
+      onPointerDownCapture={(event) => {
+        pointerTypeRef.current = event.pointerType;
+      }}
+      onPointerMoveCapture={(event) => {
+        if (
+          isDesktop &&
+          usesTransientTooltips &&
+          event.pointerType === "mouse"
+        ) {
+          setUsesTransientTooltips(false);
+          setTransientTooltip(null);
+        }
+      }}
       role="toolbar"
       aria-label="画布工具"
     >
@@ -67,7 +107,9 @@ export function EditorToolDock({
           label={definition.label}
           onClick={() => handleSelectTool(definition.tool)}
           tooltipOpen={
-            isDesktop ? undefined : mobileTooltip?.tool === definition.tool
+            usesTransientTooltips
+              ? transientTooltip?.tool === definition.tool
+              : undefined
           }
         />
       ))}
