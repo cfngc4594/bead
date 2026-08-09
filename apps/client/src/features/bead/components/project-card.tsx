@@ -41,8 +41,9 @@ export function ProjectCard({
         params={{ projectId: project.id }}
         to={route}
       >
-        <div className="aspect-4/3">
+        <div className="relative aspect-4/3">
           <ProjectPreview
+            className="absolute inset-0 aspect-4/3"
             cols={size.cols}
             rows={size.rows}
             snapshot={snapshot}

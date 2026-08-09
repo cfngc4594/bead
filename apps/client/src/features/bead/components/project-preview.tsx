@@ -60,7 +60,7 @@ export function ProjectPreview({
 
   return (
     <canvas
-      className={cn("h-full w-full object-contain p-3", className)}
+      className={cn("block h-auto w-full object-contain p-3", className)}
       ref={canvasRef}
     />
   );
