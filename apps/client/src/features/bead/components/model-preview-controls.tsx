@@ -45,14 +45,19 @@ export function ModelPreviewControls({
         >
           烫法
         </h2>
-        <div className="grid min-w-0 grid-cols-[repeat(auto-fit,56px)] justify-start gap-2">
+        <div
+          className={cn(
+            "flex min-w-0 flex-wrap gap-x-3 gap-y-2",
+            layout === "desktop" ? "justify-center" : "justify-start",
+          )}
+        >
           {modelPreviewModes.map((item) => {
             const isSelected = item.id === mode;
 
             return (
               <button
                 aria-pressed={isSelected}
-                className="group flex w-fit min-w-0 justify-self-center flex-col items-center gap-1 rounded-md py-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                className="group flex w-14 min-w-0 flex-col items-center gap-1 rounded-md py-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 key={item.id}
                 onClick={() => onModeChange(item.id)}
                 type="button"
