@@ -33,15 +33,15 @@ export function ProjectCard({
   const size = getCanvasSize(project.sizeId);
 
   return (
-    <article className="group relative flex aspect-square self-start flex-col overflow-hidden rounded-xl border bg-card shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/50">
+    <article className="group relative overflow-hidden rounded-xl border bg-card shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/50">
       <Link
         aria-label={`${openLabel} ${project.title}`}
-        className="block min-h-0 flex-1 bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="block bg-muted/30 outline-none transition-colors group-hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
         onClick={() => onOpen("preview")}
         params={{ projectId: project.id }}
         to={route}
       >
-        <div className="h-full">
+        <div className="aspect-4/3">
           <ProjectPreview
             cols={size.cols}
             rows={size.rows}
@@ -50,7 +50,7 @@ export function ProjectCard({
         </div>
       </Link>
 
-      <div className="flex shrink-0 items-center gap-3 border-t bg-card px-4 py-3">
+      <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
         <Link
           className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           onClick={() => onOpen("title")}
@@ -86,12 +86,12 @@ export function ProjectCardSkeleton({
   showActions?: boolean;
 }) {
   return (
-    <article className="flex aspect-square self-start flex-col overflow-hidden rounded-xl border bg-card shadow-xs">
-      <div className="min-h-0 flex-1 bg-muted/30 p-3">
+    <article className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className="aspect-4/3 bg-muted/30 p-3">
         <Skeleton className="h-full w-full rounded-lg" />
       </div>
 
-      <div className="flex shrink-0 items-center gap-3 border-t bg-card px-4 py-3">
+      <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
         <div className="min-w-0 flex-1 space-y-0.5">
           <div className="flex h-4 items-start">
             <Skeleton className="h-3.5 w-18" />
