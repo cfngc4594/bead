@@ -21,10 +21,12 @@ const toolbarFileSkeletons = [
   "template-import",
   "template-export",
 ];
+const toolbarOnboardingSkeletons = ["onboarding"];
 const desktopToolbarActionGroups = [
   toolbarViewSkeletons,
   toolbarHistorySkeletons,
   toolbarFileSkeletons,
+  toolbarOnboardingSkeletons,
 ];
 const letterSkeletons = Array.from(
   new Set(mardColors.map((color) => color.code[0])),

@@ -13,6 +13,7 @@ on:
       - "tsconfig.json"
       - "nx.json"
       - "biome.json"
+      - "playwright.config.ts"
       - ".github/workflows/ci.yml"
       - ".github/actions/**"
   push:
@@ -27,6 +28,7 @@ on:
       - "tsconfig.json"
       - "nx.json"
       - "biome.json"
+      - "playwright.config.ts"
       - ".github/workflows/ci.yml"
       - ".github/actions/**"
 
@@ -72,6 +74,7 @@ jobs:
               - 'apps/site/**'
             client:
               - 'apps/client/**'
+              - 'playwright.config.ts'
             api:
               - 'apps/api/**'
 
@@ -113,6 +116,46 @@ jobs:
 
       - name: Typecheck
         run: bun run typecheck
+
+  test:
+    name: Test
+    needs: changes
+    if: github.event_name == 'push' || github.event.pull_request.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Test
+        run: bun test
+
+  client-e2e:
+    name: Client E2E
+    needs: changes
+    if: >-
+      (github.event_name == 'push' || github.event.pull_request.action != 'closed') &&
+      (
+        needs.changes.outputs.shared == 'true' ||
+        needs.changes.outputs.client == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Setup monorepo
+        uses: ./.github/actions/setup-monorepo
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Test client E2E
+        run: bun run test:e2e
 
   site:
     name: Build site (${{ (github.base_ref || github.ref_name) == 'develop' && 'Preview' || 'Production' }})

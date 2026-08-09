@@ -29,7 +29,10 @@ export function DesktopEditorSidebar({
   onSelectLetter,
 }: DesktopEditorSidebarProps) {
   return (
-    <aside className="hidden h-full min-h-0 flex-col border-l bg-card md:flex">
+    <aside
+      className="hidden h-full min-h-0 flex-col border-l bg-card md:flex"
+      data-onboarding="editor-colors-desktop"
+    >
       {modelPreviewControls ? (
         <>
           <div className="flex h-16 shrink-0 items-center gap-3 border-b px-4">
