@@ -17,8 +17,6 @@
 
 # testing
 /coverage
-/.playwright-cli/
-/output/playwright/
 
 # tanstack
 /.tanstack/
