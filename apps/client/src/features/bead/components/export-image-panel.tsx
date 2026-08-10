@@ -1,4 +1,7 @@
-import type { BeadImageDisplayOptions } from "@bead/core/bead-image-svg";
+import type {
+  BeadImageDisplayOptions,
+  BeadImageSvg,
+} from "@bead/core/bead-image-svg";
 import { Button } from "@bead/ui/components/button";
 import {
   DialogClose,
@@ -24,6 +27,7 @@ import {
   saveImageBlob,
   shareImageBlob,
 } from "@/features/bead/lib/download-file";
+import { createBeadImageSvgBlob } from "@/features/bead/lib/export-image";
 import {
   NativeBackDialog,
   NativeBackSheet,
@@ -32,13 +36,14 @@ import { NativeBottomSheetContent } from "@/features/native/native-safe-area";
 import { trackEvent } from "@/lib/analytics";
 
 type ExportImagePanelProps = {
-  blob: Blob | null;
   displayOptions: BeadImageDisplayOptions;
   filename: string;
-  isCreating: boolean;
-  onCreateImage: (displayOptions: BeadImageDisplayOptions) => void;
+  image: BeadImageSvg | null;
+  isEncoding: boolean;
+  onCreatePng: (image: BeadImageSvg) => Promise<Blob | null>;
   onDisplayOptionsChange: (displayOptions: BeadImageDisplayOptions) => void;
   onOpenChange: (open: boolean) => void;
+  onPrepareImage: (displayOptions: BeadImageDisplayOptions) => void;
   open: boolean;
 };
 
@@ -49,7 +54,7 @@ type ExportOptionDefinition = {
 
 type ExportImageContentProps = {
   displayOptions: BeadImageDisplayOptions;
-  isCreating: boolean;
+  isPreviewPreparing: boolean;
   isWorking: boolean;
   onDisplayOptionsChange: (displayOptions: BeadImageDisplayOptions) => void;
   onRegenerate: () => void;
@@ -82,13 +87,14 @@ const optionDefinitions = [
 ] as const satisfies readonly ExportOptionDefinition[];
 
 export function ExportImagePanel({
-  blob,
   displayOptions,
   filename,
-  isCreating,
-  onCreateImage,
+  image,
+  isEncoding,
+  onCreatePng,
   onDisplayOptionsChange,
   onOpenChange,
+  onPrepareImage,
   open,
 }: ExportImagePanelProps) {
   const isMobileViewport = useIsMobile();
@@ -99,29 +105,35 @@ export function ExportImagePanel({
   const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
-    if (!blob) {
+    if (!image) {
       setPreviewUrl(null);
       return;
     }
 
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(createBeadImageSvgBlob(image));
     setPreviewUrl(url);
 
     return () => URL.revokeObjectURL(url);
-  }, [blob]);
+  }, [image]);
 
   async function saveImage() {
-    if (!blob || isSaving) {
+    if (!image || isEncoding || isSaving || isSharing) {
       return;
     }
 
     setIsSaving(true);
 
     try {
+      const blob = await onCreatePng(image);
+
+      if (!blob) {
+        return;
+      }
+
       await saveImageBlob(blob, filename);
       trackEvent("export_image_saved", {
         destination: isNative ? "photo_library" : "download",
-        ...displayOptions,
+        ...image.displayOptions,
       });
       toast.success(isNative ? "图片已保存" : "图片已下载");
       onOpenChange(false);
@@ -134,19 +146,25 @@ export function ExportImagePanel({
   }
 
   async function shareImage() {
-    if (!blob || isSharing) {
+    if (!image || isEncoding || isSaving || isSharing) {
       return;
     }
 
     setIsSharing(true);
 
     try {
+      const blob = await onCreatePng(image);
+
+      if (!blob) {
+        return;
+      }
+
       const didShare = await shareImageBlob(blob, filename);
 
       if (didShare) {
         trackEvent("export_image_shared", {
           destination: "share_sheet",
-          ...displayOptions,
+          ...image.displayOptions,
         });
         toast.success("图片已分享");
         onOpenChange(false);
@@ -164,20 +182,20 @@ export function ExportImagePanel({
       destination: useMobileLayout ? "mobile_panel" : "desktop_dialog",
       ...displayOptions,
     });
-    onCreateImage(displayOptions);
+    onPrepareImage(displayOptions);
   }
 
-  const isWorking = isCreating || isSaving || isSharing;
+  const isWorking = isEncoding || isSaving || isSharing;
   const content: ExportImageContentProps = {
     displayOptions,
-    isCreating,
+    isPreviewPreparing: Boolean(image) && !previewUrl,
     isWorking,
     onDisplayOptionsChange,
     onRegenerate: regenerateImage,
     previewUrl,
   };
   const layout = {
-    canSave: Boolean(blob) && !isWorking,
+    canSave: Boolean(image) && !isWorking,
     content,
     filename,
     isSaving,
@@ -227,7 +245,7 @@ function MobileExportImagePanel({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <ExportImagePreview
             className="aspect-4/3 max-h-[34vh] w-full"
-            isCreating={content.isCreating}
+            isPreparing={content.isPreviewPreparing}
             onRegenerate={content.onRegenerate}
             previewUrl={content.previewUrl}
           />
@@ -306,7 +324,7 @@ function DesktopExportImagePanel({
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
           <ExportImagePreview
             className="h-[min(50vh,500px)] min-h-64 w-full"
-            isCreating={content.isCreating}
+            isPreparing={content.isPreviewPreparing}
             onRegenerate={content.onRegenerate}
             previewUrl={content.previewUrl}
           />
@@ -352,12 +370,12 @@ function DesktopExportImagePanel({
 
 function ExportImagePreview({
   className,
-  isCreating,
+  isPreparing,
   onRegenerate,
   previewUrl,
 }: {
   className: string;
-  isCreating: boolean;
+  isPreparing: boolean;
   onRegenerate: () => void;
   previewUrl: string | null;
 }) {
@@ -374,7 +392,7 @@ function ExportImagePreview({
           className="absolute inset-0 h-full w-full object-contain p-2"
           src={previewUrl}
         />
-      ) : isCreating ? (
+      ) : isPreparing ? (
         <output className="flex items-center gap-2 text-muted-foreground">
           <LoaderCircle className="animate-spin" />
           <span>正在生成预览</span>

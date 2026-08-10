@@ -1,50 +1,37 @@
 import {
-  type BeadImageDisplayOptions,
   type BeadImageSvg,
-  createBeadImageSvg,
+  createBeadImageSvgRenderer,
 } from "@bead/core/bead-image-svg";
-import { downloadImageBlob } from "@/features/bead/lib/download-file";
 import { compactCanvas } from "@/features/bead/storage/project-snapshots";
 import type { BeadFill } from "@/features/bead/types";
 
-type ExportBeadImageOptions = {
+type PrepareBeadImageOptions = {
   beads: readonly (BeadFill | null)[];
   cols: number;
-  displayOptions: BeadImageDisplayOptions;
   rows: number;
 };
 
-type DownloadBeadImageOptions = ExportBeadImageOptions & {
-  filename: string;
-};
-
 const exportScale = 4;
+const svgMimeType = "image/svg+xml;charset=utf-8";
 
-export function createBeadImageBlob({
+export function prepareBeadImage({
   rows,
   cols,
   beads,
-  displayOptions,
-}: ExportBeadImageOptions) {
-  const image = createBeadImageSvg({
+}: PrepareBeadImageOptions) {
+  return createBeadImageSvgRenderer({
     rows,
     cols,
-    displayOptions,
     snapshot: compactCanvas(beads),
   });
-
-  return rasterizeSvg(image);
 }
 
-export async function exportBeadImage({
-  filename,
-  ...options
-}: DownloadBeadImageOptions) {
-  const blob = await createBeadImageBlob(options);
-  await downloadImageBlob(blob, filename);
+export function createBeadImageSvgBlob({ svg }: BeadImageSvg) {
+  return new Blob([svg], { type: svgMimeType });
 }
 
-async function rasterizeSvg({ svg, width, height }: BeadImageSvg) {
+export async function createBeadImagePngBlob(image: BeadImageSvg) {
+  const { width, height } = image;
   const canvas = document.createElement("canvas");
   canvas.width = width * exportScale;
   canvas.height = height * exportScale;
@@ -54,8 +41,7 @@ async function rasterizeSvg({ svg, width, height }: BeadImageSvg) {
     throw new Error("Unable to create export image.");
   }
 
-  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-  const objectUrl = URL.createObjectURL(svgBlob);
+  const objectUrl = URL.createObjectURL(createBeadImageSvgBlob(image));
 
   try {
     const image = await loadImage(objectUrl);

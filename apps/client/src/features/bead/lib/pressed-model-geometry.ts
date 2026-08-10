@@ -1,6 +1,88 @@
 import * as THREE from "three";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
 
+export function createPressedShellGeometry({ depth }: { depth: number }) {
+  const halfSize = 0.5;
+  const halfDepth = depth / 2;
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const indices: number[] = [];
+
+  function addQuad(
+    normal: readonly [number, number, number],
+    first: readonly [number, number, number],
+    second: readonly [number, number, number],
+    third: readonly [number, number, number],
+    fourth: readonly [number, number, number],
+  ) {
+    const vertexOffset = positions.length / 3;
+
+    for (const vertex of [first, second, third, fourth]) {
+      positions.push(...vertex);
+      normals.push(...normal);
+    }
+
+    indices.push(
+      vertexOffset,
+      vertexOffset + 1,
+      vertexOffset + 2,
+      vertexOffset + 2,
+      vertexOffset + 1,
+      vertexOffset + 3,
+    );
+  }
+
+  // The separately textured pressed surface owns the front (+Z) face. Keeping
+  // that face here as well would put two surfaces at almost the same depth.
+  addQuad(
+    [1, 0, 0],
+    [halfSize, -halfSize, halfDepth],
+    [halfSize, -halfSize, -halfDepth],
+    [halfSize, halfSize, halfDepth],
+    [halfSize, halfSize, -halfDepth],
+  );
+  addQuad(
+    [-1, 0, 0],
+    [-halfSize, halfSize, halfDepth],
+    [-halfSize, halfSize, -halfDepth],
+    [-halfSize, -halfSize, halfDepth],
+    [-halfSize, -halfSize, -halfDepth],
+  );
+  addQuad(
+    [0, 1, 0],
+    [-halfSize, halfSize, halfDepth],
+    [halfSize, halfSize, halfDepth],
+    [-halfSize, halfSize, -halfDepth],
+    [halfSize, halfSize, -halfDepth],
+  );
+  addQuad(
+    [0, -1, 0],
+    [halfSize, -halfSize, halfDepth],
+    [-halfSize, -halfSize, halfDepth],
+    [halfSize, -halfSize, -halfDepth],
+    [-halfSize, -halfSize, -halfDepth],
+  );
+  addQuad(
+    [0, 0, -1],
+    [-halfSize, -halfSize, -halfDepth],
+    [-halfSize, halfSize, -halfDepth],
+    [halfSize, -halfSize, -halfDepth],
+    [halfSize, halfSize, -halfDepth],
+  );
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setIndex(indices);
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+
+  return geometry;
+}
+
 export function createPressedSurfaceGeometry({
   instances,
   patternSize,

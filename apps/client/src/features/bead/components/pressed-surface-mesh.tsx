@@ -4,7 +4,10 @@ import * as THREE from "three";
 import type { BeadModelInstance } from "@/features/bead/lib/bead-model-layout";
 import { modelPreviewSpecularIntensity } from "@/features/bead/lib/model-preview-config";
 import { applyPressedModelPreviewShading } from "@/features/bead/lib/model-preview-material";
-import { createPressedSurfaceGeometry } from "@/features/bead/lib/pressed-model-geometry";
+import {
+  createPressedShellGeometry,
+  createPressedSurfaceGeometry,
+} from "@/features/bead/lib/pressed-model-geometry";
 
 export type NormalTextureStatus = "loading" | "ready" | "error";
 
@@ -38,7 +41,7 @@ export function PressedSurfaceMesh({
     [instances, patternSize],
   );
   const edgeGeometry = useMemo(
-    () => new THREE.BoxGeometry(1, 1, pressedModelDepth),
+    () => createPressedShellGeometry({ depth: pressedModelDepth }),
     [],
   );
   const edgeMaterial = useMemo(() => {
@@ -167,10 +170,7 @@ export function PressedSurfaceMesh({
         args={[edgeGeometry, edgeMaterial, instances.length]}
         ref={edgeMeshRef}
       />
-      <mesh
-        geometry={surfaceGeometry}
-        position={[0, 0, pressedModelDepth / 2 + 0.002]}
-      >
+      <mesh geometry={surfaceGeometry} position={[0, 0, pressedModelDepth / 2]}>
         <meshPhysicalMaterial
           color="#ffffff"
           key={normalMap?.uuid ?? normalMapUrl}

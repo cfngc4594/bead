@@ -1,11 +1,12 @@
 import type { CanvasSnapshot } from "./canvas-snapshot";
 import { getMardColor, getMardColorIndex } from "./colors";
 
-export type BeadImageSvg = {
+export type BeadImageSvg = Readonly<{
+  displayOptions: BeadImageDisplayOptions;
   height: number;
   svg: string;
   width: number;
-};
+}>;
 
 export type BeadImageDisplayOptions = Readonly<{
   showBeadCodes: boolean;
@@ -26,6 +27,12 @@ type BeadImageSvgOptions = {
   snapshot: CanvasSnapshot;
 };
 
+type BeadImageSvgRendererOptions = Omit<BeadImageSvgOptions, "displayOptions">;
+
+export type BeadImageSvgRenderer = Readonly<{
+  render: (displayOptions?: BeadImageDisplayOptions) => BeadImageSvg;
+}>;
+
 type BeadStat = {
   code: string;
   count: number;
@@ -33,6 +40,11 @@ type BeadStat = {
 };
 
 type GuideInterval = 5 | 10;
+
+type StatsPresentation = {
+  height: number;
+  layer: string;
+};
 
 type StatsLayout = {
   columns: number;
@@ -57,7 +69,7 @@ const maxStatsColumns = 8;
 
 const palette = {
   background: "#ffffff",
-  cellBackground: "#ffffff",
+  boardBackground: "#ffffff",
   grid: "#d9d9d9",
   labelBackground: "#f3f4f6",
   labelText: "#6b7280",
@@ -69,6 +81,16 @@ export function createBeadImageSvg({
   rows,
   snapshot,
 }: BeadImageSvgOptions): BeadImageSvg {
+  return createBeadImageSvgRenderer({ cols, rows, snapshot }).render(
+    displayOptions,
+  );
+}
+
+export function createBeadImageSvgRenderer({
+  cols,
+  rows,
+  snapshot,
+}: BeadImageSvgRendererOptions): BeadImageSvgRenderer {
   assertPositiveInteger(rows, "rows");
   assertPositiveInteger(cols, "cols");
 
@@ -107,113 +129,181 @@ export function createBeadImageSvg({
   const boardHeight = rows * cellSize + boardOrigin * 2;
   const width = boardWidth + exportHorizontalPadding * 2;
   const statsWidth = cols * cellSize;
-  const statsLayout = displayOptions.showColorLegend
-    ? getStatsLayout({
-        boardHeight,
-        statsCount: stats.length,
-        statsWidth,
-        totalWidth: width,
-      })
-    : null;
-  const statsY = boardHeight + (statsLayout ? statsBoardGap : 0);
-  const height =
-    statsY +
-    (statsLayout?.height ?? 0) +
-    exportTopPadding +
-    exportBottomPadding;
-  const elements = [
-    `<rect width="${width}" height="${height}" fill="${palette.background}"/>`,
-    `<g transform="translate(${exportHorizontalPadding} ${exportTopPadding})">`,
-    ...createBoardElements({
-      beads,
-      boardOrigin,
-      cols,
-      rows,
-      showBeadCodes: displayOptions.showBeadCodes,
-      showGuides: displayOptions.showGuides,
-    }),
-    ...(statsLayout
-      ? createStatsElements(stats, boardOrigin, statsY, statsLayout)
-      : []),
-    "</g>",
-  ];
+  const heightWithoutStats =
+    boardHeight + exportTopPadding + exportBottomPadding;
+  const renderedVariants = new Map<number, BeadImageSvg>();
+  let beadCodesLayer: string | undefined;
+  let boardLayer: string | undefined;
+  let guidesLayer: string | undefined;
+  let statsPresentation: StatsPresentation | undefined;
+
+  function getBoardLayer() {
+    boardLayer ??= createBoardLayer({ beads, boardOrigin, cols, rows });
+    return boardLayer;
+  }
+
+  function getBeadCodesLayer() {
+    beadCodesLayer ??= createBeadCodesLayer({ beads, boardOrigin, cols });
+    return beadCodesLayer;
+  }
+
+  function getGuidesLayer() {
+    guidesLayer ??= createGuideElements(rows, cols, boardOrigin).join("");
+    return guidesLayer;
+  }
+
+  function getStatsPresentation() {
+    if (statsPresentation) {
+      return statsPresentation;
+    }
+
+    const layout = getStatsLayout({
+      boardHeight,
+      statsCount: stats.length,
+      statsWidth,
+      totalWidth: width,
+    });
+    const y = boardHeight + statsBoardGap;
+    statsPresentation = {
+      height: y + layout.height + exportTopPadding + exportBottomPadding,
+      layer: createStatsElements(stats, boardOrigin, y, layout).join(""),
+    };
+    return statsPresentation;
+  }
 
   return {
-    height,
-    svg: [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-      ...elements,
-      "</svg>",
-    ].join(""),
-    width,
+    render(displayOptions = defaultBeadImageDisplayOptions) {
+      const cacheKey = getDisplayOptionsCacheKey(displayOptions);
+      const cached = renderedVariants.get(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
+      const visibleStats = displayOptions.showColorLegend
+        ? getStatsPresentation()
+        : null;
+      const height = visibleStats?.height ?? heightWithoutStats;
+      const image = {
+        displayOptions: {
+          showBeadCodes: displayOptions.showBeadCodes,
+          showColorLegend: displayOptions.showColorLegend,
+          showGuides: displayOptions.showGuides,
+        },
+        height,
+        svg: [
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+          `<rect width="${width}" height="${height}" fill="${palette.background}"/>`,
+          `<g transform="translate(${exportHorizontalPadding} ${exportTopPadding})">`,
+          getBoardLayer(),
+          displayOptions.showGuides ? getGuidesLayer() : "",
+          displayOptions.showBeadCodes ? getBeadCodesLayer() : "",
+          visibleStats?.layer ?? "",
+          "</g>",
+          "</svg>",
+        ].join(""),
+        width,
+      };
+
+      renderedVariants.set(cacheKey, image);
+      return image;
+    },
   };
 }
 
-function createBoardElements({
+function createBoardLayer({
   beads,
   boardOrigin,
   cols,
   rows,
-  showBeadCodes,
-  showGuides,
 }: {
   beads: ReadonlyMap<number, BeadStat>;
   boardOrigin: number;
   cols: number;
   rows: number;
-  showBeadCodes: boolean;
-  showGuides: boolean;
 }) {
-  const elements: string[] = [
-    '<g shape-rendering="crispEdges">',
+  const boardX = boardOrigin + 0.5;
+  const boardY = boardOrigin + 0.5;
+  const boardWidth = cols * cellSize;
+  const boardHeight = rows * cellSize;
+  const beadElements: string[] = [];
+
+  for (const [index, bead] of beads) {
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const x = boardX + col * cellSize;
+    const y = boardY + row * cellSize;
+    beadElements.push(
+      `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${bead.hex}"/>`,
+    );
+  }
+
+  return [
+    '<g data-layer="board">',
     ...createLabelElements(rows, cols, boardOrigin),
-  ];
+    `<rect data-layer="board-background" x="${boardX}" y="${boardY}" width="${boardWidth}" height="${boardHeight}" fill="${palette.boardBackground}"/>`,
+    '<g data-layer="bead-fills" shape-rendering="crispEdges">',
+    ...beadElements,
+    "</g>",
+    createBaseGridPath({ boardX, boardY, cols, rows }),
+    "</g>",
+  ].join("");
+}
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const index = row * cols + col;
-      const x = boardOrigin + col * cellSize;
-      const y = boardOrigin + row * cellSize;
-      const bead = beads.get(index);
+function createBaseGridPath({
+  boardX,
+  boardY,
+  cols,
+  rows,
+}: {
+  boardX: number;
+  boardY: number;
+  cols: number;
+  rows: number;
+}) {
+  const boardRight = boardX + cols * cellSize;
+  const boardBottom = boardY + rows * cellSize;
+  const path: string[] = [];
 
-      elements.push(
-        `<rect x="${x + 0.5}" y="${y + 0.5}" width="${cellSize}" height="${cellSize}" fill="${palette.cellBackground}" stroke="${palette.grid}"/>`,
-      );
-
-      if (bead) {
-        elements.push(
-          `<rect x="${x + 1}" y="${y + 1}" width="${cellSize - 1}" height="${cellSize - 1}" fill="${bead.hex}"/>`,
-        );
-      }
-    }
+  for (let col = 0; col <= cols; col += 1) {
+    const x = boardX + col * cellSize;
+    path.push(`M${x} ${boardY}V${boardBottom}`);
   }
-  elements.push("</g>");
 
-  if (showGuides) {
-    elements.push(...createGuideElements(rows, cols, boardOrigin));
+  for (let row = 0; row <= rows; row += 1) {
+    const y = boardY + row * cellSize;
+    path.push(`M${boardX} ${y}H${boardRight}`);
   }
 
-  if (!showBeadCodes) {
-    return elements;
-  }
+  return `<path data-layer="base-grid" d="${path.join(" ")}" fill="none" stroke="${palette.grid}" shape-rendering="geometricPrecision"/>`;
+}
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const bead = beads.get(row * cols + col);
-      if (!bead) {
-        continue;
-      }
-
+function createBeadCodesLayer({
+  beads,
+  boardOrigin,
+  cols,
+}: {
+  beads: ReadonlyMap<number, BeadStat>;
+  boardOrigin: number;
+  cols: number;
+}) {
+  return Array.from(beads.entries())
+    .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+    .map(([index, bead]) => {
+      const row = Math.floor(index / cols);
+      const col = index % cols;
       const x = boardOrigin + col * cellSize + cellCenterOffset;
       const y = boardOrigin + row * cellSize + cellCenterOffset;
-      elements.push(
-        createCenteredText(bead.code, x, y, getReadableTextColor(bead.hex)),
-      );
-    }
-  }
 
-  return elements;
+      return createCenteredText(
+        bead.code,
+        x,
+        y,
+        getReadableTextColor(bead.hex),
+      );
+    })
+    .join("");
 }
 
 function createGuideElements(rows: number, cols: number, boardOrigin: number) {
@@ -440,6 +530,18 @@ function assertPositiveInteger(value: number, name: string) {
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(`${name} must be a positive integer`);
   }
+}
+
+function getDisplayOptionsCacheKey({
+  showBeadCodes,
+  showColorLegend,
+  showGuides,
+}: BeadImageDisplayOptions) {
+  return (
+    Number(showBeadCodes) |
+    (Number(showColorLegend) << 1) |
+    (Number(showGuides) << 2)
+  );
 }
 
 function clamp(value: number, min: number, max: number) {
