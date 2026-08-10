@@ -1,5 +1,27 @@
 import { expect, test } from "bun:test";
-import { createPressedSurfaceGeometry } from "./pressed-model-geometry";
+import {
+  createPressedShellGeometry,
+  createPressedSurfaceGeometry,
+} from "./pressed-model-geometry";
+
+test("creates a pressed shell without an overlapping front face", () => {
+  const geometry = createPressedShellGeometry({ depth: 0.18 });
+  const normals = geometry.getAttribute("normal");
+
+  expect(geometry.getAttribute("position").count).toBe(20);
+  expect(normals.count).toBe(20);
+  expect(geometry.index?.count).toBe(30);
+  expect(geometry.boundingBox?.min.x).toBeCloseTo(-0.5);
+  expect(geometry.boundingBox?.max.x).toBeCloseTo(0.5);
+  expect(geometry.boundingBox?.min.z).toBeCloseTo(-0.09);
+  expect(geometry.boundingBox?.max.z).toBeCloseTo(0.09);
+
+  for (let index = 0; index < normals.count; index += 1) {
+    expect(normals.getZ(index)).not.toBe(1);
+  }
+
+  geometry.dispose();
+});
 
 test("creates one textured quad for each filled bead", () => {
   const geometry = createPressedSurfaceGeometry({
