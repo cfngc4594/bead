@@ -11,8 +11,11 @@ type DiscoverProjectRow = typeof discoverProjects.$inferSelect;
 
 function toDiscoverProject(project: DiscoverProjectRow): DiscoverProject {
   return {
-    ...project,
+    id: project.id,
     publishedAt: project.publishedAt.getTime(),
+    sizeId: project.sizeId,
+    snapshot: project.snapshot,
+    title: project.title,
   };
 }
 
@@ -40,10 +43,11 @@ export async function findDiscoverProject(
 
 export async function createDiscoverProject(
   project: PublishDiscoverProject,
+  publisherUserId: string,
 ): Promise<DiscoverProject> {
   const [createdProject] = await db
     .insert(discoverProjects)
-    .values(project)
+    .values({ ...project, publisherUserId })
     .returning();
 
   return toDiscoverProject(createdProject);

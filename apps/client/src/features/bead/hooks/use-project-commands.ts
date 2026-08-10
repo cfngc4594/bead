@@ -7,6 +7,7 @@ import {
   type Project,
   renameProject as renameStoredProject,
 } from "@/features/bead/storage/projects";
+import { AuthenticationRequiredError } from "@/features/discover/api/discover-api";
 import { usePublishDiscoverProject } from "@/features/discover/api/discover-queries";
 import { createPublishInput } from "@/features/discover/lib/create-publish-input";
 import { trackEvent } from "@/lib/analytics";
@@ -20,6 +21,7 @@ export function useProjectCommands(project: ProjectCommandTarget) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const publishMutation = usePublishDiscoverProject();
   const canPublish = !publishMutation.isPending && getFilledCount(project) > 0;
 
@@ -44,6 +46,11 @@ export function useProjectCommands(project: ProjectCommandTarget) {
       trackEvent("project_published", { sizeId: project.sizeId });
       toast.success("已发布");
     } catch (error) {
+      if (error instanceof AuthenticationRequiredError) {
+        setIsLoginOpen(true);
+        return;
+      }
+
       console.error("Unable to publish bead project", error);
       toast.error("发布作品失败");
     }
@@ -95,11 +102,13 @@ export function useProjectCommands(project: ProjectCommandTarget) {
     duplicate,
     isDeleteOpen,
     isDeleting,
+    isLoginOpen,
     isPublishing: publishMutation.isPending,
     isRenameOpen,
     publish,
     rename,
     setDeleteOpen,
     setIsRenameOpen,
+    setIsLoginOpen,
   };
 }

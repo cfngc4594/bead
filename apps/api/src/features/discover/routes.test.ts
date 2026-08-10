@@ -11,12 +11,14 @@ import {
 } from "./routes.js";
 
 const PROJECT_ID = "123e4567-e89b-12d3-a456-426614174001";
+const USER_ID = "publisher-user-id";
 
 describe("discover project routes", () => {
   test("returns discover projects", async () => {
     const project = createProject(createPublishProject("Rabbit"));
     const app = createDiscoverRoutes(
       createRepository({ listProjects: async () => [project] }),
+      resolveAuthenticatedUser,
     );
 
     const response = await app.request("/");
@@ -26,7 +28,10 @@ describe("discover project routes", () => {
   });
 
   test("returns 404 for a missing project and 400 for an invalid id", async () => {
-    const app = createDiscoverRoutes(createRepository());
+    const app = createDiscoverRoutes(
+      createRepository(),
+      resolveAuthenticatedUser,
+    );
 
     expect((await app.request(`/${PROJECT_ID}`)).status).toBe(404);
     expect((await app.request("/not-a-uuid")).status).toBe(400);
@@ -34,13 +39,16 @@ describe("discover project routes", () => {
 
   test("validates publish input", async () => {
     let receivedProject: PublishDiscoverProject | undefined;
+    let receivedPublisherUserId: string | undefined;
     const app = createDiscoverRoutes(
       createRepository({
-        createProject: async (project) => {
+        createProject: async (project, publisherUserId) => {
           receivedProject = project;
+          receivedPublisherUserId = publisherUserId;
           return createProject(project);
         },
       }),
+      resolveAuthenticatedUser,
     );
     const input = {
       project: createPublishProject("Rabbit"),
@@ -54,6 +62,7 @@ describe("discover project routes", () => {
 
     expect(response.status).toBe(201);
     expect(receivedProject?.title).toBe("Rabbit");
+    expect(receivedPublisherUserId).toBe(USER_ID);
     const responseBody = z
       .object({ project: discoverProjectSchema })
       .parse(await response.json());
@@ -68,6 +77,28 @@ describe("discover project routes", () => {
     });
     expect(invalidResponse.status).toBe(400);
   });
+
+  test("requires authentication to publish", async () => {
+    let createWasCalled = false;
+    const app = createDiscoverRoutes(
+      createRepository({
+        createProject: async (project) => {
+          createWasCalled = true;
+          return createProject(project);
+        },
+      }),
+      async () => null,
+    );
+
+    const response = await app.request("/", {
+      body: JSON.stringify({ project: createPublishProject("Rabbit") }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(401);
+    expect(createWasCalled).toBe(false);
+  });
 });
 
 function createRepository(
@@ -79,6 +110,10 @@ function createRepository(
     listProjects: async () => [],
     ...overrides,
   };
+}
+
+async function resolveAuthenticatedUser() {
+  return USER_ID;
 }
 
 function createPublishProject(title: string): PublishDiscoverProject {

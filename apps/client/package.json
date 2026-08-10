@@ -22,6 +22,7 @@
     "@tanstack/react-db": "^0.1.87",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-router": "^1.170.16",
+    "better-auth": "^1.6.25",
     "date-fns": "^4.4.0",
     "hono": "^4.12.27",
     "konva": "^10.3.0",

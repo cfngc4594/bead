@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { databaseEnv } from "../database-env.js";
-import * as schema from "./schema.js";
+import * as authSchema from "./auth-schema.js";
+import * as applicationSchema from "./schema.js";
 
 type PostgresClient = ReturnType<typeof postgres>;
 
@@ -19,4 +20,9 @@ const client =
 
 databaseGlobal.beadPostgresClient = client;
 
-export const db = drizzle(client, { schema });
+export const databaseSchema = {
+  ...applicationSchema,
+  ...authSchema,
+};
+
+export const db = drizzle(client, { schema: databaseSchema });

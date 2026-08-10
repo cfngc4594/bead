@@ -13,6 +13,7 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
+import { PhoneAuthDialog } from "@/features/auth/components/phone-auth-dialog";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import {
   DeleteProjectDialog,
@@ -70,6 +71,13 @@ export function ProjectListItem({
           onConfirm={commands.confirmDelete}
           onOpenChange={commands.setDeleteOpen}
           open={commands.isDeleteOpen}
+        />
+      ) : null}
+      {commands.isLoginOpen ? (
+        <PhoneAuthDialog
+          onAuthenticated={commands.publish}
+          onOpenChange={commands.setIsLoginOpen}
+          open={commands.isLoginOpen}
         />
       ) : null}
     </>

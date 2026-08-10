@@ -4,6 +4,13 @@ import type {
 } from "@bead/core/discover";
 import { api } from "@/lib/api";
 
+export class AuthenticationRequiredError extends Error {
+  constructor() {
+    super("Authentication required");
+    this.name = "AuthenticationRequiredError";
+  }
+}
+
 export async function fetchDiscoverProjects(): Promise<DiscoverProject[]> {
   const response = await api.discover.$get();
 
@@ -38,6 +45,10 @@ export async function publishDiscoverProject(
   project: PublishDiscoverProject,
 ): Promise<DiscoverProject> {
   const response = await api.discover.$post({ json: { project } });
+
+  if (response.status === 401) {
+    throw new AuthenticationRequiredError();
+  }
 
   if (!response.ok) {
     return throwResponseError(response, "发布作品失败");
