@@ -2,6 +2,7 @@ import type { CanvasSnapshot } from "./canvas-snapshot";
 import { getMardColor, getMardColorIndex } from "./colors";
 
 export type BeadImageSvg = Readonly<{
+  displayOptions: BeadImageDisplayOptions;
   height: number;
   svg: string;
   width: number;
@@ -184,6 +185,11 @@ export function createBeadImageSvgRenderer({
         : null;
       const height = visibleStats?.height ?? heightWithoutStats;
       const image = {
+        displayOptions: {
+          showBeadCodes: displayOptions.showBeadCodes,
+          showColorLegend: displayOptions.showColorLegend,
+          showGuides: displayOptions.showGuides,
+        },
         height,
         svg: [
           '<?xml version="1.0" encoding="UTF-8"?>',

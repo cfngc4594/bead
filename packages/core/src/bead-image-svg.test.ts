@@ -131,6 +131,7 @@ test("reuses rendered variants from one prepared image renderer", () => {
 
   expect(new Set(images.map((image) => image.svg))).toHaveLength(8);
   variants.forEach((displayOptions, index) => {
+    expect(images[index]?.displayOptions).toEqual(displayOptions);
     expect(renderer.render({ ...displayOptions })).toBe(images[index]);
   });
 });

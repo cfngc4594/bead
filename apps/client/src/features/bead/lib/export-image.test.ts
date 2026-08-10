@@ -14,6 +14,7 @@ test("creates the preview blob from the prepared SVG document", async () => {
   const image = renderer.render(defaultBeadImageDisplayOptions);
   const previewBlob = createBeadImageSvgBlob(image);
 
+  expect(image.displayOptions).toEqual(defaultBeadImageDisplayOptions);
   expect(previewBlob.type).toBe("image/svg+xml;charset=utf-8");
   expect(await previewBlob.text()).toBe(image.svg);
 });

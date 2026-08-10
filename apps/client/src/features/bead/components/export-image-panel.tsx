@@ -40,10 +40,7 @@ type ExportImagePanelProps = {
   filename: string;
   image: BeadImageSvg | null;
   isEncoding: boolean;
-  onCreatePng: (
-    image: BeadImageSvg,
-    displayOptions: BeadImageDisplayOptions,
-  ) => Promise<Blob | null>;
+  onCreatePng: (image: BeadImageSvg) => Promise<Blob | null>;
   onDisplayOptionsChange: (displayOptions: BeadImageDisplayOptions) => void;
   onOpenChange: (open: boolean) => void;
   onPrepareImage: (displayOptions: BeadImageDisplayOptions) => void;
@@ -127,7 +124,7 @@ export function ExportImagePanel({
     setIsSaving(true);
 
     try {
-      const blob = await onCreatePng(image, displayOptions);
+      const blob = await onCreatePng(image);
 
       if (!blob) {
         return;
@@ -136,7 +133,7 @@ export function ExportImagePanel({
       await saveImageBlob(blob, filename);
       trackEvent("export_image_saved", {
         destination: isNative ? "photo_library" : "download",
-        ...displayOptions,
+        ...image.displayOptions,
       });
       toast.success(isNative ? "图片已保存" : "图片已下载");
       onOpenChange(false);
@@ -156,7 +153,7 @@ export function ExportImagePanel({
     setIsSharing(true);
 
     try {
-      const blob = await onCreatePng(image, displayOptions);
+      const blob = await onCreatePng(image);
 
       if (!blob) {
         return;
@@ -167,7 +164,7 @@ export function ExportImagePanel({
       if (didShare) {
         trackEvent("export_image_shared", {
           destination: "share_sheet",
-          ...displayOptions,
+          ...image.displayOptions,
         });
         toast.success("图片已分享");
         onOpenChange(false);

@@ -1,7 +1,4 @@
-import type {
-  BeadImageDisplayOptions,
-  BeadImageSvg,
-} from "@bead/core/bead-image-svg";
+import type { BeadImageSvg } from "@bead/core/bead-image-svg";
 import { mardColors } from "@bead/core/colors";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -102,10 +99,7 @@ export function useEditorActions({
     trackEvent("redo_used", getCanvasProperties());
   }
 
-  async function createExportImageBlob(
-    image: BeadImageSvg,
-    displayOptions: BeadImageDisplayOptions,
-  ) {
+  async function createExportImageBlob(image: BeadImageSvg) {
     if (isExportingImageRef.current) {
       return null;
     }
@@ -114,7 +108,7 @@ export function useEditorActions({
     setIsExportingImage(true);
     trackEvent("image_export_started", {
       ...getImageExportProperties(),
-      ...displayOptions,
+      ...image.displayOptions,
       destination: "export_panel",
     });
 
@@ -124,7 +118,7 @@ export function useEditorActions({
 
       trackEvent("image_export_succeeded", {
         ...getImageExportProperties(),
-        ...displayOptions,
+        ...image.displayOptions,
         destination: "export_panel",
       });
       return blob;
@@ -132,7 +126,7 @@ export function useEditorActions({
       console.error("Unable to create export image", error);
       trackEvent("image_export_failed", {
         ...getImageExportProperties(),
-        ...displayOptions,
+        ...image.displayOptions,
         destination: "export_panel",
       });
       toast.error("图片生成失败");
