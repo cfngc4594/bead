@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import {
+  type BeadImageDisplayOptions,
   createBeadImageSvg,
+  createBeadImageSvgRenderer,
   defaultBeadImageDisplayOptions,
 } from "./bead-image-svg";
 
@@ -110,6 +112,27 @@ test("draws dashed five-cell guides and solid ten-cell guides", () => {
   expect(image.svg).toContain(
     '<line x1="18.5" y1="198.5" x2="234.5" y2="198.5" stroke="#334155" stroke-width="1.5"/>',
   );
+});
+
+test("reuses rendered variants from one prepared image renderer", () => {
+  const renderer = createBeadImageSvgRenderer({
+    cols: 12,
+    rows: 12,
+    snapshot: { cells: [[0, "A1"]] },
+  });
+  const variants = Array.from({ length: 8 }, (_, cacheKey) => ({
+    showBeadCodes: Boolean(cacheKey & 1),
+    showColorLegend: Boolean(cacheKey & 2),
+    showGuides: Boolean(cacheKey & 4),
+  })) satisfies BeadImageDisplayOptions[];
+  const images = variants.map((displayOptions) =>
+    renderer.render(displayOptions),
+  );
+
+  expect(new Set(images.map((image) => image.svg))).toHaveLength(8);
+  variants.forEach((displayOptions, index) => {
+    expect(renderer.render({ ...displayOptions })).toBe(images[index]);
+  });
 });
 
 test("rejects invalid snapshot indexes", () => {

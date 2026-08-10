@@ -1,5 +1,7 @@
 import {
   type BeadImageDisplayOptions,
+  type BeadImageSvg,
+  type BeadImageSvgRenderer,
   defaultBeadImageDisplayOptions,
 } from "@bead/core/bead-image-svg";
 import { getMardColor, mardColors } from "@bead/core/colors";
@@ -17,6 +19,7 @@ import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
+import { prepareBeadImage } from "@/features/bead/lib/export-image";
 import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
@@ -50,8 +53,9 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
+  const exportImageRendererRef = useRef<BeadImageSvgRenderer | null>(null);
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
-  const [exportImageBlob, setExportImageBlob] = useState<Blob | null>(null);
+  const [exportImage, setExportImage] = useState<BeadImageSvg | null>(null);
   const [exportImageDisplayOptions, setExportImageDisplayOptions] =
     useState<BeadImageDisplayOptions>(defaultBeadImageDisplayOptions);
   const {
@@ -178,27 +182,43 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     });
   }
 
-  function createExportImage(displayOptions: BeadImageDisplayOptions) {
-    void actions.createExportImageBlob(displayOptions).then((blob) => {
-      if (blob) {
-        setExportImageBlob(blob);
-      }
-    });
+  function prepareExportImage(displayOptions: BeadImageDisplayOptions) {
+    try {
+      exportImageRendererRef.current ??= prepareBeadImage({
+        beads,
+        cols: size.cols,
+        rows: size.rows,
+      });
+      setExportImage(exportImageRendererRef.current.render(displayOptions));
+    } catch (error) {
+      console.error("Unable to prepare export image", error);
+      setExportImage(null);
+      toast.error("预览生成失败");
+    }
   }
 
   function handleExportImage() {
-    setExportImageBlob(null);
+    exportImageRendererRef.current = null;
+    setExportImage(null);
     setIsExportPanelOpen(true);
     trackEvent("export_image_panel_opened", getCanvasProperties());
-    createExportImage(exportImageDisplayOptions);
+    prepareExportImage(exportImageDisplayOptions);
   }
 
   function changeExportImageDisplayOptions(
     displayOptions: BeadImageDisplayOptions,
   ) {
     setExportImageDisplayOptions(displayOptions);
-    setExportImageBlob(null);
-    createExportImage(displayOptions);
+    prepareExportImage(displayOptions);
+  }
+
+  function changeExportPanelOpen(open: boolean) {
+    setIsExportPanelOpen(open);
+
+    if (!open) {
+      exportImageRendererRef.current = null;
+      setExportImage(null);
+    }
   }
 
   function changeModelPreviewMode(mode: ModelPreviewMode) {
@@ -266,14 +286,15 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           isGeneratingAlgorithmImage={isGeneratingAlgorithmImage}
         />
         <ExportImagePanel
-          blob={exportImageBlob}
           displayOptions={exportImageDisplayOptions}
           filename={exportImageFilename}
-          isCreating={isExportingImage}
+          image={exportImage}
+          isEncoding={isExportingImage}
           open={isExportPanelOpen}
-          onCreateImage={createExportImage}
+          onCreatePng={actions.createExportImageBlob}
           onDisplayOptionsChange={changeExportImageDisplayOptions}
-          onOpenChange={setIsExportPanelOpen}
+          onOpenChange={changeExportPanelOpen}
+          onPrepareImage={prepareExportImage}
         />
         <input
           accept=".bead.json,application/json"

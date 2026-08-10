@@ -1,4 +1,7 @@
-import type { BeadImageDisplayOptions } from "@bead/core/bead-image-svg";
+import type {
+  BeadImageDisplayOptions,
+  BeadImageSvg,
+} from "@bead/core/bead-image-svg";
 import { mardColors } from "@bead/core/colors";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -6,7 +9,7 @@ import type { CanvasSize } from "@/config/canvas-sizes";
 import { startAiImageJob, waitForAiImageJob } from "@/features/bead/api/ai-api";
 import { canvasSnapshotToBeads } from "@/features/bead/lib/canvas-snapshot-to-beads";
 import type { CanvasState } from "@/features/bead/lib/canvas-state";
-import { createBeadImageBlob } from "@/features/bead/lib/export-image";
+import { createBeadImagePngBlob } from "@/features/bead/lib/export-image";
 import { exportBeadTemplate } from "@/features/bead/lib/export-template";
 import { generateBeadsFromImageFile } from "@/features/bead/lib/image-to-beads";
 import {
@@ -100,6 +103,7 @@ export function useEditorActions({
   }
 
   async function createExportImageBlob(
+    image: BeadImageSvg,
     displayOptions: BeadImageDisplayOptions,
   ) {
     if (isExportingImageRef.current) {
@@ -116,12 +120,7 @@ export function useEditorActions({
 
     try {
       await waitForNextFrame();
-      const blob = await createBeadImageBlob({
-        rows: size.rows,
-        cols: size.cols,
-        beads,
-        displayOptions,
-      });
+      const blob = await createBeadImagePngBlob(image);
 
       trackEvent("image_export_succeeded", {
         ...getImageExportProperties(),
