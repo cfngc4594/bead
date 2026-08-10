@@ -28,6 +28,15 @@ test("keeps hover tooltips for mouse input in desktop layouts", () => {
   ).toBe(false);
 });
 
+test("keeps hover tooltips for pointerless desktop activations", () => {
+  expect(
+    shouldShowTransientCanvasToolHint({
+      layout: "desktop",
+      pointerType: null,
+    }),
+  ).toBe(false);
+});
+
 test("always shows transient tool hints in mobile layouts", () => {
   expect(
     shouldShowTransientCanvasToolHint({

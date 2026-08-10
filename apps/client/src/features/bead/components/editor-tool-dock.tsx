@@ -29,12 +29,10 @@ export function EditorToolDock({
   const isDesktop = layout === "desktop";
   const pointerTypeRef = useRef<string | null>(null);
   const showTransientTooltipForClickRef = useRef(false);
-  const [usesTransientTooltips, setUsesTransientTooltips] = useState(
-    !isDesktop,
-  );
   const [transientTooltip, setTransientTooltip] = useState<{
     tool: CanvasTool;
   } | null>(null);
+  const usesTransientTooltips = !isDesktop || transientTooltip !== null;
 
   useEffect(() => {
     if (transientTooltip === null) {
@@ -55,7 +53,6 @@ export function EditorToolDock({
 
     const showTransientTooltip = showTransientTooltipForClickRef.current;
     showTransientTooltipForClickRef.current = false;
-    setUsesTransientTooltips(showTransientTooltip);
 
     if (showTransientTooltip) {
       setTransientTooltip({ tool: nextTool });
@@ -89,10 +86,9 @@ export function EditorToolDock({
       onPointerMoveCapture={(event) => {
         if (
           isDesktop &&
-          usesTransientTooltips &&
+          transientTooltip !== null &&
           event.pointerType === "mouse"
         ) {
-          setUsesTransientTooltips(false);
           setTransientTooltip(null);
         }
       }}
