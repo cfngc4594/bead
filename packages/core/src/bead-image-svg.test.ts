@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import {
+  type BeadImageDisplayOptions,
   createBeadImageSvg,
+  createBeadImageSvgRenderer,
   defaultBeadImageDisplayOptions,
 } from "./bead-image-svg";
 
@@ -25,6 +27,37 @@ test("creates one complete export document with labels, bead codes, and stats", 
   expect(image.svg.match(/>1<\/text>/g)).toHaveLength(4);
   expect(image.svg).toContain('fill="#FAF4C8"');
   expect(image.svg).toContain('fill="#3677D2"');
+});
+
+test("draws full-cell bead fills beneath one independent base-grid path", () => {
+  const image = createBeadImageSvg({
+    cols: 2,
+    displayOptions: {
+      ...defaultBeadImageDisplayOptions,
+      showBeadCodes: false,
+      showColorLegend: false,
+      showGuides: false,
+    },
+    rows: 1,
+    snapshot: {
+      cells: [
+        [0, "A1"],
+        [1, "C7"],
+      ],
+    },
+  });
+
+  expect(image.svg).toContain(
+    '<rect data-layer="board-background" x="18.5" y="18.5" width="36" height="18" fill="#ffffff"/>',
+  );
+  expect(image.svg).toContain(
+    '<g data-layer="bead-fills" shape-rendering="crispEdges"><rect x="18.5" y="18.5" width="18" height="18" fill="#FAF4C8"/><rect x="36.5" y="18.5" width="18" height="18" fill="#3677D2"/></g>',
+  );
+  expect(image.svg).toContain(
+    '<path data-layer="base-grid" d="M18.5 18.5V36.5 M36.5 18.5V36.5 M54.5 18.5V36.5 M18.5 18.5H54.5 M18.5 36.5H54.5" fill="none" stroke="#d9d9d9" shape-rendering="geometricPrecision"/>',
+  );
+  expect(image.svg.match(/data-layer="base-grid"/g)).toHaveLength(1);
+  expect(image.svg).not.toContain('width="17" height="17"');
 });
 
 test("combines repeated colors in the export stats", () => {
@@ -110,6 +143,28 @@ test("draws dashed five-cell guides and solid ten-cell guides", () => {
   expect(image.svg).toContain(
     '<line x1="18.5" y1="198.5" x2="234.5" y2="198.5" stroke="#334155" stroke-width="1.5"/>',
   );
+});
+
+test("reuses rendered variants from one prepared image renderer", () => {
+  const renderer = createBeadImageSvgRenderer({
+    cols: 12,
+    rows: 12,
+    snapshot: { cells: [[0, "A1"]] },
+  });
+  const variants = Array.from({ length: 8 }, (_, cacheKey) => ({
+    showBeadCodes: Boolean(cacheKey & 1),
+    showColorLegend: Boolean(cacheKey & 2),
+    showGuides: Boolean(cacheKey & 4),
+  })) satisfies BeadImageDisplayOptions[];
+  const images = variants.map((displayOptions) =>
+    renderer.render(displayOptions),
+  );
+
+  expect(new Set(images.map((image) => image.svg))).toHaveLength(8);
+  variants.forEach((displayOptions, index) => {
+    expect(images[index]?.displayOptions).toEqual(displayOptions);
+    expect(renderer.render({ ...displayOptions })).toBe(images[index]);
+  });
 });
 
 test("rejects invalid snapshot indexes", () => {

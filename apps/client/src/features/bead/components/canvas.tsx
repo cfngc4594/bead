@@ -31,6 +31,7 @@ import {
   cellSize,
   getGridCellFromPoint,
   getGridOrigin,
+  gridLineOffset,
 } from "@/features/bead/lib/canvas-geometry";
 import {
   createColumnLabelTexture,
@@ -621,24 +622,17 @@ export function CanvasBoard(props: CanvasBoardProps) {
         <Layer listening={false}>
           <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
             {showCellHover && hoveredCell ? (
-              <>
-                <Rect
-                  x={gridOrigin.x + hoveredCell.column * cellSize + 1}
-                  y={gridOrigin.y + hoveredCell.row * cellSize + 1}
-                  width={cellSize - 2}
-                  height={cellSize - 2}
-                  stroke={interactionPalette.hoverOuterStroke}
-                  strokeWidth={2}
-                />
-                <Rect
-                  x={gridOrigin.x + hoveredCell.column * cellSize + 2.5}
-                  y={gridOrigin.y + hoveredCell.row * cellSize + 2.5}
-                  width={cellSize - 5}
-                  height={cellSize - 5}
-                  stroke={interactionPalette.hoverInnerStroke}
-                  strokeWidth={1}
-                />
-              </>
+              <Rect
+                x={
+                  gridOrigin.x + hoveredCell.column * cellSize + gridLineOffset
+                }
+                y={gridOrigin.y + hoveredCell.row * cellSize + gridLineOffset}
+                width={cellSize}
+                height={cellSize}
+                fill={interactionPalette.hoverFill}
+                stroke={interactionPalette.hoverStroke}
+                strokeWidth={1}
+              />
             ) : null}
             {tool === "select" && selectionBox ? (
               <Rect

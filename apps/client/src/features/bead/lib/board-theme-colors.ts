@@ -9,8 +9,8 @@ type BoardDrawingPalette = {
 
 type BoardInteractionPalette = {
   activeSelectionFill: string;
-  hoverInnerStroke: string;
-  hoverOuterStroke: string;
+  hoverFill: string;
+  hoverStroke: string;
   invalidSelectionStroke: string;
   selectionFill: string;
   selectionStroke: string;
@@ -34,16 +34,16 @@ export const boardDrawingPalettes = {
 export const boardInteractionPalettes = {
   light: {
     activeSelectionFill: "rgba(59, 130, 246, 0.08)",
-    hoverInnerStroke: "#111111",
-    hoverOuterStroke: "#ffffff",
+    hoverFill: "rgba(255, 255, 255, 0.12)",
+    hoverStroke: "#ffffff",
     invalidSelectionStroke: "#dc2626",
     selectionFill: "rgba(59, 130, 246, 0.12)",
     selectionStroke: "#2563eb",
   },
   dark: {
     activeSelectionFill: "rgba(96, 165, 250, 0.12)",
-    hoverInnerStroke: "#111111",
-    hoverOuterStroke: "#ffffff",
+    hoverFill: "rgba(255, 255, 255, 0.12)",
+    hoverStroke: "#ffffff",
     invalidSelectionStroke: "#f87171",
     selectionFill: "rgba(96, 165, 250, 0.18)",
     selectionStroke: "#60a5fa",
