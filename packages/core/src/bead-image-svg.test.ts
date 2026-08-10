@@ -29,6 +29,37 @@ test("creates one complete export document with labels, bead codes, and stats", 
   expect(image.svg).toContain('fill="#3677D2"');
 });
 
+test("draws full-cell bead fills beneath one independent base-grid path", () => {
+  const image = createBeadImageSvg({
+    cols: 2,
+    displayOptions: {
+      ...defaultBeadImageDisplayOptions,
+      showBeadCodes: false,
+      showColorLegend: false,
+      showGuides: false,
+    },
+    rows: 1,
+    snapshot: {
+      cells: [
+        [0, "A1"],
+        [1, "C7"],
+      ],
+    },
+  });
+
+  expect(image.svg).toContain(
+    '<rect data-layer="board-background" x="18.5" y="18.5" width="36" height="18" fill="#ffffff"/>',
+  );
+  expect(image.svg).toContain(
+    '<g data-layer="bead-fills" shape-rendering="crispEdges"><rect x="18.5" y="18.5" width="18" height="18" fill="#FAF4C8"/><rect x="36.5" y="18.5" width="18" height="18" fill="#3677D2"/></g>',
+  );
+  expect(image.svg).toContain(
+    '<path data-layer="base-grid" d="M18.5 18.5V36.5 M36.5 18.5V36.5 M54.5 18.5V36.5 M18.5 18.5H54.5 M18.5 36.5H54.5" fill="none" stroke="#d9d9d9" shape-rendering="geometricPrecision"/>',
+  );
+  expect(image.svg.match(/data-layer="base-grid"/g)).toHaveLength(1);
+  expect(image.svg).not.toContain('width="17" height="17"');
+});
+
 test("combines repeated colors in the export stats", () => {
   const image = createBeadImageSvg({
     cols: 2,

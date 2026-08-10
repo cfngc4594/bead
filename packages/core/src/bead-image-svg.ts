@@ -69,7 +69,7 @@ const maxStatsColumns = 8;
 
 const palette = {
   background: "#ffffff",
-  cellBackground: "#ffffff",
+  boardBackground: "#ffffff",
   grid: "#d9d9d9",
   labelBackground: "#f3f4f6",
   labelText: "#6b7280",
@@ -133,13 +133,13 @@ export function createBeadImageSvgRenderer({
     boardHeight + exportTopPadding + exportBottomPadding;
   const renderedVariants = new Map<number, BeadImageSvg>();
   let beadCodesLayer: string | undefined;
-  let gridLayer: string | undefined;
+  let boardLayer: string | undefined;
   let guidesLayer: string | undefined;
   let statsPresentation: StatsPresentation | undefined;
 
-  function getGridLayer() {
-    gridLayer ??= createBoardGridLayer({ beads, boardOrigin, cols, rows });
-    return gridLayer;
+  function getBoardLayer() {
+    boardLayer ??= createBoardLayer({ beads, boardOrigin, cols, rows });
+    return boardLayer;
   }
 
   function getBeadCodesLayer() {
@@ -196,7 +196,7 @@ export function createBeadImageSvgRenderer({
           `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
           `<rect width="${width}" height="${height}" fill="${palette.background}"/>`,
           `<g transform="translate(${exportHorizontalPadding} ${exportTopPadding})">`,
-          getGridLayer(),
+          getBoardLayer(),
           displayOptions.showGuides ? getGuidesLayer() : "",
           displayOptions.showBeadCodes ? getBeadCodesLayer() : "",
           visibleStats?.layer ?? "",
@@ -212,7 +212,7 @@ export function createBeadImageSvgRenderer({
   };
 }
 
-function createBoardGridLayer({
+function createBoardLayer({
   beads,
   boardOrigin,
   cols,
@@ -223,32 +223,60 @@ function createBoardGridLayer({
   cols: number;
   rows: number;
 }) {
-  const gridElements: string[] = [
-    '<g shape-rendering="crispEdges">',
-    ...createLabelElements(rows, cols, boardOrigin),
-  ];
+  const boardX = boardOrigin + 0.5;
+  const boardY = boardOrigin + 0.5;
+  const boardWidth = cols * cellSize;
+  const boardHeight = rows * cellSize;
+  const beadElements: string[] = [];
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const index = row * cols + col;
-      const x = boardOrigin + col * cellSize;
-      const y = boardOrigin + row * cellSize;
-      const bead = beads.get(index);
-
-      gridElements.push(
-        `<rect x="${x + 0.5}" y="${y + 0.5}" width="${cellSize}" height="${cellSize}" fill="${palette.cellBackground}" stroke="${palette.grid}"/>`,
-      );
-
-      if (bead) {
-        gridElements.push(
-          `<rect x="${x + 1}" y="${y + 1}" width="${cellSize - 1}" height="${cellSize - 1}" fill="${bead.hex}"/>`,
-        );
-      }
-    }
+  for (const [index, bead] of beads) {
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const x = boardX + col * cellSize;
+    const y = boardY + row * cellSize;
+    beadElements.push(
+      `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${bead.hex}"/>`,
+    );
   }
-  gridElements.push("</g>");
 
-  return gridElements.join("");
+  return [
+    '<g data-layer="board">',
+    ...createLabelElements(rows, cols, boardOrigin),
+    `<rect data-layer="board-background" x="${boardX}" y="${boardY}" width="${boardWidth}" height="${boardHeight}" fill="${palette.boardBackground}"/>`,
+    '<g data-layer="bead-fills" shape-rendering="crispEdges">',
+    ...beadElements,
+    "</g>",
+    createBaseGridPath({ boardX, boardY, cols, rows }),
+    "</g>",
+  ].join("");
+}
+
+function createBaseGridPath({
+  boardX,
+  boardY,
+  cols,
+  rows,
+}: {
+  boardX: number;
+  boardY: number;
+  cols: number;
+  rows: number;
+}) {
+  const boardRight = boardX + cols * cellSize;
+  const boardBottom = boardY + rows * cellSize;
+  const path: string[] = [];
+
+  for (let col = 0; col <= cols; col += 1) {
+    const x = boardX + col * cellSize;
+    path.push(`M${x} ${boardY}V${boardBottom}`);
+  }
+
+  for (let row = 0; row <= rows; row += 1) {
+    const y = boardY + row * cellSize;
+    path.push(`M${boardX} ${y}H${boardRight}`);
+  }
+
+  return `<path data-layer="base-grid" d="${path.join(" ")}" fill="none" stroke="${palette.grid}" shape-rendering="geometricPrecision"/>`;
 }
 
 function createBeadCodesLayer({
