@@ -1,9 +1,6 @@
 import type { BeadColor } from "@bead/core/colors";
-import { Button } from "@bead/ui/components/button";
 import { ScrollArea } from "@bead/ui/components/scroll-area";
-import { cn } from "@bead/ui/lib/utils";
-import { ChevronDown, ChevronUp, Rotate3D } from "lucide-react";
-import { useState } from "react";
+import { Rotate3D } from "lucide-react";
 import { ColorGrid } from "@/features/bead/components/color-grid";
 import { ColorLetterIndex } from "@/features/bead/components/color-letter-index";
 import { CurrentColor } from "@/features/bead/components/current-color";
@@ -24,7 +21,6 @@ type MobileEditorPanelProps = {
   onSelectColor: (color: BeadColor) => void;
   onSelectTool: (tool: CanvasTool) => void;
   onSelectLetter: (letter: string) => void;
-  onResetViewAfterResize: () => void;
 };
 
 export function MobileEditorPanel({
@@ -37,24 +33,12 @@ export function MobileEditorPanel({
   onSelectColor,
   onSelectTool,
   onSelectLetter,
-  onResetViewAfterResize,
 }: MobileEditorPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const isModelPreviewOpen = modelPreviewControls !== null;
 
   return (
-    <section
-      className={cn(
-        "flex min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden",
-        isExpanded ? "h-auto max-h-[50vh]" : "h-14",
-      )}
-    >
-      <div
-        className={cn(
-          "flex min-h-0 shrink-0 items-center justify-between gap-3 px-4",
-          isExpanded ? "h-14 border-b" : "h-14",
-        )}
-      >
+    <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
+      <div className="flex h-14 min-h-0 shrink-0 items-center justify-between gap-3 border-b px-4">
         {isModelPreviewOpen ? (
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
@@ -67,80 +51,52 @@ export function MobileEditorPanel({
             <CurrentColor color={selectedColor} />
           </div>
         )}
-        <div className="flex shrink-0 items-center gap-1.5">
-          {isModelPreviewOpen ? null : (
+        {isModelPreviewOpen ? null : (
+          <div className="flex shrink-0 items-center gap-1.5">
             <EditorToolDock
               layout="mobile"
               onSelectTool={onSelectTool}
               tool={tool}
             />
-          )}
-          <Button
-            aria-expanded={isExpanded}
-            aria-label={
-              isExpanded
-                ? isModelPreviewOpen
-                  ? "折叠 3D 设置面板"
-                  : "折叠颜色面板"
-                : isModelPreviewOpen
-                  ? "展开 3D 设置面板"
-                  : "展开颜色面板"
-            }
-            className="shrink-0"
-            onClick={() => {
-              setIsExpanded((value) => !value);
-              onResetViewAfterResize();
-            }}
-            size="icon-sm"
-            type="button"
-            variant="outline"
-          >
-            {isExpanded ? (
-              <ChevronDown aria-hidden="true" />
-            ) : (
-              <ChevronUp aria-hidden="true" />
-            )}
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
-      {isExpanded ? (
-        <div className="h-50 min-h-0">
-          {isModelPreviewOpen ? (
-            <ScrollArea className="h-full min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-              <ModelPreviewControls
-                {...modelPreviewControls}
-                className="box-border w-screen max-w-[100vw] min-w-0 overflow-hidden p-4"
+      <div className="h-50 min-h-0">
+        {isModelPreviewOpen ? (
+          <ScrollArea className="h-full min-w-0 overflow-hidden overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+            <ModelPreviewControls
+              {...modelPreviewControls}
+              className="box-border w-screen max-w-[100vw] min-w-0 overflow-hidden p-4"
+              layout="mobile"
+            />
+          </ScrollArea>
+        ) : (
+          <div className="flex h-full min-h-0 flex-col">
+            <div className="relative h-12 min-w-0 shrink-0">
+              <ColorLetterIndex
+                letters={letters}
+                onSelectLetter={onSelectLetter}
+                orientation="horizontal"
+                selectedLetter={selectedLetter}
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
+              />
+            </div>
+
+            <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
+              <ColorGrid
+                colors={colors}
                 layout="mobile"
+                onSelectColor={onSelectColor}
+                selectedColor={selectedColor}
               />
             </ScrollArea>
-          ) : (
-            <div className="flex h-full min-h-0 flex-col">
-              <div className="relative h-12 min-w-0 shrink-0">
-                <ColorLetterIndex
-                  letters={letters}
-                  onSelectLetter={onSelectLetter}
-                  orientation="horizontal"
-                  selectedLetter={selectedLetter}
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border"
-                />
-              </div>
-
-              <ScrollArea className="min-h-0 flex-1 overscroll-contain **:data-[slot=scroll-area-scrollbar]:hidden">
-                <ColorGrid
-                  colors={colors}
-                  layout="mobile"
-                  onSelectColor={onSelectColor}
-                  selectedColor={selectedColor}
-                />
-              </ScrollArea>
-            </div>
-          )}
-        </div>
-      ) : null}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

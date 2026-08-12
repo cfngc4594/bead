@@ -14,10 +14,10 @@ const tabIcons = {
 } satisfies Record<(typeof appTabs)[number]["id"], LucideIcon>;
 
 const tabLinkClassName = cn(
-  "inline-flex flex-col items-center justify-center gap-0.5 rounded-lg px-2.5 py-1.5 text-muted-foreground text-[11px] outline-none transition-colors",
-  "hover:bg-muted hover:text-foreground",
-  "focus-visible:bg-muted focus-visible:text-foreground",
-  "data-[status=active]:bg-muted data-[status=active]:font-medium data-[status=active]:text-foreground",
+  "inline-flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-muted-foreground text-[11px] outline-none transition-colors",
+  "hover:text-foreground",
+  "focus-visible:text-foreground",
+  "data-[status=active]:font-medium data-[status=active]:text-foreground",
 );
 
 export function TabLayout() {
@@ -40,8 +40,16 @@ function TabLink({ tab }: { tab: (typeof appTabs)[number] }) {
 
   return (
     <Link {...linkProps} aria-label={label} className={tabLinkClassName}>
-      <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
-      <span className="truncate">{label}</span>
+      {({ isActive }) => (
+        <>
+          <Icon
+            aria-hidden="true"
+            className="size-5"
+            strokeWidth={isActive ? 2.2 : 1.8}
+          />
+          <span className="leading-none">{label}</span>
+        </>
+      )}
     </Link>
   );
 }
