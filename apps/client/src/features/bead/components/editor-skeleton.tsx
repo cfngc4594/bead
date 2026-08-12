@@ -9,6 +9,7 @@ const canvasToolSkeletons = [
   "pan",
   "select",
   "paint",
+  "fill",
   "erase",
   "mix",
   "picker",
@@ -158,12 +159,13 @@ function MobileEditorPanelSkeleton() {
   return (
     <section className="flex h-auto max-h-[50vh] min-w-0 shrink-0 flex-col overflow-hidden border-t bg-card md:hidden">
       <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-4">
-        <CurrentColorSkeleton />
+        <div className="min-w-0 flex-1">
+          <CurrentColorSkeleton />
+        </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {canvasToolSkeletons.map((item) => (
             <ToolbarIconSkeleton key={item} />
           ))}
-          <ToolbarIconSkeleton />
         </div>
       </div>
 
@@ -195,10 +197,5 @@ function MobileEditorPanelSkeleton() {
 }
 
 function CurrentColorSkeleton() {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Skeleton className="size-8 shrink-0 rounded-full" />
-      <Skeleton className="h-4 w-8 rounded-sm" />
-    </div>
-  );
+  return <Skeleton className="size-8 shrink-0 rounded-full" />;
 }

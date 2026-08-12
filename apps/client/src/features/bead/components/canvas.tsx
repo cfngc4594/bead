@@ -27,6 +27,7 @@ import {
   boardDrawingPalettes,
   boardInteractionPalettes,
 } from "@/features/bead/lib/board-theme-colors";
+import { getFloodFillCells } from "@/features/bead/lib/canvas-flood-fill";
 import {
   cellSize,
   getGridCellFromPoint,
@@ -441,7 +442,21 @@ export function CanvasBoard(props: CanvasBoardProps) {
       return;
     }
 
-    if (!isEditTool(tool)) {
+    if (tool === "fill") {
+      const cell = getCellFromPointer(nativeEvent);
+
+      if (cell) {
+        props.onEditStart();
+        props.onEditCells(
+          getFloodFillCells({ beads, rows, cols, startCell: cell }),
+        );
+        props.onEditEnd();
+      }
+
+      return;
+    }
+
+    if (!isStrokeEditTool(tool)) {
       return;
     }
 
@@ -487,7 +502,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
       return;
     }
 
-    if (isEditTool(tool) && isPaintingRef.current) {
+    if (isStrokeEditTool(tool) && isPaintingRef.current) {
       paintThroughPointerSamples(nativeEvent);
     }
   }
@@ -692,7 +707,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
   );
 }
 
-function isEditTool(tool: CanvasTool) {
+function isStrokeEditTool(tool: CanvasTool) {
   return tool === "paint" || tool === "mix" || tool === "erase";
 }
 
@@ -717,7 +732,7 @@ function getCanvasCursor({
     return "crosshair";
   }
 
-  if (tool === "erase") {
+  if (tool === "erase" || tool === "fill") {
     return "cell";
   }
 

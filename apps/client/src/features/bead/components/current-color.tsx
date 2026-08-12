@@ -1,4 +1,5 @@
 import type { BeadColor } from "@bead/core/colors";
+import { getReadableTextColor } from "@/features/bead/lib/color-utils";
 
 type CurrentColorProps = {
   color: BeadColor;
@@ -6,14 +7,16 @@ type CurrentColorProps = {
 
 export function CurrentColor({ color }: CurrentColorProps) {
   return (
-    <div className="flex min-w-0 select-none items-center gap-3">
-      <span
-        className="size-8 shrink-0 rounded-full border"
-        style={{ backgroundColor: color.hex }}
-      />
-      <div className="min-w-0">
-        <p className="font-medium text-sm">{color.code}</p>
-      </div>
-    </div>
+    <span
+      aria-label={`当前豆色 ${color.code}`}
+      className="grid size-8 shrink-0 select-none place-items-center rounded-full border font-semibold text-[10px]"
+      role="img"
+      style={{
+        backgroundColor: color.hex,
+        color: getReadableTextColor(color.hex),
+      }}
+    >
+      {color.code}
+    </span>
   );
 }
