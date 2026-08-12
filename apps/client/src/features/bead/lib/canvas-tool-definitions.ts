@@ -17,11 +17,11 @@ type CanvasToolDefinition = {
 };
 
 export const canvasToolDefinitions: CanvasToolDefinition[] = [
-  { icon: Hand, label: "移动画布", tool: "pan" },
-  { icon: MousePointer2, label: "选择移动", tool: "select" },
+  { icon: Hand, label: "平移", tool: "pan" },
+  { icon: MousePointer2, label: "选择", tool: "select" },
   { icon: PenLine, label: "画笔", tool: "paint" },
+  { icon: PaintBucket, label: "填充", tool: "fill" },
   { icon: Eraser, label: "橡皮", tool: "erase" },
-  { icon: PaintBucket, label: "油漆桶", tool: "fill" },
   { icon: Blend, label: "混豆", tool: "mix" },
   { icon: Pipette, label: "吸管", tool: "picker" },
 ];

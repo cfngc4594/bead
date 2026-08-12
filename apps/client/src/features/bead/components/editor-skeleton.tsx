@@ -9,8 +9,8 @@ const canvasToolSkeletons = [
   "pan",
   "select",
   "paint",
-  "erase",
   "fill",
+  "erase",
   "mix",
   "picker",
 ];
