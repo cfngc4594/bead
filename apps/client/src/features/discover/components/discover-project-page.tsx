@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
+import { Suspense } from "react";
 import { discoverProjectQueryOptions } from "@/features/discover/api/discover-queries";
 import { DiscoverProjectHeaderSkeleton } from "@/features/discover/components/discover-project-page-skeleton";
 import {
@@ -16,6 +17,35 @@ import {
 const routeApi = getRouteApi("/discover/$projectId");
 
 export function DiscoverProjectPage() {
+  return (
+    <Suspense fallback={<DiscoverProjectPendingPage />}>
+      <DiscoverProjectContent />
+    </Suspense>
+  );
+}
+
+export function DiscoverProjectPendingPage() {
+  return (
+    <DiscoverProjectShell
+      header={
+        <>
+          <DiscoverProjectBackButton />
+          <DiscoverProjectHeaderSkeleton />
+        </>
+      }
+    />
+  );
+}
+
+export function DiscoverProjectErrorPage({ onRetry }: { onRetry: () => void }) {
+  return (
+    <DiscoverProjectShell header={<DiscoverProjectBackButton />}>
+      <DiscoverProjectError onRetry={onRetry} />
+    </DiscoverProjectShell>
+  );
+}
+
+function DiscoverProjectContent() {
   const { projectId } = routeApi.useParams();
   const { data: project } = useSuspenseQuery(
     discoverProjectQueryOptions(projectId),
@@ -37,16 +67,4 @@ export function DiscoverProjectPage() {
   }
 
   return <DiscoverProjectViewer project={project} />;
-}
-
-export function DiscoverProjectPendingPage() {
-  return <DiscoverProjectShell header={<DiscoverProjectHeaderSkeleton />} />;
-}
-
-export function DiscoverProjectErrorPage({ onRetry }: { onRetry: () => void }) {
-  return (
-    <DiscoverProjectShell header={<DiscoverProjectBackButton />}>
-      <DiscoverProjectError onRetry={onRetry} />
-    </DiscoverProjectShell>
-  );
 }
