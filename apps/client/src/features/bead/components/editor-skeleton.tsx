@@ -195,10 +195,5 @@ function MobileEditorPanelSkeleton() {
 }
 
 function CurrentColorSkeleton() {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Skeleton className="size-8 shrink-0 rounded-full" />
-      <Skeleton className="h-4 w-8 rounded-sm" />
-    </div>
-  );
+  return <Skeleton className="size-8 shrink-0 rounded-full" />;
 }
