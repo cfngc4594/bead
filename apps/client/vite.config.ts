@@ -1,13 +1,39 @@
 import path from "node:path";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
+import {
+  createThemeBootstrapScript,
+  createThemeCriticalStyles,
+} from "./src/config/theme";
+
+function themeBootstrapPlugin(): Plugin {
+  return {
+    name: "bead-theme-bootstrap",
+    transformIndexHtml: {
+      order: "pre",
+      handler: () => [
+        {
+          tag: "style",
+          children: createThemeCriticalStyles(),
+          injectTo: "head-prepend",
+        },
+        {
+          tag: "script",
+          children: createThemeBootstrapScript(),
+          injectTo: "head-prepend",
+        },
+      ],
+    },
+  };
+}
 
 export default defineConfig({
   root: __dirname,
   base: "./",
   envDir: path.resolve(__dirname, "../.."),
   plugins: [
+    themeBootstrapPlugin(),
     tanstackRouter({
       target: "react",
       autoCodeSplitting: true,

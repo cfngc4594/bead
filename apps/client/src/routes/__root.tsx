@@ -2,8 +2,7 @@ import { Toaster } from "@bead/ui/components/sonner";
 import { TooltipProvider } from "@bead/ui/components/tooltip";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { appConfig } from "@/config/app";
+import { AppThemeProvider, useAppTheme } from "@/components/theme-provider";
 import { NativeBackHandler } from "@/features/native/native-back-handler";
 import { NativeSafeAreaViewport } from "@/features/native/native-safe-area";
 import { initAnalytics } from "@/lib/analytics";
@@ -27,14 +26,14 @@ function RootComponent() {
   }, []);
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey={appConfig.themeStorageKey}>
+    <AppThemeProvider>
       <RootContent />
-    </ThemeProvider>
+    </AppThemeProvider>
   );
 }
 
 function RootContent() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useAppTheme();
 
   return (
     <>
@@ -48,7 +47,7 @@ function RootContent() {
         mobileOffset={TOASTER_SAFE_AREA_OFFSET}
         offset={TOASTER_SAFE_AREA_OFFSET}
         position="top-right"
-        theme={theme}
+        theme={resolvedTheme}
       />
     </>
   );

@@ -2,7 +2,7 @@ import { ScrollArea } from "@bead/ui/components/scroll-area";
 import { cn } from "@bead/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
+import { useAppTheme } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/_tabs/settings")({
   component: SettingsPage,
@@ -27,7 +27,7 @@ const themeOptions = [
 ] as const;
 
 function SettingsPage() {
-  const { setTheme, theme = "system" } = useTheme();
+  const { preference, setPreference } = useAppTheme();
 
   return (
     <main
@@ -49,7 +49,7 @@ function SettingsPage() {
               className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0"
             >
               {themeOptions.map(({ icon: Icon, label, value }) => {
-                const isSelected = theme === value;
+                const isSelected = preference === value;
 
                 return (
                   <label
@@ -63,7 +63,7 @@ function SettingsPage() {
                       checked={isSelected}
                       className="sr-only"
                       name="theme"
-                      onChange={() => setTheme(value)}
+                      onChange={() => setPreference(value)}
                       type="radio"
                       value={value}
                     />
