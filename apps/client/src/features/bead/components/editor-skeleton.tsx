@@ -163,7 +163,6 @@ function MobileEditorPanelSkeleton() {
           {canvasToolSkeletons.map((item) => (
             <ToolbarIconSkeleton key={item} />
           ))}
-          <ToolbarIconSkeleton />
         </div>
       </div>
 

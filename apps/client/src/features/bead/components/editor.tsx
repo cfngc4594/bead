@@ -91,7 +91,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     selectedColor,
     selectedLetter,
     selectionResetSignal,
-    setResetViewAfterResizeSignal,
     setResetViewSignal,
     setSelectedLetter,
     tool,
@@ -370,9 +369,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         letters={colorLetters}
         onSelectTool={actions.selectTool}
         modelPreviewControls={modelPreviewControls}
-        onResetViewAfterResize={() =>
-          setResetViewAfterResizeSignal((value) => value + 1)
-        }
         onSelectColor={actions.selectColor}
         onSelectLetter={setSelectedLetter}
         selectedColor={selectedColor}
