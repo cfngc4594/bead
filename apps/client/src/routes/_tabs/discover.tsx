@@ -3,13 +3,12 @@ import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-q
 import {
   DiscoverListErrorPage,
   DiscoverListPage,
-  DiscoverListPendingPage,
 } from "@/features/discover/components/discover-list-page";
 
 export const Route = createFileRoute("/_tabs/discover")({
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(discoverProjectsQueryOptions),
-  pendingComponent: DiscoverListPendingPage,
+  loader: ({ context: { queryClient } }) => {
+    void queryClient.prefetchQuery(discoverProjectsQueryOptions);
+  },
   errorComponent: DiscoverListRouteError,
   component: DiscoverListPage,
 });
