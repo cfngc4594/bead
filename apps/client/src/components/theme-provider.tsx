@@ -1,74 +1,98 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  ThemeProvider as NextThemesProvider,
+  useTheme as useNextTheme,
+} from "next-themes";
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
+import {
+  type ResolvedTheme,
+  resolvedThemes,
+  resolveThemeState,
+  type ThemePreference,
+  themeConfig,
+} from "@/config/theme";
 
-type Theme = "dark" | "light" | "system";
-
-type ThemeProviderProps = {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
+type AppThemeState = {
+  preference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  setPreference: (preference: ThemePreference) => void;
 };
 
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
+const AppThemeContext = createContext<AppThemeState | undefined>(undefined);
+const runtimeThemes = [...resolvedThemes];
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "vite-ui-theme",
-  ...props
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
-  );
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-
-      root.classList.add(systemTheme);
-      return;
-    }
-
-    root.classList.add(theme);
-  }, [theme]);
-
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
-    },
-  };
-
+export function AppThemeProvider({ children }: PropsWithChildren) {
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
-      {children}
-    </ThemeProviderContext.Provider>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme={themeConfig.defaultPreference}
+      disableTransitionOnChange
+      enableColorScheme
+      enableSystem
+      storageKey={themeConfig.storageKey}
+      themes={runtimeThemes}
+    >
+      <AppThemeStateProvider>{children}</AppThemeStateProvider>
+    </NextThemesProvider>
   );
 }
 
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
+function AppThemeStateProvider({ children }: PropsWithChildren) {
+  const {
+    resolvedTheme: nextResolvedTheme,
+    setTheme,
+    systemTheme: nextSystemTheme,
+    theme: nextPreference,
+  } = useNextTheme();
+  const { preference, resolvedTheme, shouldResetPreference } =
+    resolveThemeState(
+      nextPreference,
+      nextResolvedTheme,
+      nextSystemTheme,
+      getDocumentThemeFallback(),
+    );
+  const setPreference = useCallback(
+    (nextPreference: ThemePreference) => setTheme(nextPreference),
+    [setTheme],
+  );
 
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+  useEffect(() => {
+    if (shouldResetPreference) {
+      setTheme(themeConfig.defaultPreference);
+    }
+  }, [setTheme, shouldResetPreference]);
+
+  const value = useMemo(
+    () => ({ preference, resolvedTheme, setPreference }),
+    [preference, resolvedTheme, setPreference],
+  );
+
+  return (
+    <AppThemeContext.Provider value={value}>
+      {children}
+    </AppThemeContext.Provider>
+  );
+}
+
+function getDocumentThemeFallback(): ResolvedTheme {
+  return typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark")
+    ? "dark"
+    : "light";
+}
+
+export function useAppTheme(): AppThemeState {
+  const context = useContext(AppThemeContext);
+
+  if (!context) {
+    throw new Error("useAppTheme must be used within AppThemeProvider");
   }
 
   return context;
-};
+}
