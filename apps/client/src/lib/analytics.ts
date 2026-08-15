@@ -41,9 +41,15 @@ type AnalyticsEventName =
 
 type AnalyticsValue = string | number | boolean | null | undefined;
 type AnalyticsProperties = Record<string, AnalyticsValue>;
+type AnalyticsPayload = Record<string, unknown> & { url?: string };
+type AnalyticsUrlResolver = (url: string) => string;
 
 declare global {
   interface Window {
+    beadAnalyticsBeforeSend?: (
+      type: string,
+      payload: AnalyticsPayload,
+    ) => AnalyticsPayload;
     umami?: {
       track: (eventName: string, eventData?: AnalyticsProperties) => void;
     };
@@ -51,18 +57,22 @@ declare global {
 }
 
 const analyticsScriptId = "umami-analytics-script";
+const analyticsBeforeSendName = "beadAnalyticsBeforeSend";
 const queuedEventsLimit = 20;
 const queuedEvents: Array<{
   eventName: AnalyticsEventName;
   properties: AnalyticsProperties;
 }> = [];
 
-export function initAnalytics() {
+export function initAnalytics(resolveUrl: AnalyticsUrlResolver) {
   const config = getAnalyticsConfig();
 
   if (!config || typeof document === "undefined") {
     return;
   }
+
+  window.beadAnalyticsBeforeSend = (type, payload) =>
+    normalizeAnalyticsPayload(type, payload, resolveUrl);
 
   if (document.getElementById(analyticsScriptId)) {
     return;
@@ -72,6 +82,7 @@ export function initAnalytics() {
   script.id = analyticsScriptId;
   script.defer = true;
   script.src = config.scriptUrl;
+  script.dataset.beforeSend = analyticsBeforeSendName;
   script.dataset.websiteId = config.websiteId;
   script.addEventListener("load", flushQueuedEvents, { once: true });
 
@@ -145,4 +156,19 @@ function flushQueuedEvents() {
       console.warn("Unable to flush analytics event", event.eventName, error);
     }
   }
+}
+
+function normalizeAnalyticsPayload(
+  _type: string,
+  payload: AnalyticsPayload,
+  resolveUrl: AnalyticsUrlResolver,
+): AnalyticsPayload {
+  if (typeof payload.url !== "string") {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    url: resolveUrl(payload.url),
+  };
 }
