@@ -1,8 +1,7 @@
 import type { CanvasSnapshot } from "@bead/core/canvas-snapshot";
 import { cn } from "@bead/ui/lib/utils";
 import { useEffect, useRef } from "react";
-import { useTheme } from "@/components/theme-provider";
-import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
+import { useAppTheme } from "@/components/theme-provider";
 import { drawBoard } from "@/features/bead/lib/canvas-drawing";
 import { getPatternSize } from "@/features/bead/lib/canvas-geometry";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
@@ -23,8 +22,7 @@ export function ProjectPreview({
   rows,
   snapshot,
 }: ProjectPreviewProps) {
-  const { theme } = useTheme();
-  const boardTheme = resolveBoardTheme(theme);
+  const { resolvedTheme: boardTheme } = useAppTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

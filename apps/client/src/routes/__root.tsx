@@ -1,12 +1,16 @@
 import { Toaster } from "@bead/ui/components/sonner";
 import { TooltipProvider } from "@bead/ui/components/tooltip";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  Outlet,
+  useRouter,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { appConfig } from "@/config/app";
+import { AppThemeProvider, useAppTheme } from "@/components/theme-provider";
 import { NativeBackHandler } from "@/features/native/native-back-handler";
 import { NativeSafeAreaViewport } from "@/features/native/native-safe-area";
 import { initAnalytics } from "@/lib/analytics";
+import { resolveAnalyticsUrl } from "@/lib/analytics-url";
 import type { RouterContext } from "@/lib/router-context";
 import "@/styles/globals.css";
 
@@ -22,19 +26,21 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootComponent() {
+  const router = useRouter();
+
   useEffect(() => {
-    initAnalytics();
-  }, []);
+    initAnalytics((url) => resolveAnalyticsUrl(url, router.matchRoutes));
+  }, [router]);
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey={appConfig.themeStorageKey}>
+    <AppThemeProvider>
       <RootContent />
-    </ThemeProvider>
+    </AppThemeProvider>
   );
 }
 
 function RootContent() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useAppTheme();
 
   return (
     <>
@@ -48,7 +54,7 @@ function RootContent() {
         mobileOffset={TOASTER_SAFE_AREA_OFFSET}
         offset={TOASTER_SAFE_AREA_OFFSET}
         position="top-right"
-        theme={theme}
+        theme={resolvedTheme}
       />
     </>
   );

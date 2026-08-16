@@ -15,14 +15,13 @@ import {
   Shape,
   Stage,
 } from "react-konva";
-import { useTheme } from "@/components/theme-provider";
+import { useAppTheme } from "@/components/theme-provider";
 import { useCanvasNavigation } from "@/features/bead/hooks/use-canvas-navigation";
 import { useCanvasWheel } from "@/features/bead/hooks/use-canvas-wheel";
 import { useSelectionGesture } from "@/features/bead/hooks/use-selection-gesture";
 import { useStageSize } from "@/features/bead/hooks/use-stage-size";
 import { useTouchPinch } from "@/features/bead/hooks/use-touch-pinch";
 import { useBeadCodeRendering } from "@/features/bead/lib/bead-code-visibility";
-import { resolveBoardTheme } from "@/features/bead/lib/board-theme";
 import {
   boardDrawingPalettes,
   boardInteractionPalettes,
@@ -102,8 +101,7 @@ export function CanvasBoard(props: CanvasBoardProps) {
   const tool = props.mode === "editable" ? props.tool : "pan";
   const selectionResetSignal =
     props.mode === "editable" ? props.selectionResetSignal : 0;
-  const { theme } = useTheme();
-  const boardTheme = resolveBoardTheme(theme);
+  const { resolvedTheme: boardTheme } = useAppTheme();
   const drawingPalette = boardDrawingPalettes[boardTheme];
   const interactionPalette = boardInteractionPalettes[boardTheme];
   const containerRef = useRef<HTMLDivElement>(null);
