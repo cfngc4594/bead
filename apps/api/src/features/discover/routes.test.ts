@@ -36,7 +36,7 @@ describe("discover project routes", () => {
           id: PROJECT_ID,
           publishedAt: 1,
           sizeId: "16x16",
-          thumbnailUrl: `/discover/${PROJECT_ID}/thumbnail`,
+          thumbnailUrl: `/api/discover/${PROJECT_ID}/thumbnail`,
           title: "Rabbit",
         },
       ],

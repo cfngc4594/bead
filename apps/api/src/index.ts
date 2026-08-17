@@ -6,6 +6,15 @@ import { discoverRoutes } from "./features/discover/routes.js";
 import { functions, inngest } from "./inngest/index.js";
 import { serverEnv } from "./server-env.js";
 
+const routes = new Hono()
+  .get("/health", (c) => {
+    return c.json({ status: "ok" as const });
+  })
+  .route("/ai", aiRoutes)
+  .route("/discover", discoverRoutes);
+
+export type AppType = typeof routes;
+
 export const app = new Hono()
   .use(
     "*",
@@ -13,11 +22,6 @@ export const app = new Hono()
       origin: serverEnv.CORS_ORIGINS,
     }),
   )
-  .get("/health", (c) => {
-    return c.json({ status: "ok" as const });
-  })
-  .route("/ai", aiRoutes)
-  .route("/discover", discoverRoutes)
   .on(
     ["GET", "PUT", "POST"],
     "/api/inngest",
@@ -26,11 +30,10 @@ export const app = new Hono()
       functions,
     }),
   )
+  .route("/api", routes)
   .onError((error, c) => {
     console.error("Unhandled API error", error);
     return c.json({ error: "Internal server error" }, 500);
   });
-
-export type AppType = typeof app;
 
 export default app;

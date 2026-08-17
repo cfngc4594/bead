@@ -3,5 +3,5 @@ export function discoverThumbnailObjectKey(projectId: string) {
 }
 
 export function discoverThumbnailPath(projectId: string) {
-  return `/discover/${projectId}/thumbnail`;
+  return `/api/discover/${projectId}/thumbnail`;
 }
