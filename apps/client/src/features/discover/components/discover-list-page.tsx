@@ -22,15 +22,9 @@ const DISCOVER_SCROLL_RESTORATION_ID = "discover-list";
 export function DiscoverListPage() {
   return (
     <DiscoverListShell>
-      <ScrollArea className="min-h-0 flex-1">
-        <ScrollAreaViewport
-          data-scroll-restoration-id={DISCOVER_SCROLL_RESTORATION_ID}
-        >
-          <Suspense fallback={<DiscoverListSkeleton />}>
-            <DiscoverListContent />
-          </Suspense>
-        </ScrollAreaViewport>
-      </ScrollArea>
+      <Suspense fallback={<DiscoverListSkeleton />}>
+        <DiscoverListContent />
+      </Suspense>
     </DiscoverListShell>
   );
 }
@@ -77,24 +71,30 @@ function DiscoverListContent() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-4 px-4 py-6 md:px-8 lg:grid-cols-3">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          onOpen={(source) =>
-            trackEvent("discover_project_opened", {
-              sizeId: project.sizeId,
-              source,
-            })
-          }
-          openLabel="查看"
-          project={project}
-          route="/discover/$projectId"
-          snapshot={project.snapshot}
-          timestamp={project.publishedAt}
-          timestampLabel="发布"
-        />
-      ))}
-    </div>
+    <ScrollArea className="min-h-0 flex-1">
+      <ScrollAreaViewport
+        data-scroll-restoration-id={DISCOVER_SCROLL_RESTORATION_ID}
+      >
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-4 px-4 py-6 md:px-8 lg:grid-cols-3">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              onOpen={(source) =>
+                trackEvent("discover_project_opened", {
+                  sizeId: project.sizeId,
+                  source,
+                })
+              }
+              openLabel="查看"
+              project={project}
+              route="/discover/$projectId"
+              snapshot={project.snapshot}
+              timestamp={project.publishedAt}
+              timestampLabel="发布"
+            />
+          ))}
+        </div>
+      </ScrollAreaViewport>
+    </ScrollArea>
   );
 }
