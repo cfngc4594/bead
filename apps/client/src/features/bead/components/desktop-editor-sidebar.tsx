@@ -10,6 +10,7 @@ import {
 } from "@/features/bead/components/model-preview-controls";
 
 type DesktopEditorSidebarProps = {
+  centerSelectedLetterSignal: number;
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
@@ -20,6 +21,7 @@ type DesktopEditorSidebarProps = {
 };
 
 export function DesktopEditorSidebar({
+  centerSelectedLetterSignal,
   letters,
   colors,
   selectedColor,
@@ -54,6 +56,7 @@ export function DesktopEditorSidebar({
 
           <div className="grid min-h-0 flex-1 grid-cols-[48px_minmax(0,1fr)] overflow-hidden">
             <ColorLetterIndex
+              centerSelectedLetterSignal={centerSelectedLetterSignal}
               letters={letters}
               onSelectLetter={onSelectLetter}
               orientation="vertical"

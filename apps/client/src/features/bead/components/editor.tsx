@@ -54,6 +54,8 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
   const exportImageRendererRef = useRef<BeadImageSvgRenderer | null>(null);
+  const [centerSelectedLetterSignal, setCenterSelectedLetterSignal] =
+    useState(0);
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
   const [exportImage, setExportImage] = useState<BeadImageSvg | null>(null);
   const [exportImageDisplayOptions, setExportImageDisplayOptions] =
@@ -166,6 +168,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     }
 
     actions.selectColor(color);
+    setCenterSelectedLetterSignal((value) => value + 1);
     actions.selectTool("paint");
   }
 
@@ -356,6 +359,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
       </section>
 
       <DesktopEditorSidebar
+        centerSelectedLetterSignal={centerSelectedLetterSignal}
         colors={filteredColors}
         letters={colorLetters}
         modelPreviewControls={modelPreviewControls}
@@ -365,6 +369,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
         selectedLetter={selectedLetter}
       />
       <MobileEditorPanel
+        centerSelectedLetterSignal={centerSelectedLetterSignal}
         colors={filteredColors}
         letters={colorLetters}
         onSelectTool={actions.selectTool}

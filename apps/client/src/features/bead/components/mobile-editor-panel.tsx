@@ -12,6 +12,7 @@ import {
 import type { CanvasTool } from "@/features/bead/types";
 
 type MobileEditorPanelProps = {
+  centerSelectedLetterSignal: number;
   letters: readonly string[];
   colors: readonly BeadColor[];
   selectedColor: BeadColor;
@@ -24,6 +25,7 @@ type MobileEditorPanelProps = {
 };
 
 export function MobileEditorPanel({
+  centerSelectedLetterSignal,
   letters,
   colors,
   selectedColor,
@@ -75,6 +77,7 @@ export function MobileEditorPanel({
           <div className="flex h-full min-h-0 flex-col">
             <div className="relative h-12 min-w-0 shrink-0">
               <ColorLetterIndex
+                centerSelectedLetterSignal={centerSelectedLetterSignal}
                 letters={letters}
                 onSelectLetter={onSelectLetter}
                 orientation="horizontal"
