@@ -47,11 +47,9 @@ export function createDiscoverRoutes(repository: DiscoverRouteRepository) {
           return c.json({ error: "Discover project not found" }, 404);
         }
 
-        return new Response(Buffer.from(thumbnail), {
-          headers: {
-            "Cache-Control": "public, max-age=31536000, immutable",
-            "Content-Type": "image/png",
-          },
+        return c.body(Buffer.from(thumbnail), 200, {
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "Content-Type": "image/png",
         });
       },
     )
