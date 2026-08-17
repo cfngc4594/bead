@@ -6,7 +6,9 @@ import {
   createDiscoverProject,
   findDiscoverProject,
   listDiscoverProjects,
+  toDiscoverProjectListItem,
 } from "./repository.js";
+import { getDiscoverThumbnail } from "./thumbnail-store.js";
 
 const discoverProjectParamSchema = z.object({
   projectId: z.uuid(),
@@ -15,12 +17,14 @@ const discoverProjectParamSchema = z.object({
 export type DiscoverRouteRepository = {
   createProject: typeof createDiscoverProject;
   findProject: typeof findDiscoverProject;
+  getThumbnail: typeof getDiscoverThumbnail;
   listProjects: typeof listDiscoverProjects;
 };
 
 const discoverRepository: DiscoverRouteRepository = {
   createProject: createDiscoverProject,
   findProject: findDiscoverProject,
+  getThumbnail: getDiscoverThumbnail,
   listProjects: listDiscoverProjects,
 };
 
@@ -28,8 +32,27 @@ export function createDiscoverRoutes(repository: DiscoverRouteRepository) {
   return new Hono()
     .get("/", async (c) => {
       const projects = await repository.listProjects();
-      return c.json({ projects });
+      return c.json({
+        projects: projects.map(toDiscoverProjectListItem),
+      });
     })
+    .get(
+      "/:projectId/thumbnail",
+      zValidator("param", discoverProjectParamSchema),
+      async (c) => {
+        const { projectId } = c.req.valid("param");
+        const thumbnail = await repository.getThumbnail(projectId);
+
+        if (!thumbnail) {
+          return c.json({ error: "Discover project not found" }, 404);
+        }
+
+        return c.body(Buffer.from(thumbnail), 200, {
+          "Cache-Control": "public, max-age=31536000, immutable",
+          "Content-Type": "image/png",
+        });
+      },
+    )
     .get(
       "/:projectId",
       zValidator("param", discoverProjectParamSchema),

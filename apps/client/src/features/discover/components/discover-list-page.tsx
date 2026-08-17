@@ -16,6 +16,7 @@ import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-q
 import { DiscoverListSkeleton } from "@/features/discover/components/discover-list-skeleton";
 import { DiscoverListError } from "@/features/discover/components/discover-states";
 import { trackEvent } from "@/lib/analytics";
+import { api } from "@/lib/api";
 
 const DISCOVER_SCROLL_RESTORATION_ID = "discover-list";
 
@@ -86,9 +87,14 @@ function DiscoverListContent() {
                 })
               }
               openLabel="查看"
+              preview={{
+                kind: "image",
+                src: api.discover[":projectId"].thumbnail.$url({
+                  param: { projectId: project.id },
+                }).href,
+              }}
               project={project}
               route="/discover/$projectId"
-              snapshot={project.snapshot}
               timestamp={project.publishedAt}
               timestampLabel="发布"
             />
