@@ -77,7 +77,7 @@ function DiscoverListContent() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 sm:grid-cols-2 md:px-8 lg:grid-cols-3">
+    <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-4 px-4 py-6 md:px-8 lg:grid-cols-3">
       {projects.map((project) => (
         <ProjectCard
           key={project.id}
