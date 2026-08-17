@@ -13,16 +13,34 @@ import {
 const PROJECT_ID = "123e4567-e89b-12d3-a456-426614174001";
 
 describe("discover project routes", () => {
-  test("returns discover projects", async () => {
-    const project = createProject(createPublishProject("Rabbit"));
+  test("returns discover list items without snapshots", async () => {
     const app = createDiscoverRoutes(
-      createRepository({ listProjects: async () => [project] }),
+      createRepository({
+        listProjects: async () => [
+          {
+            id: PROJECT_ID,
+            publishedAt: 1,
+            sizeId: "16x16",
+            title: "Rabbit",
+          },
+        ],
+      }),
     );
 
     const response = await app.request("/");
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ projects: [project] });
+    expect(await response.json()).toEqual({
+      projects: [
+        {
+          id: PROJECT_ID,
+          publishedAt: 1,
+          sizeId: "16x16",
+          thumbnailUrl: `/api/discover/${PROJECT_ID}/thumbnail`,
+          title: "Rabbit",
+        },
+      ],
+    });
   });
 
   test("returns 404 for a missing project and 400 for an invalid id", async () => {
@@ -30,6 +48,27 @@ describe("discover project routes", () => {
 
     expect((await app.request(`/${PROJECT_ID}`)).status).toBe(404);
     expect((await app.request("/not-a-uuid")).status).toBe(400);
+  });
+
+  test("returns a png thumbnail", async () => {
+    const png = Uint8Array.from([137, 80, 78, 71]);
+    const app = createDiscoverRoutes(
+      createRepository({
+        getThumbnail: async () => png,
+      }),
+    );
+
+    const response = await app.request(`/${PROJECT_ID}/thumbnail`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(png);
+  });
+
+  test("returns 404 for a missing thumbnail", async () => {
+    const app = createDiscoverRoutes(createRepository());
+
+    expect((await app.request(`/${PROJECT_ID}/thumbnail`)).status).toBe(404);
   });
 
   test("validates publish input", async () => {
@@ -76,6 +115,7 @@ function createRepository(
   return {
     createProject: async (project) => createProject(project),
     findProject: async () => null,
+    getThumbnail: async () => null,
     listProjects: async () => [],
     ...overrides,
   };

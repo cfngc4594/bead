@@ -32,10 +32,23 @@ export const discoverProjectSchema = discoverProjectContentSchema
   })
   .superRefine(addDiscoverProjectIssues);
 
+export const discoverProjectListItemSchema = z
+  .object({
+    id: z.uuid(),
+    title: z.string().trim().min(1).max(80),
+    sizeId: canvasSizeIdSchema,
+    publishedAt: z.number().int().nonnegative(),
+    thumbnailUrl: z.string().min(1),
+  })
+  .strict();
+
 export type PublishDiscoverProject = z.infer<
   typeof publishDiscoverProjectSchema
 >;
 export type DiscoverProject = z.infer<typeof discoverProjectSchema>;
+export type DiscoverProjectListItem = z.infer<
+  typeof discoverProjectListItemSchema
+>;
 
 function addDiscoverProjectIssues(
   project: Pick<
