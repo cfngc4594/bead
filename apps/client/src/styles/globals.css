@@ -128,7 +128,8 @@
   html {
     @apply font-sans;
     overscroll-behavior: none;
-    touch-action: manipulation;
+    /* pan only: block page pinch-zoom; canvas handles its own pinch */
+    touch-action: pan-x pan-y;
   }
   body {
     overscroll-behavior: none;

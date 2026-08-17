@@ -16,6 +16,8 @@ const config: CapacitorConfig = {
         ? "Bead Preview"
         : "Bead Development",
   webDir: "out",
+  // Keep WebView page zoom off; canvas implements its own pinch zoom.
+  zoomEnabled: false,
   server: {
     androidScheme: "https",
     hostname: "localhost",
