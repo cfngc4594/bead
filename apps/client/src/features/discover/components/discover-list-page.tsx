@@ -11,10 +11,12 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
 import { type ReactNode, Suspense } from "react";
+import { env } from "@/env";
 import { ProjectCard } from "@/features/bead/components/project-card";
 import { discoverProjectsQueryOptions } from "@/features/discover/api/discover-queries";
 import { DiscoverListSkeleton } from "@/features/discover/components/discover-list-skeleton";
 import { DiscoverListError } from "@/features/discover/components/discover-states";
+import { discoverThumbnailSrc } from "@/features/discover/lib/discover-thumbnail-src";
 import { trackEvent } from "@/lib/analytics";
 
 const DISCOVER_SCROLL_RESTORATION_ID = "discover-list";
@@ -86,9 +88,15 @@ function DiscoverListContent() {
                 })
               }
               openLabel="查看"
+              preview={{
+                kind: "image",
+                src: discoverThumbnailSrc(
+                  project.thumbnailUrl,
+                  env.VITE_API_URL,
+                ),
+              }}
               project={project}
               route="/discover/$projectId"
-              snapshot={project.snapshot}
               timestamp={project.publishedAt}
               timestampLabel="发布"
             />

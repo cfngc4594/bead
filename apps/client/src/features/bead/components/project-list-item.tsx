@@ -49,9 +49,12 @@ export function ProjectListItem({
           })
         }
         openLabel="打开"
+        preview={{
+          kind: "snapshot",
+          snapshot: project.snapshots[project.currentIndex],
+        }}
         project={project}
         route="/projects/$projectId"
-        snapshot={project.snapshots[project.currentIndex]}
         timestamp={project.updatedAt}
         timestampLabel="更新"
       />

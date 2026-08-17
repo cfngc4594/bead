@@ -1,10 +1,13 @@
 import type {
   DiscoverProject,
+  DiscoverProjectListItem,
   PublishDiscoverProject,
 } from "@bead/core/discover";
 import { api } from "@/lib/api";
 
-export async function fetchDiscoverProjects(): Promise<DiscoverProject[]> {
+export async function fetchDiscoverProjects(): Promise<
+  DiscoverProjectListItem[]
+> {
   const response = await api.discover.$get();
 
   if (!response.ok) {

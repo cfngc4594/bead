@@ -11,22 +11,26 @@ type ProjectCardProject = Pick<Project, "id" | "title" | "sizeId">;
 
 type ProjectCardRoute = "/discover/$projectId" | "/projects/$projectId";
 
+type ProjectCardPreview =
+  | { kind: "snapshot"; snapshot: CanvasSnapshot }
+  | { kind: "image"; src: string };
+
 export function ProjectCard({
   actions,
   openLabel,
   onOpen,
+  preview,
   project,
   route,
-  snapshot,
   timestamp,
   timestampLabel,
 }: {
   actions?: ReactNode;
   openLabel: string;
   onOpen: (source: "preview" | "title") => void;
+  preview: ProjectCardPreview;
   project: ProjectCardProject;
   route: ProjectCardRoute;
-  snapshot: CanvasSnapshot;
   timestamp: number;
   timestampLabel: string;
 }) {
@@ -42,12 +46,22 @@ export function ProjectCard({
         to={route}
       >
         <div className="relative aspect-4/3">
-          <ProjectPreview
-            className="absolute inset-0 aspect-4/3"
-            cols={size.cols}
-            rows={size.rows}
-            snapshot={snapshot}
-          />
+          {preview.kind === "snapshot" ? (
+            <ProjectPreview
+              className="absolute inset-0 aspect-4/3"
+              cols={size.cols}
+              rows={size.rows}
+              snapshot={preview.snapshot}
+            />
+          ) : (
+            <img
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain p-3"
+              decoding="async"
+              draggable={false}
+              src={preview.src}
+            />
+          )}
         </div>
       </Link>
 
