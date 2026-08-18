@@ -1,11 +1,5 @@
-import {
-  type BeadImageDisplayOptions,
-  type BeadImageSvg,
-  type BeadImageSvgRenderer,
-  defaultBeadImageDisplayOptions,
-} from "@bead/core/bead-image-svg";
 import { getMardColor, mardColors } from "@bead/core/colors";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { toast } from "sonner";
 import type { CanvasSize } from "@/config/canvas-sizes";
 import { BeadModelPreview } from "@/features/bead/components/bead-model-preview";
@@ -15,11 +9,11 @@ import { ExportImagePanel } from "@/features/bead/components/export-image-panel"
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
 import { MobileEditorPanel } from "@/features/bead/components/mobile-editor-panel";
 import { EditorToolbar } from "@/features/bead/components/toolbar";
+import { useBeadImageExport } from "@/features/bead/hooks/use-bead-image-export";
 import { useEditorActions } from "@/features/bead/hooks/use-editor-actions";
 import { useMixedBeadBrush } from "@/features/bead/hooks/use-mixed-bead-brush";
 import { useModelPreview } from "@/features/bead/hooks/use-model-preview";
 import { useProjectCanvas } from "@/features/bead/hooks/use-project-canvas";
-import { prepareBeadImage } from "@/features/bead/lib/export-image";
 import type { ModelPreviewMode } from "@/features/bead/lib/model-preview-config";
 import {
   type ProjectId,
@@ -53,11 +47,6 @@ export function Editor({ projectId, size, title, onBack }: EditorProps) {
 
 function EditorContent({ projectId, size, title, onBack }: EditorProps) {
   const hasTrackedCanvasEditRef = useRef(false);
-  const exportImageRendererRef = useRef<BeadImageSvgRenderer | null>(null);
-  const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
-  const [exportImage, setExportImage] = useState<BeadImageSvg | null>(null);
-  const [exportImageDisplayOptions, setExportImageDisplayOptions] =
-    useState<BeadImageDisplayOptions>(defaultBeadImageDisplayOptions);
   const {
     beads,
     beginEdit,
@@ -70,6 +59,13 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     canUndo,
     canRedo,
   } = useProjectCanvas({ projectId, size });
+  const exportImage = useBeadImageExport({
+    beads,
+    cols: size.cols,
+    rows: size.rows,
+    sizeId: size.id,
+    source: "editor",
+  });
   const modelPreview = useModelPreview({
     onClose: () => trackEvent("model_preview_closed", getCanvasProperties()),
     onError: () => trackEvent("model_preview_failed", getCanvasProperties()),
@@ -83,7 +79,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     handleAlgorithmImageFileChange,
     handleImportFileChange,
     importInputRef,
-    isExportingImage,
     isGeneratingAiImage,
     isGeneratingAlgorithmImage,
     resetViewAfterResizeSignal,
@@ -108,7 +103,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     [selectedLetter],
   );
   const hasBeads = beads.some(Boolean);
-  const exportImageFilename = `bead-${size.id}.png`;
 
   function beginCellEdit() {
     if (tool === "mix") {
@@ -181,45 +175,6 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
     });
   }
 
-  function prepareExportImage(displayOptions: BeadImageDisplayOptions) {
-    try {
-      exportImageRendererRef.current ??= prepareBeadImage({
-        beads,
-        cols: size.cols,
-        rows: size.rows,
-      });
-      setExportImage(exportImageRendererRef.current.render(displayOptions));
-    } catch (error) {
-      console.error("Unable to prepare export image", error);
-      setExportImage(null);
-      toast.error("预览生成失败");
-    }
-  }
-
-  function handleExportImage() {
-    exportImageRendererRef.current = null;
-    setExportImage(null);
-    setIsExportPanelOpen(true);
-    trackEvent("export_image_panel_opened", getCanvasProperties());
-    prepareExportImage(exportImageDisplayOptions);
-  }
-
-  function changeExportImageDisplayOptions(
-    displayOptions: BeadImageDisplayOptions,
-  ) {
-    setExportImageDisplayOptions(displayOptions);
-    prepareExportImage(displayOptions);
-  }
-
-  function changeExportPanelOpen(open: boolean) {
-    setIsExportPanelOpen(open);
-
-    if (!open) {
-      exportImageRendererRef.current = null;
-      setExportImage(null);
-    }
-  }
-
   function changeModelPreviewMode(mode: ModelPreviewMode) {
     modelPreview.setMode(mode);
     trackEvent("model_preview_mode_changed", {
@@ -272,7 +227,7 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onPreviewModel={modelPreview.toggle}
           onResetView={() => setResetViewSignal((value) => value + 1)}
           onClearDraft={actions.clearDraft}
-          onExportImage={handleExportImage}
+          onExportImage={exportImage.openPanel}
           onExportTemplate={actions.exportTemplate}
           onImportAiImage={actions.importAiImage}
           onImportAlgorithmImage={actions.importAlgorithmImage}
@@ -280,20 +235,20 @@ function EditorContent({ projectId, size, title, onBack }: EditorProps) {
           onBack={onBack}
           onRenameProject={handleRenameProject}
           onUndo={actions.undoEdit}
-          isExportingImage={isExportingImage}
+          isExportingImage={exportImage.isEncoding}
           isGeneratingAiImage={isGeneratingAiImage}
           isGeneratingAlgorithmImage={isGeneratingAlgorithmImage}
         />
         <ExportImagePanel
-          displayOptions={exportImageDisplayOptions}
-          filename={exportImageFilename}
-          image={exportImage}
-          isEncoding={isExportingImage}
-          open={isExportPanelOpen}
-          onCreatePng={actions.createExportImageBlob}
-          onDisplayOptionsChange={changeExportImageDisplayOptions}
-          onOpenChange={changeExportPanelOpen}
-          onPrepareImage={prepareExportImage}
+          displayOptions={exportImage.displayOptions}
+          filename={exportImage.filename}
+          image={exportImage.image}
+          isEncoding={exportImage.isEncoding}
+          open={exportImage.isPanelOpen}
+          onCreatePng={exportImage.createPngBlob}
+          onDisplayOptionsChange={exportImage.changeDisplayOptions}
+          onOpenChange={exportImage.changePanelOpen}
+          onPrepareImage={exportImage.prepareImage}
         />
         <input
           accept=".bead.json,application/json"

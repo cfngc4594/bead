@@ -1,11 +1,13 @@
 import type { DiscoverProject } from "@bead/core/discover";
 import { Badge } from "@bead/ui/components/badge";
 import { Button } from "@bead/ui/components/button";
-import { Focus, LoaderCircle, Plus } from "lucide-react";
+import { Download, Focus, LoaderCircle, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getCanvasSize } from "@/config/canvas-sizes";
+import { ExportImagePanel } from "@/features/bead/components/export-image-panel";
 import { LazyCanvasBoard } from "@/features/bead/components/lazy-canvas-board";
+import { useBeadImageExport } from "@/features/bead/hooks/use-bead-image-export";
 import { expandSnapshot } from "@/features/bead/storage/project-snapshots";
 import { createProjectFromSnapshot } from "@/features/bead/storage/projects";
 import {
@@ -32,6 +34,13 @@ export function DiscoverProjectViewer({
       }),
     [project.snapshot, size.cols, size.rows],
   );
+  const exportImage = useBeadImageExport({
+    beads,
+    cols: size.cols,
+    rows: size.rows,
+    sizeId: size.id,
+    source: "discover",
+  });
 
   useEffect(() => {
     function resetViewAfterResize() {
@@ -92,6 +101,21 @@ export function DiscoverProjectViewer({
           </Button>
 
           <Button
+            aria-label={exportImage.isEncoding ? "导出中" : "导出图片"}
+            disabled={exportImage.isEncoding}
+            onClick={exportImage.openPanel}
+            size="icon-sm"
+            type="button"
+            variant="outline"
+          >
+            {exportImage.isEncoding ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <Download />
+            )}
+          </Button>
+
+          <Button
             aria-label="添加到作品"
             disabled={isAdding}
             onClick={() => void handleAddToProjects()}
@@ -115,6 +139,17 @@ export function DiscoverProjectViewer({
           rows={size.rows}
         />
       </section>
+      <ExportImagePanel
+        displayOptions={exportImage.displayOptions}
+        filename={exportImage.filename}
+        image={exportImage.image}
+        isEncoding={exportImage.isEncoding}
+        open={exportImage.isPanelOpen}
+        onCreatePng={exportImage.createPngBlob}
+        onDisplayOptionsChange={exportImage.changeDisplayOptions}
+        onOpenChange={exportImage.changePanelOpen}
+        onPrepareImage={exportImage.prepareImage}
+      />
     </DiscoverProjectShell>
   );
 }

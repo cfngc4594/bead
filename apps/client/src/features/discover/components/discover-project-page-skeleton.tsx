@@ -8,6 +8,7 @@ export function DiscoverProjectHeaderSkeleton() {
         <Skeleton className="hidden h-5 w-10 rounded-full sm:block" />
       </div>
       <Skeleton className="size-7 shrink-0 rounded-lg" />
+      <Skeleton className="size-7 shrink-0 rounded-lg" />
       <Skeleton className="h-8 w-16 shrink-0 rounded-lg sm:w-28" />
     </>
   );
