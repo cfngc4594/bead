@@ -34,8 +34,9 @@ export function useBeadImageExport({
   const isExportingImageRef = useRef(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [image, setImage] = useState<BeadImageSvg | null>(null);
-  const [displayOptions, setDisplayOptions] =
-    useState<BeadImageDisplayOptions>(defaultBeadImageDisplayOptions);
+  const [displayOptions, setDisplayOptions] = useState<BeadImageDisplayOptions>(
+    defaultBeadImageDisplayOptions,
+  );
   const [isEncoding, setIsEncoding] = useState(false);
 
   function getCanvasProperties() {
