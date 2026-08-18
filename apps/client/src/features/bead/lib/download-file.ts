@@ -2,6 +2,10 @@ import { Capacitor } from "@capacitor/core";
 import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { Media } from "@capacitor-community/media";
+import {
+  uniqueNativeFileBase,
+  uniqueNativeFilename,
+} from "@/features/bead/lib/export-filename";
 
 const nativeAlbumName = "Bead";
 
@@ -79,16 +83,17 @@ async function shareNativeFile(blob: Blob, filename: string) {
 }
 
 async function shareNativeData(data: string, filename: string) {
+  const uniqueFilename = uniqueNativeFilename(filename);
   const { uri } = await Filesystem.writeFile({
     data,
     directory: Directory.Cache,
-    path: createSharePath(filename),
+    path: createSharePath(uniqueFilename),
     recursive: true,
   });
 
   await Share.share({
     files: [uri],
-    title: filename,
+    title: uniqueFilename,
   });
 }
 
@@ -98,7 +103,7 @@ async function saveNativeImage(blob: Blob, filename: string) {
       Capacitor.getPlatform() === "android"
         ? await getAndroidAlbumPath()
         : undefined,
-    fileName: stripFileExtension(filename),
+    fileName: uniqueNativeFileBase(filename),
     path: await blobToDataUrl(blob),
   });
 }
@@ -196,8 +201,4 @@ function createSharePath(filename: string) {
 
 function isAlbumAlreadyExistsError(error: unknown) {
   return String(error).toLowerCase().includes("album already exists");
-}
-
-function stripFileExtension(filename: string) {
-  return filename.replace(/\.[^.]+$/, "");
 }
