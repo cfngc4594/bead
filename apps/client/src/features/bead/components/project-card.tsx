@@ -72,10 +72,10 @@ export function ProjectCard({
           params={{ projectId: project.id }}
           to={route}
         >
-          <p className="truncate font-medium text-sm leading-4">
+          <p className="truncate font-medium text-sm leading-5">
             {project.title}
           </p>
-          <div className="mt-0.5 flex min-w-0 items-center gap-2 text-muted-foreground text-xs leading-4">
+          <div className="mt-1 flex min-w-0 items-center gap-2 text-muted-foreground text-xs leading-4">
             <span className="flex h-4 shrink-0 items-center rounded-sm bg-muted px-1.5 font-medium text-foreground tabular-nums">
               {size.title}
             </span>
@@ -107,8 +107,8 @@ export function ProjectCardSkeleton({
       </div>
 
       <div className="flex items-center gap-3 border-t bg-card px-4 py-3">
-        <div className="min-w-0 flex-1 space-y-0.5">
-          <div className="flex h-4 items-start">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex h-5 items-start">
             <Skeleton className="h-3.5 w-18" />
           </div>
           <div className="flex h-4 items-center gap-2">
