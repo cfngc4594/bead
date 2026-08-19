@@ -2,6 +2,7 @@
   "name": "@bead/client",
   "private": true,
   "scripts": {
+    "cap:assets": "capacitor-assets generate --ios --android",
     "dev": "vite --config vite.config.ts",
     "build": "vite build --config vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@bead/api": "workspace:*",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.0",
     "@tailwindcss/postcss": "^4",
     "@tanstack/router-plugin": "^1.168.18",
