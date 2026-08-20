@@ -9,6 +9,7 @@ import {
   createTransaction,
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
+import { v4 as uuidv4 } from "uuid";
 import {
   type CanvasState,
   createEmptyCanvas,
@@ -220,7 +221,7 @@ function moveProjectIndex(projectId: ProjectId, delta: -1 | 1) {
 }
 
 function createProjectId() {
-  return crypto.randomUUID();
+  return uuidv4();
 }
 
 function getRequiredProject(projectId: ProjectId) {
