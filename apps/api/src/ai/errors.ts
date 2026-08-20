@@ -1,6 +1,7 @@
 import { NoSuchKey } from "@aws-sdk/client-s3";
 import { NonRetriableError } from "inngest";
 import { APIError } from "openai";
+import { QwenImageError } from "./qwen-image.js";
 
 const RETRIABLE_CLIENT_STATUSES = new Set([408, 409, 429]);
 
@@ -32,6 +33,10 @@ function isNonRetriableAiError(error: unknown) {
   if (error instanceof NoSuchKey) return true;
 
   if (error instanceof APIError) {
+    return isNonRetriableHttpStatus(error.status);
+  }
+
+  if (error instanceof QwenImageError) {
     return isNonRetriableHttpStatus(error.status);
   }
 
