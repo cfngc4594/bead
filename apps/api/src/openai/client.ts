@@ -1,9 +1,10 @@
 import { OpenAI } from "openai";
-import { openaiEnv } from "../openai-env.js";
+import { getOpenAiImageConfig } from "../ai/image-provider-env.js";
 
-export const openai = new OpenAI({
-  apiKey: openaiEnv.OPENAI_API_KEY,
-  baseURL: openaiEnv.OPENAI_BASE_URL,
-});
-
-export const imageModel = openaiEnv.OPENAI_IMAGE_MODEL;
+export function createOpenAiImageClient() {
+  const config = getOpenAiImageConfig();
+  return {
+    model: config.model,
+    openai: new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL }),
+  };
+}
